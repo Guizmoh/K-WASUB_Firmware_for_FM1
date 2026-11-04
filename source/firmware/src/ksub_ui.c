@@ -3287,6 +3287,11 @@ static void app_init(void)
         perf_touch();
         set.askv = 10; set_dirty = 1; set_ms = fm1_ms;
     }
+    if (set.askv == 10u) {                      /* (1.0.49: the sound at start is HOOVER DNB, once, where it was the first preset) */
+        uint32_t k;
+        if (!set.bank && !set.idx) for (k = 0; k < NFACTORY; k++) if (str_eq(FACTORY[k].name, "HOOVER DNB")) { set.idx = (uint8_t)k; break; }
+        set.askv = 11; set_dirty = 1; set_ms = fm1_ms;
+    }
     load_preset(set.bank, set.idx);
     if (set.asave && work.magic == WK_MAGIC && work.sum == wk_sum() && work.bank == set.bank && work.idx == set.idx) {   /* AUTOSAVE: the sound as it was left */
         int8_t p[NP_MAX];
