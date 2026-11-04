@@ -71,11 +71,20 @@ button.primary { background: var(--lime); color: #11160a; border-color: var(--li
 .key.on.w { background: var(--lime); } .key.on.b { background: #7a9a20; }
 .key span { position: absolute; bottom: 6px; left: 0; right: 0; text-align: center; font-size: 10px; color: #56605e; }
 .help { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
-.help section { background: var(--body); border: 1px solid var(--edge); border-radius: 12px; padding: 14px 16px; min-width: 0; }
-.help h2 { font: 700 14px/1.2 var(--f-disp); letter-spacing: .08em; margin: 0 0 8px; color: var(--lime); }
-.help ul { margin: 0; padding-left: 18px; color: var(--mute); }
+.help details { background: var(--body); border: 1px solid var(--edge); border-radius: 12px; min-width: 0; overflow: hidden; }
+.help summary { cursor: pointer; list-style: none; padding: 14px 16px; font: 700 14px/1.2 var(--f-disp); letter-spacing: .08em; color: var(--lime); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.help summary::-webkit-details-marker { display: none; }
+.help summary::after { content: "+"; font: 600 18px/1 var(--f-mono); color: var(--mute); }
+.help details[open] summary { border-bottom: 1px solid var(--edge); }
+.help details[open] summary::after { content: "−"; }
+.help ul { margin: 0; padding: 0 16px 14px 34px; color: var(--mute); }
 .help li { margin: 3px 0; } .help kbd { font: 600 11px var(--f-mono); color: var(--ink); background: var(--body-hi);
   border: 1px solid var(--edge); border-radius: 4px; padding: 0 4px; }
+.site-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 6px 0 12px; border-bottom: 1px solid var(--edge); }
+.site-nav a { color: var(--mute); text-decoration: none; font: 500 13px/1.4 var(--f-disp); }
+.site-nav a:hover, .site-nav .brand { color: var(--lime); }
+.site-nav .brand { font-weight: 700; font-size: 17px; letter-spacing: .02em; margin-right: auto; }
+.site-nav .brand span { color: var(--ink); }
 @media (max-width: 760px) {
   .top { grid-template-columns: 1fr; }
   .screen { margin: 0 auto; }
@@ -85,7 +94,14 @@ button.primary { background: var(--lime); color: #11160a; border-color: var(--li
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
-<div class="wrap">
+<div class="wrap" id="try">
+  <nav class="site-nav" aria-label="K-WASUB site navigation">
+    <a class="brand" href="../index.html">K-WA<span>SUB</span></a>
+    <a href="../#try">Try it</a><a href="../#install">Install</a>
+    <a href="../manual.html">Manual</a><a href="../data.html">Data</a>
+    <a href="../#news">What's new</a><a href="../#don">Support</a>
+    <a href="https://github.com/Guizmoh/K-WASUB_Firmware_for_FM1">GitHub</a>
+  </nav>
   <header>
     <div>
       <h1>K-WA<span>SUB</span></h1>
@@ -115,17 +131,17 @@ button.primary { background: var(--lime); color: #11160a; border-color: var(--li
   </div>
 
   <div class="help">
-    <section>
-      <h2><span lang="en">PAGES</span><span lang="fr">PAGES</span></h2>
+    <details>
+      <summary><span class="help-title"><span lang="en">PAGES</span><span lang="fr">PAGES</span></span></summary>
       <ul>
         <li><span lang="en"><b>HOME</b> 01 PLAY &middot; <b>EDIT</b> 02 BASS &middot; <b>ENV</b> 03 ENVELOPE &middot; <b>SEQ</b> 04 FILTER &middot; <b>LFO</b> 05 &middot; <b>FX</b> 06 &middot; <b>ARP</b> 07 PRESETS &middot; <b>GLO</b> 08 SYSTEM</span><span lang="fr"><b>HOME</b> 01 PLAY &middot; <b>EDIT</b> 02 BASS &middot; <b>ENV</b> 03 ENVELOPE &middot; <b>SEQ</b> 04 FILTER &middot; <b>LFO</b> 05 &middot; <b>FX</b> 06 &middot; <b>ARP</b> 07 PRESETS &middot; <b>GLO</b> 08 SYSTEM</span></li>
         <li><span lang="en">A page button opens the <b>first view</b> of its page; press it again for the next view (the dots at the top right show the views)</span><span lang="fr">Un bouton de page ouvre la <b>première vue</b> de sa page ; appuyer encore : vue suivante (les points en haut à droite montrent les vues)</span></li>
         <li><span lang="en"><b>SELECT</b> chooses the row, <b>ALGO</b> changes its value, <b>K1–K4</b> do what the bottom of the screen says</span><span lang="fr"><b>SELECT</b> choisit la ligne, <b>ALGO</b> change sa valeur, <b>K1–K4</b> font ce que dit le bas de l'écran</span></li>
         <li><span lang="en"><b>PRESETS</b> changes the sound at once, on HOME and on the PRESETS page (<b>ARP</b>)</span><span lang="fr"><b>PRESETS</b> change le son tout de suite, sur HOME et sur la page PRESETS (<b>ARP</b>)</span></li>
       </ul>
-    </section>
-    <section>
-      <h2><span lang="en">PLAYING LIVE</span><span lang="fr">JOUER EN LIVE</span></h2>
+    </details>
+    <details>
+      <summary><span class="help-title"><span lang="en">PLAYING LIVE</span><span lang="fr">JOUER EN LIVE</span></span></summary>
       <ul>
         <li><span lang="en"><b>SEL</b> opens: PERFORM (4 macros, morph, pads) &rarr; MORPH X/Y &rarr; FX LIVE &rarr; MACROS &rarr; MORPH A/B</span><span lang="fr"><b>SEL</b> ouvre : PERFORM (4 macros, morph, pads) &rarr; MORPH X/Y &rarr; FX LIVE &rarr; MACROS &rarr; MORPH A/B</span></li>
         <li><span lang="en">Hold <b>LFO</b> and turn a knob: LFO 2 goes on what that knob sets (LFO 1 or 2: SYSTEM)</span><span lang="fr"><b>LFO</b> maintenu + un potard : le LFO 2 va sur ce que règle le potard (LFO 1 ou 2 : SYSTEM)</span></li>
@@ -134,19 +150,122 @@ button.primary { background: var(--lime); color: #11160a; border-color: var(--li
         <li><span lang="en">Held buttons (mouse): <b>OCT-</b> 1 s = UNDO, <b>OCT+</b> = REDO, <b>SAVE</b> = UNDO / REDO window, <b>HOME</b> = PANIC, <b>GLO</b> = CLASSIC / SHIFT, <b>SEL</b> = A/B</span><span lang="fr">Boutons maintenus (souris) : <b>OCT-</b> 1 s = UNDO, <b>OCT+</b> = REDO, <b>SAVE</b> = fenêtre UNDO / REDO, <b>HOME</b> = PANIC, <b>GLO</b> = CLASSIC / SHIFT, <b>SEL</b> = A/B</span></li>
         <li><span lang="en"><b>OCT-</b> + <b>OCT+</b> together: everything off</span><span lang="fr"><b>OCT-</b> + <b>OCT+</b> ensemble : tout couper</span></li>
       </ul>
-    </section>
-    <section>
-      <h2><span lang="en">COMPUTER KEYBOARD</span><span lang="fr">CLAVIER DE L'ORDINATEUR</span></h2>
+    </details>
+    <details>
+      <summary><span class="help-title"><span lang="en">COMPUTER KEYBOARD</span><span lang="fr">CLAVIER DE L'ORDINATEUR</span></span></summary>
       <ul>
         <li><span lang="en">Notes: <kbd>Z</kbd><kbd>S</kbd><kbd>X</kbd>… and <kbd>Q</kbd><kbd>2</kbd><kbd>W</kbd>…</span><span lang="fr">Notes : <kbd>Z</kbd><kbd>S</kbd><kbd>X</kbd>… et <kbd>Q</kbd><kbd>2</kbd><kbd>W</kbd>…</span></li>
         <li><span lang="en"><kbd>↑</kbd><kbd>↓</kbd> row &middot; <kbd>←</kbd><kbd>→</kbd> value &middot; <kbd>PgUp</kbd><kbd>PgDn</kbd> preset</span><span lang="fr"><kbd>↑</kbd><kbd>↓</kbd> ligne &middot; <kbd>←</kbd><kbd>→</kbd> valeur &middot; <kbd>PgUp</kbd><kbd>PgDn</kbd> preset</span></li>
         <li><span lang="en"><kbd>Shift</kbd>+<kbd>1</kbd>…<kbd>8</kbd> pages &middot; <kbd>Tab</kbd> SEL &middot; <kbd>Space</kbd> SEQ PLAY/STOP &middot; <kbd>Enter</kbd> TAP (SEQ view: REC) &middot; <kbd>⌫</kbd> SAVE (held: undo) &middot; <kbd>-</kbd> / <kbd>=</kbd> OCT− / OCT+ (held, in SHIFT: the columns)</span><span lang="fr"><kbd>Shift</kbd>+<kbd>1</kbd>…<kbd>8</kbd> pages &middot; <kbd>Tab</kbd> SEL &middot; <kbd>Espace</kbd> SEQ PLAY/STOP &middot; <kbd>Entrée</kbd> TAP (vue SEQ : REC) &middot; <kbd>⌫</kbd> SAVE (maintenu : undo) &middot; <kbd>-</kbd> / <kbd>=</kbd> OCT− / OCT+ (maintenus, en SHIFT : les colonnes)</span></li>
         <li><span lang="en">Mouse wheel or drag on a knob</span><span lang="fr">Molette ou glisser sur un bouton rotatif</span></li>
       </ul>
-    </section>
+    </details>
   </div>
 </div>
 
+
+<template id="site-content-template"><style>
+
+:host{--bg:#0b0f10;--panel:#131a1c;--panel2:#1a2326;--rule:#2a3639;--ink:#f1f6f6;--mut:#9db0b2;--lime:#c8f03c;--cyan:#50d8d0;--vio:#aa8cfa;--or:#f08c3c;color-scheme:dark;
+--sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+:host{display:block;margin-top:24px;background:var(--bg);color:var(--ink);font:1rem/1.6 var(--sans);background-image:radial-gradient(900px 420px at 50% -120px,#1c2a12,transparent 70%);background-repeat:no-repeat}
+a{color:var(--cyan)}a:hover{color:var(--lime)}
+main{max-width:1000px;margin:0 auto;padding:18px 16px 70px}
+nav.bar{display:flex;gap:6px 18px;flex-wrap:wrap;align-items:center;padding:6px 0 14px}nav.bar a{color:var(--mut);text-decoration:none;font-size:.92rem}nav.bar a:hover{color:var(--lime)}
+.logo{font:800 1.3rem var(--sans);letter-spacing:-.02em;color:var(--lime)!important}.logo b{color:var(--ink)}nav.bar .sp{flex:1}nav.bar .lang{color:var(--mut);font-size:.9rem}nav.bar .lang b{color:var(--lime)}
+.hero img{width:100%;display:block;border-radius:18px;border:1px solid var(--rule);box-shadow:0 22px 60px #000a}
+.betab{margin:0 0 .7rem;text-align:center;color:var(--mut);font-size:.9rem}.beta{display:inline-block;background:var(--lime);color:#10150a;font-weight:800;border-radius:8px;padding:2px 10px;letter-spacing:.04em}
+.src{margin:.5rem 0 0;font-size:.85rem;text-align:center}.src a{color:var(--mut);text-decoration:none;word-break:break-all}.src a:hover{color:var(--lime);text-decoration:underline}
+h1{font-size:clamp(1.6rem,4.6vw,2.4rem);line-height:1.15;margin:1.2rem 0 .4rem;letter-spacing:-.02em}h1 em{font-style:normal;color:var(--lime)}
+h2{font-size:1.5rem;margin:0 0 .5rem;letter-spacing:-.01em}.sec{margin-top:52px}
+.lead{color:var(--mut);font-size:1.12rem;max-width:46rem;margin:.2rem 0}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0 6px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:12px 20px;font:700 1rem var(--sans);text-decoration:none;border:2px solid var(--lime);color:var(--lime);background:transparent;cursor:pointer}
+.btn.p{background:var(--lime);color:#10150a}.btn:hover{filter:brightness(1.12);color:inherit}.btn.p:hover{color:#10150a}
+.btn.d{border-color:var(--or);color:var(--or)}.btn.d.p{background:var(--or);color:#1b0e02}
+.btn[aria-disabled=true]{opacity:.55;pointer-events:none}
+.cards{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));margin-top:14px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:16px;padding:16px 18px}
+.card h3{margin:0 0 .3rem;font-size:1.05rem;color:var(--lime)}.card p{margin:.3rem 0;color:#cfdadb;font-size:.96rem}
+.n{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--lime);color:#10150a;font-weight:800;margin-right:8px}
+.shots{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));margin-top:14px}
+.shots figure{margin:0}.shots img{width:100%;aspect-ratio:1;border-radius:10px;border:1px solid var(--rule);display:block;background:#000}
+.shots figcaption{font-size:.8rem;color:var(--mut);text-align:center;margin-top:4px}
+.emu{margin-top:14px;background:var(--panel);border:1px solid var(--rule);border-radius:18px;overflow:hidden}
+.tabs{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--rule);flex-wrap:wrap;align-items:center}
+.tabs button{font:600 .9rem var(--sans);background:var(--panel2);color:var(--ink);border:1px solid var(--rule);border-radius:9px;padding:6px 12px;cursor:pointer}
+.tabs button[aria-pressed=true]{background:var(--lime);color:#10150a;border-color:var(--lime)}.tabs span{color:var(--mut);font-size:.85rem;margin-left:auto}
+.frame{position:relative;height:min(86vh,820px);background:#06090a}.frame iframe{width:100%;height:100%;border:0;display:none}
+.frame .go{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px}
+table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:12px;overflow:hidden;font-size:.95rem;margin-top:12px}th,td{padding:9px 12px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}th{background:var(--panel2);color:var(--lime);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}tr:last-child td{border:0}
+code{font-family:var(--mono);font-size:.9em;background:var(--panel2);border:1px solid var(--rule);border-radius:6px;padding:0 .35em;white-space:nowrap}
+.donate{border-color:#7a4a18;background:linear-gradient(180deg,#241a0e,#151a1c);text-align:center;padding:26px 20px}
+.donate p{max-width:38rem;margin:.4rem auto}
+details{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:10px 16px;margin:8px 0}summary{cursor:pointer;font-weight:700}
+footer{margin-top:50px;border-top:1px solid var(--rule);padding-top:18px;color:var(--mut);font-size:.9rem}
+
+.fab{position:fixed;right:14px;bottom:14px;z-index:20;display:inline-flex;align-items:center;gap:8px;background:#f08c3c;color:#1b0e02;font:800 .95rem system-ui,sans-serif;text-decoration:none;border-radius:999px;padding:11px 18px;box-shadow:0 8px 26px #000a,0 0 0 2px #1b0e02}
+.fab:hover{filter:brightness(1.1);color:#1b0e02}
+.dbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:center;background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:12px 16px;margin:14px 0;color:var(--mut);font-size:.98rem;text-align:center}
+.dbar a{background:var(--lime);color:#10150a;font-weight:800;text-decoration:none;border-radius:10px;padding:8px 16px}
+.news{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:6px}.news li{display:grid;grid-template-columns:62px 1fr;gap:4px 12px;align-items:start;padding:8px 12px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;font-size:.92rem;line-height:1.45}.news .v{font:700 .85rem var(--mono);color:var(--lime);padding-top:1px}.news ul{margin:0;padding-left:16px}.news ul li{display:list-item;padding:0;border:0;background:none;font-size:inherit}.news.old li{padding:5px 12px;font-size:.86rem;color:var(--mut)}.news.old .v{color:var(--mut)}details.olds{margin-top:8px}details.olds summary{cursor:pointer;color:var(--cyan);font-size:.92rem;padding:6px 2px}@media(max-width:520px){.news li{grid-template-columns:1fr}}
+
+</style><main>
+
+
+<div class="dbar"><span>K-WASUB is free. If it helps your sounds, a coffee keeps it going.</span><a href="https://ko-fi.com/omnipotard" target="_blank" rel="noopener">Donate on Ko-fi</a></div><section class="hero"><p class="betab"><span class="beta">BETA __KSUB_VER__</span> · a work in progress: tell me what you see on your FM-1</p><img src="../docs/img/promo.png" alt="K-WASUB, a modern bass synth for the FM-1: wobble, X/Y morph, FX PADS, EQ, SHIFT mode">
+<p class="src"><a href="https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/">https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/</a></p>
+<h1>Turn your FM-1 into a modern <em>bass synth</em></h1>
+<p class="lead">K-WASUB is a free firmware for the M-VAVE FM-1. It is made to build and play <b>DnB, dub, dubstep and techno basses</b>: growling reeses, deep subs, 808s, and above all a <b>wobble you shape live</b> with the knobs and the keys.</p>
+<div class="cta"><a class="btn p" href="../#try">▶ Try it in the browser</a><a class="btn" href="#install">⬇ Install on the FM-1</a><a class="btn" href="../manual.html">📖 Read the manual</a></div></section>
+
+
+<section class="sec"><h2>What is it for?</h2>
+<div class="cards">
+<div class="card"><h3>Play a living bass</h3><p>The 27 keys play the bass, <b>K1–K4</b> set the four settings that matter on each page. Hold LFO and turn a knob: LFO 2 is wired to whatever that knob sets (with OCT−: LFO 1, with OCT+: <b>LFO 3</b>, the global one). <b>Three LFOs</b>, almost every setting a destination, the EQ included.</p></div>
+<div class="card"><h3>Effects on the keys</h3><p><b>FX PADS</b>: white keys set the wobble speed (4, 8, 16, 24, 32, 48), black keys play stutters, tape stop, DJ filter, saturation, phaser…</p></div>
+<div class="card"><h3>A real bass sound</h3><p>2 oscillators with 9 engines (ANALOG, 808, CS, wavetable, 4-operator FM with 8 algorithms, GROWL (FM into vowel formants), ADDITIVE (16 partials, drawbars), phase dist, hard sync), each with a FOLD (CS: a RING) after it, a sub locked on A, a sample layer and <b>resample</b>, 7 filters, <b>multiband OTT</b>, mono bass, compressor with pump, 4-band EQ, limiter and automatic level.</p></div>
+<div class="card"><h3>Morph between sounds</h3><p><b>MORPH X/Y</b>: four sounds in the corners of a square, a dot that blends them (an LFO can walk it). <b>MORPH A/B</b>: a fade on the beat.</p></div>
+<div class="card"><h3>Sequencers with parameter locks</h3><p><b>SEQ BASS</b> and a <b>DRUMS</b> sequencer (808, 909, dub techno, acoustic): up to 64 steps, chance and trig conditions on every step, and <b>parameter locks</b>: hold a step and turn a knob to give that step its own tune, decay, tone, level, ratchet (2–4 hits) or dub echo; on the bass, its own cutoff, resonance, filter envelope, drive, wobble rate, shape or sample start. <b>Automation</b>: hold REC while it plays and turn any knob, it is recorded step by step; hold REC alone to erase it.</p></div>
+<div class="card"><h3>In sync</h3><p>MIDI clock in and out, and a <b>sync out</b> for Pocket Operators and Volcas (a pulse every eighth on the left output). Live REC of the bass and the drums, OCT− / OCT+ to turn the pages of 16 steps.</p></div>
+<div class="card"><h3>Simple or fast</h3><p><b>CLASSIC</b> mode (lists) or <b>SHIFT</b> mode (3 columns, OCT− and OCT+ as Shift keys). 8 themes (CLASSIC GLOW, TECH and RIBBON with gradients), 13 palettes + their RAD gradient versions, 4 brightness levels.</p></div>
+<div class="card"><h3>Safe and open</h3><p>Free, open source (GPL-3.0), can be reinstalled or removed over USB, with a rescue mode. If the FM-1 stops, the screen tells you why.</p></div></div></section>
+
+
+
+<section class="sec" id="install"><h2>Install on the FM-1</h2>
+<div class="cards">
+<div class="card"><h3><span class="n">1</span>Plug in</h3><p>The FM-1 over USB to the computer, with a <b>data</b> cable (not a charge-only one). Close any other MIDI software.</p></div>
+<div class="card"><h3><span class="n">2</span>Open the installer</h3><p>In <b>Chrome</b> or <b>Edge</b>: <a href="../installer.html"><b>installer.html</b></a>. Click “Install K-WASUB” and confirm. Unplug nothing until it is done.</p></div>
+<div class="card"><h3><span class="n">3</span>Play</h3><p>After the restart, the start screen shows. Press any button. The manual covers the first 3 minutes.</p></div></div>
+<div class="cta"><a class="btn p" href="../installer.html">⬇ Open the installer</a><a class="btn" href="../install/">All files (.fwsc)</a></div>
+<p style="color:var(--mut);font-size:.92rem">Without Chrome or Edge: <code>INSTALL-Windows.bat</code>, <code>INSTALL-Mac.command</code> or <code>INSTALL-Linux.sh</code> (Python 3). You can go back to KAWA or to the stock firmware at any time; holding <code>OCT−</code> at power-on opens the USB rescue mode.</p></section>
+
+<section class="sec"><h2>A quick look</h2><div class="shots">
+<figure><img src="../docs/img/p-home.png" alt=""><figcaption>HOME</figcaption></figure><figure><img src="../docs/img/g-lfo.png" alt=""><figcaption>Wobble</figcaption></figure>
+<figure><img src="../docs/img/t-purered.png" alt=""><figcaption>PURE</figcaption></figure><figure><img src="../docs/img/t-magma.png" alt=""><figcaption>RACK</figcaption></figure>
+<figure><img src="../docs/img/k-presets.png" alt=""><figcaption>Presets</figcaption></figure><figure><img src="../docs/img/t-ribbon-ice.png" alt=""><figcaption>RIBBON</figcaption></figure>
+<figure><img src="../docs/img/rbc-env.png" alt=""><figcaption>RIBBON CLASSIC</figcaption></figure><figure><img src="../docs/img/t-glow-sky.png" alt=""><figcaption>SKY</figcaption></figure>
+<figure><img src="../docs/img/t-tech-cyber.png" alt=""><figcaption>TECH</figcaption></figure><figure><img src="../docs/img/t-blaze.png" alt=""><figcaption>BLAZE</figcaption></figure>
+<figure><img src="../docs/img/t-rad-pink.png" alt=""><figcaption>PINK RAD</figcaption></figure><figure><img src="../docs/img/t-rad-red.png" alt=""><figcaption>RED RAD</figcaption></figure></div>
+<p style="margin-top:12px"><a href="../manual.html">See every screen in the manual →</a></p></section>
+
+__KSUB_NEWS__
+
+<section class="sec" id="don"><div class="card donate"><h2>Support K-WASUB</h2>
+<p>K-WASUB is free and will stay free. If it helps your sounds, you can chip in for the time and the test hardware (FM-1, cables…). Thank you!</p>
+<p><a id="donate" class="btn d p" href="#don" aria-disabled="true">☕ Make a donation</a></p><p id="dnote" style="color:var(--mut);font-size:.88rem">The donation link is coming soon.</p></div></section>
+
+<section class="sec"><h2>FAQ</h2>
+<details><summary>Do I lose the stock firmware?</summary><p>No. You can reinstall the stock firmware (M-UPGRADE) whenever you like.</p></details>
+<details><summary>No sound on the FM-1?</summary><p>In SYSTEM, look at <code>AUDIO CORES</code> (try SINGLE) and the MASTER volume. If the FM-1 switched off, read <code>LAST STOP</code> at start-up and note what it says.</p></details>
+<details><summary>Which engines?</summary><p>Nine, on both oscillators: <b>ANALOG</b>, <b>808</b> (a sine falling from PUNCH over DROP, DRIVE, CLICK), <b>CS</b> (a CS-80 voice's two channels), <b>WAVETABLE</b>, <b>FM</b> (4 operators, 8 algorithms), <b>GROWL</b> (FM into vowel formants: the yoy), <b>ADDITIVE</b> (16 partials, drawbar registers), <b>PHASE DIST</b> and <b>HARD SYNC</b>. Each has a 4th setting: <b>FOLD</b> (the wave folded back, west coast style), on CS <b>RING</b>, on 808 <b>CLICK</b>, on FM <b>ALGO</b>, on GROWL <b>TYPE</b>, on ADDITIVE <b>REGISTER</b>.</p></details>
+<details><summary>Is it finished?</summary><p>No: K-WASUB is a <b>BETA</b> (version __KSUB_VER__). It is tested in the emulator and by automatic tests at every release, but not on every FM-1 yet, so something may still misbehave. All feedback is welcome: please let me know about any bugs you find or features you would like to see. I am open to every suggestion. You can always reinstall the stock firmware (M-UPGRADE) or KAWA.</p></details></section>
+
+<footer>K-WASUB · GPL-3.0 · born from <a href="https://github.com/Guizmoh/Kawa-Tracker-Fm1">KAWA</a> (Omnipotard / Leo Kuroshita, Hügelton Instruments), whose FM-1 platform it reuses. Not affiliated with M-VAVE. <a href="https://github.com/Guizmoh/K-WASUB_Firmware_for_FM1">Source code</a> · <a href="../LICENSE">License</a></footer>
+
+</main></template>
 <script>
 "use strict";
 const FR = /[?&]lang=fr/.test(location.search), T = (en, fr) => (FR ? fr : en);
@@ -421,4 +540,20 @@ $("midi").addEventListener("click", async () => {
 });
 
 startIdle();
+</script>
+<script>
+(() => {
+  const host = document.createElement('div');
+  host.className = 'site-content';
+  host.setAttribute('aria-label', 'K-WASUB website content');
+  const template = document.getElementById('site-content-template');
+  const shadow = host.attachShadow({ mode: 'open' });
+  shadow.append(template.content.cloneNode(true));
+  const donate = shadow.getElementById('donate');
+  const note = shadow.getElementById('dnote');
+  if (donate) { donate.href = 'https://ko-fi.com/omnipotard'; donate.target = '_blank'; donate.rel = 'noopener'; donate.removeAttribute('aria-disabled'); }
+  if (note) note.hidden = true;
+  template.replaceWith(host);
+  document.querySelector('.wrap').append(host);
+})();
 </script>

@@ -1,7 +1,7 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
 # K-WASUB in a browser: the firmware compiled to WebAssembly (clang, wasm32, no libc), put into the page.
-#   web/make_emulator.sh            -> build/web/ksub.wasm, ../emulator/index.html (one file, works offline)
+#   web/make_emulator.sh            -> build/web/ksub.wasm, ../emulator/index.html (one file, works offline) and ../index.html (the same page, the home page)
 # Needs clang with the wasm32 target and wasm-ld (lld); nothing else.
 set -e
 cd "$(dirname "$0")/.."
@@ -15,11 +15,14 @@ import base64, os
 from pathlib import Path
 b64 = base64.b64encode(Path(f"build/web/ksub.wasm").read_bytes()).decode()
 body = Path("web/emulator.html").read_text().replace("__KSUB_WASM__", b64).replace("__KSUB_VER__", os.environ["KSUB_VER"])
+home = Path("../index.html").read_text(); a = home.index('<section class="sec" id="news">')
+body = body.replace("__KSUB_NEWS__", home[a:home.index("</section>", a) + 10])   # the news, as on the home page
 Path(f"build/web/ksub-emulator.html").write_text(body)          # the page's content alone (to embed or publish)
 head, rest = body.split("</style>", 1)
 page = ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
         + head + "</style>\n</head>\n<body>" + rest + "</body>\n</html>\n")
 Path("../emulator/index.html").write_text(page)
+Path("../index.html").write_text(page.replace('"../#', '"#').replace('"../', '"'))   # the home page: the same page, from the top of the site
 print("wasm", Path(f"build/web/ksub.wasm").stat().st_size, "B; page", len(page), "B")
 PY
