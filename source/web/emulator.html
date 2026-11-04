@@ -555,5 +555,17 @@ startIdle();
   if (note) note.hidden = true;
   template.replaceWith(host);
   document.querySelector('.wrap').append(host);
+  /* the anchors (#install, #news, #don…) live in the shadow root: the page's own links cannot reach them, so they are followed here */
+  const go = (h, smooth) => { const id = decodeURIComponent((h || '').slice(1)); if (!id) return false;
+    const t = document.getElementById(id) || shadow.getElementById(id); if (!t) return false;
+    t.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' }); return true; };
+  const onClick = ev => { const a = ev.composedPath().find(n => n.tagName === 'A'); if (!a) return;
+    const h = a.getAttribute('href') || ''; const i = h.indexOf('#'); if (i < 0) return;
+    const base = h.slice(0, i); if (base && base !== 'index.html' && base !== '../' && base !== './') return;
+    if (base === '../' && !/\/emulator\/?(index\.html)?$/.test(location.pathname)) { /* from the home page: the same page */ } else if (base === '../') return;
+    if (go(h.slice(i), true)) { ev.preventDefault(); history.replaceState(null, '', h.slice(i)); } };
+  document.addEventListener('click', onClick); shadow.addEventListener('click', onClick);
+  window.addEventListener('hashchange', () => go(location.hash, true));
+  if (location.hash) setTimeout(() => go(location.hash, false), 50);
 })();
 </script>
