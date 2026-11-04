@@ -1023,7 +1023,7 @@ static void voice_block(voice_t *v, int32_t *acc)
     gain = 4096 + drv * 160;
     if (ft <= FT_NOTCH) {
         const int8_t *c = FT_MIX[ft];
-        int32_t k = res * 125, comp = ft <= FT_LP12 ? 4096 + (k >> 1) : 4096, x0 = cut >> 7;
+        int32_t k = res * 125, comp = ft <= FT_LP12 || ft == FT_NOTCH ? 4096 + (k >> 1) : 4096,   /* (NOTCH too: it lost ~7.5 dB at RES 100; 1.0.47) */ x0 = cut >> 7;
         g_t = KS_CUT_G[x0] + (((KS_CUT_G[x0 + 1] - KS_CUT_G[x0]) * (cut & 127)) >> 7);
         if (res > 56) { int32_t cap = 60493 - (res - 56) * 120; if (g_t > cap) g_t = cap; }   /* (the top of the cutoff with a high RESONANCE: the ladder rang at fs/2, a 22 kHz crackle at a note's filter-envelope peak; 1.0.41) */
         if (!v->g) v->g = g_t;
@@ -1599,7 +1599,7 @@ static void voices_render(int32_t *dst, uint32_t n, uint32_t t0, uint32_t budget
         vo[old].ea.lv = 0;
         on--;
     }
-    binc = (ks_bpm10 * 664858u) >> 16;          /* beats per block, Q24: bpm10 x 16 x 2^24 / (600 x 44100) */
+    { static uint32_t brem; uint32_t bq = ks_bpm10 * 664858u + brem; binc = bq >> 16; brem = bq & 0xFFFFu; }   /* (the rest kept: the clock no longer runs slow, up to 10 ms a minute; 1.0.47) */          /* beats per block, Q24: bpm10 x 16 x 2^24 / (600 x 44100) */
     for (i = 0; i < n; i += KS_CB) {
         int32_t *acc = dst + i;
         if (i && fm1_ticks() - t0 > budget) {   /* out of time: the rest of the block stays silent (the last part faded: no click) */
