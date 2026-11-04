@@ -478,6 +478,10 @@ static const preset_t FACTORY[] = {
        AE_D, 95, AE_S, 50, AE_R, 40, DR_ON, 1, DR_TYPE, 3, DR_AMT, 55),
     PR("CS VOX", MS_VOL, 115, P_STYLE, 2, A_ENG, E_CS, A_P1, 0, A_P2, 40, A_P3, 40, B_ENG, E_GROWL, B_P1, 55, B_P2, 50, B_P3, 70,
        B_P4, 80, B_LVL, 80, S_LVL, 75, F_CUT, 90, F_RES, 25, L1_SHP, 0, L1_SYNC, 1, L1_DIV, 6, L1_DEP, 50, L1_DST, D_BP2, L1_TRIG, 1),
+    /* (1.0.50: ACID LINE with the mod envelope on the cutoff, a slow swell: 806 ms up, 26 ms down, +53 %; the cutoff at 1.1 kHz) */
+    PR("aCiD StUff", MS_VOL, 77, P_STYLE, 3, A_ENG, E_ANALOG, A_P1, 85, S_LVL, 40, F_TYPE, FT_LP24, F_CUT, 75, F_RES, 100,
+       F_ENV, 50, FE_D, 45, FE_S, 0, AE_D, 50, AE_S, 80, V_MODE, VM_LEGATO, V_GLIDE, 25, DR_ON, 1, DR_TYPE, 1,
+       DR_AMT, 50, DL_ON, 1, DL_TIME, 10, DL_MIX, 20, ME_A, 93, ME_D, 50, ME_AMT, 34, ME_DST, D_CUT),
 };
 #define NFACTORY (sizeof FACTORY / sizeof FACTORY[0])
 
