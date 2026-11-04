@@ -2656,6 +2656,7 @@ static void on_enc(uint32_t e, int32_t d)
     }
     if (e == ENC_PRESETS) {                     /* HOME and PRESETS: the sounds; a SEL window: the windows; the other pages: their views */
         if (win == 6u) return;                  /* (FX PADS: nothing) */
+        if (save_view()) return;                /* (SAVE: the sound being saved stays: 1.0.52) */
         if (win && win != 3u) win_step(d);
         else if (page == PG_PLAY || page == PG_PRE) preset_step(d);
         else view_step(d);

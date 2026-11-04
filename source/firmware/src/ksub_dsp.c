@@ -897,7 +897,11 @@ static void voice_block(voice_t *v, int32_t *acc)
     amp = env_run(&v->ea, (uint32_t)GP(D_AEA), (uint32_t)GP(D_AED), GP(D_AES) << 23, (uint32_t)GP(D_AER), ANTICLICK);   /* (never faster than ~2.2 ms: a hard attack clicked; 1.0.42) */
     if (!v->ea.st && !v->ea.lv) { v->on = 0; v->amp = 0; return; }
     if (GP(D_GLIDE) || v->slide)                /* (a SEQ slide without GLIDE: ~60 ms) */
-        v->pitch = v->target + (int32_t)(((int64_t)(v->pitch - v->target) * KS_GLIDE_DEC[GP(D_GLIDE) ? GP(D_GLIDE) : 50]) >> 24);   /* (the time shown) */
+    {                                           /* (the time shown; the gap rounded toward the note: a glide up stopped ~0.2 semitone flat, 1.0.52) */
+        int64_t d = (int64_t)(v->pitch - v->target), g = KS_GLIDE_DEC[GP(D_GLIDE) ? GP(D_GLIDE) : 50];
+        d = d < 0 ? -((-d * g) >> 24) : (d * g) >> 24;
+        v->pitch = v->target + (int32_t)d;
+    }
     else v->pitch = v->target;
     voice_mods(v, m, fenv, menv);
     if (GP(D_DRIFT)) {                          /* slow wandering of each oscillator */
