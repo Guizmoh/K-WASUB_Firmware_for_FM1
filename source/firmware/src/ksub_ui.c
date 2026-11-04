@@ -1460,7 +1460,7 @@ static void item_range(uint32_t id, int32_t *lo, int32_t *hi)
         return;
     }
     *lo = 0;
-    *hi = id == G_MIDICH ? 16 : id == G_BPM ? 2400 : id == G_CLOCK || id == G_QLFO || id == G_ENG8 || id == G_ASAVE || id == G_LANG || id == G_NORM || id == G_RS_GO || id == G_GRID || id == G_BROWSE || id == G_C3COL || id == G_UI || id == G_ASK || id == G_ZOOM || id == G_MLEARN || id == G_MSTART || id == G_MPROG || id == G_MCLK || id == G_SYNC || id == G_SQ_ON || id == G_NEWSONG || id == G_L3_SYNC ? 1 : id == G_MMAP ? 16 : id == I_ABMIX ? 127 : id == G_BRI ? 3 : id == G_DEEP ? 4 : id == G_ACCEL || id == G_CON || id == G_RS_LEN ? 2 : id == G_THEME ? 7 : id == G_FONT ? (int32_t)NFONT - 1 : id == G_PAL ? (int32_t)(2u * NPAL_BASE - 1u) : id == G_OCT ? 6 : 0;
+    *hi = id == G_MIDICH ? 16 : id == G_BPM ? 2400 : id == G_CLOCK || id == G_QLFO || id == G_ENG8 || id == G_ASAVE || id == G_LANG || id == G_NORM || id == G_RS_GO || id == G_GRID || id == G_BROWSE || id == G_C3COL || id == G_UI || id == G_ASK || id == G_ZOOM || id == G_MLEARN || id == G_MSTART || id == G_MPROG || id == G_MCLK || id == G_SYNC || id == G_NEWSONG || id == G_L3_SYNC ? 1 : id == G_MMAP ? 16 : id == I_ABMIX ? 127 : id == G_BRI ? 3 : id == G_DEEP ? 4 : id == G_SQ_ON ? 2 : id == G_ACCEL || id == G_CON || id == G_RS_LEN ? 2 : id == G_THEME ? 7 : id == G_FONT ? (int32_t)NFONT - 1 : id == G_PAL ? (int32_t)(2u * NPAL_BASE - 1u) : id == G_OCT ? 6 : 0;
     if (id == G_ACCEL) *hi = 3;                 /* (OFF, ON, FAST, ULTRA) */
     if (id == G_LANG) *hi = 2;                  /* (ENGLISH, FRANCAIS, ESPANOL) */
     if (id == G_BPM) *lo = 600;
@@ -1569,7 +1569,7 @@ static int32_t item_get(uint32_t id)
     case G_DK_KIT: return dk.kit;
     case G_DK_VOL: return dk.vol;
     case G_DK_MODE: return dk.mode & 3u;
-    case G_SQ_ON: return !(dk.mode & 4u);
+    case G_SQ_ON: return dk.mode & 4u ? 0 : dk.mode & 8u ? 2 : 1;   /* (1.0.51: 1 ON, the keys play over it; 2 ON, the keys transpose it) */
     case G_NEWSONG: return 0;
     case G_DK_SWING: return dk_pp()->swing;
     case G_SQ_PAT: return perf.cur;
@@ -1654,7 +1654,7 @@ static void item_set(uint32_t id, int32_t v)
         return;
     }
     if (id == G_SQ_ON) {                        /* the sequence on / off (the drums go on) */
-        dk.mode = (uint8_t)(v ? dk.mode & 3u : dk.mode | 4u);
+        dk.mode = (uint8_t)(!v ? dk.mode | 4u : v == 1 ? dk.mode & 3u : (dk.mode & 3u) | 8u);
         dk_touch();
         return;
     }
@@ -1694,7 +1694,7 @@ static void item_set(uint32_t id, int32_t v)
         case G_DK_LEN: q->len = (uint8_t)v; if (dk_cur >= v) dk_cur = (uint8_t)(v - 1); if (dk_psel) dk_load_preset(dk_psel); else dk_edited(); break;   /* (a preset: played again at the new length) */
         case G_DK_KIT: dk.kit = (uint8_t)v; break;
         case G_DK_VOL: dk.vol = (uint8_t)v; break;
-        case G_DK_MODE: dk.mode = (uint8_t)((dk.mode & 4u) | (uint32_t)v); break;
+        case G_DK_MODE: dk.mode = (uint8_t)((dk.mode & 12u) | (uint32_t)v); break;
         case G_DK_SWING: q->swing = (uint8_t)v; break;
         default: dk.prm[t][id - G_DK_LVL] = (int8_t)v; break;
         }
@@ -2094,7 +2094,7 @@ static void item_text(uint32_t id, char *b)
         case G_DK_KIT: str_cat(b, dk_kname((uint32_t)v)); break;
         case G_DK_KSAT: case G_DK_SNAP: if (v) fmt_u(b, (uint32_t)v, 0); else str_cat(b, "OFF"); break;
         case G_DK_ECHO: str_cat(b, v ? "ON" : "OFF"); break;
-        case G_SQ_ON: str_cat(b, v ? "ON" : "OFF (BASS LIVE)"); break;
+        case G_SQ_ON: str_cat(b, v == 2 ? "ON \xB7 KEYS TRANSPOSE" : v ? "ON \xB7 KEYS PLAY" : "OFF (BASS LIVE)"); break;
         case G_NEWSONG: str_cat(b, new_arm == 2u ? "TURN AGAIN: ERASES ALL" : "TURN ALGO"); break;
         case G_DK_MODE: str_cat(b, v == 2 ? "BASS ONLY" : v ? "DRUMS ONLY" : "BASS + DRUMS"); break;
         case G_DK_SWING: if (v) { b = fmt_u(b, 50u + (uint32_t)v / 2u, 0); str_cat(b, "%"); } else str_cat(b, "OFF"); break;

@@ -1567,14 +1567,14 @@ static void voices_render(int32_t *dst, uint32_t n, uint32_t t0, uint32_t budget
     while (ev_r != ev_w) {
         uint32_t e = evq[ev_r % 64u], t = e & 255u, a = (e >> 8) & 255u, b = e >> 16;
         ev_r++;
-        uint32_t sqb = sq_play && SQ_BASS_ON;   /* (the bass sequence runs: SEQ BASS OFF, or DRUMS ONLY, leaves the keys free to play) */
+        uint32_t sqr = sq_play && SQ_BASS_ON, sqb = sqr && (dk.mode & 8u);   /* (the keys transpose the bass sequence only with SEQUENCE: ON · KEYS TRANSPOSE; else they play, over it too: 1.0.51) */
         if (t == EV_ON) {
             if (sqb && !sq_rec) sq_tr = (int32_t)a - 60;   /* (the SEQ plays: the keys transpose it) */
-            else if (perf.ar_on && !sqb) ar_add(a);
+            else if (perf.ar_on && !sqr) ar_add(a);
             else note_on(a, b);
         } else if (t == EV_OFF) {
             if (sqb && !sq_rec) {}
-            else if (perf.ar_on && !sqb) ar_del(a);
+            else if (perf.ar_on && !sqr) ar_del(a);
             else note_off(a);
         } else if (t == EV_SEQ) {
             sq_off();
