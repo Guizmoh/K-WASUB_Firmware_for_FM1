@@ -107,7 +107,7 @@ static volatile uint8_t mc_val[4];              /* the four macros now, 0..127 (
 /* FX LIVE (not stored, all off at the start): DJ filter (- low pass, + high pass) and its resonance, PUMP (the
  * sidechain dip on the tempo) and its rate, STUTTER (the last slice played again and again), TAPE (slower, to a stop) */
 static volatile int8_t lfx_flt;
-static volatile uint8_t lfx_fres = 40, lfx_pump, lfx_prate, lfx_stut, lfx_tape;
+static volatile uint8_t lfx_fres = 40, lfx_pump, lfx_prate, lfx_stut, lfx_tape, lfx_frz;   /* lfx_frz: FREEZE (1.0.48) */
 static volatile uint32_t ks_bpm10 = 1400;       /* tempo x 10 */
 static volatile int32_t ks_wheel, ks_press, ks_bend;   /* Q15 */
 static volatile uint32_t ks_beats;              /* Q24 beats, kept modulo 48 beats (every division fits) */
@@ -1650,7 +1650,7 @@ static struct {
     uint32_t dl_w, ch_w, chph, rv_i[8], ap_i[4];
     int32_t cp_env, cp_g, ph_x[2][4], ph_y[2][4], ph_last[2], sp_hp, sp_lp;   /* compressor, phaser, the spring's band */
     uint32_t cp_n, phph, dl_wow;
-    int32_t lo[2], lg, ng, nenv;                /* the bass shelf's two lows, the limiter's gain, the normaliser's gain (Q12) and level */
+    int32_t lo[2], hh, lg, ng, nenv;                /* the bass shelf's two lows, the limiter's gain, the normaliser's gain (Q12) and level */
     int32_t mb[2][2];                           /* MONO BASS: two lows a side */
     int32_t ot_l[2][2], ot_h[2], ot_g[3];       /* MULTIBAND: the low band's two poles, the high split's, each band's gain (Q12) */
 } fx;
@@ -1677,6 +1677,8 @@ static int32_t pump_gain(uint32_t pos, uint32_t rate, int32_t depth)
 static const uint16_t RV_SC[4] = {150, 256, 205, 86};
 static const int16_t RV_FBA[4] = {-1800, 0, 1500, 4200}, RV_DA[4] = {-2000, 0, -7000, 3000};
 
+static uint8_t fz_on;                           /* FREEZE: on (its loop set), and the loop's length */
+static uint32_t fz_T;
 static volatile uint8_t fx_flush;               /* 1: the effects' memories emptied (a sound loaded), 2: and the drums' echo too (PANIC); 1.0.36 */
 static void fx_clear(uint32_t what)
 {
@@ -1709,7 +1711,7 @@ static void fx_render(const int32_t *in, int32_t *out, uint32_t n)
     int32_t dj_f = 0, dj_q = 0, dj_mix = 0, dj_df = 0, dj_dm = 0;
     static const int32_t MB_A[7] = {0, 267, 356, 445, 534, 667, 889};   /* one pole at 60 .. 200 Hz, Q15 */
     int32_t mba = MB_A[(uint32_t)P[MB_MONO] % 7u], ot_amt = GP(D_OTAMT) * 258, ot_sum[3] = {0, 0, 0}, ot_gl, ot_gm, ot_gh;
-    int32_t shelf = ks_deep == 2u ? 300 : ks_deep ? 150 : 0, ng = fx.ng ? fx.ng : 4096, lg = fx.lg ? fx.lg : 32768, nsum = 0;
+    int32_t shelf = ks_deep == 2u ? 300 : ks_deep == 1u || ks_deep == 4u ? 150 : 0, harm = ks_deep >= 3u, ng = fx.ng ? fx.ng : 4096, lg = fx.lg ? fx.lg : 32768, nsum = 0;
     if (!fx.ot_g[0]) fx.ot_g[0] = fx.ot_g[1] = fx.ot_g[2] = 4096;
     ot_gl = (int32_t)(((int64_t)fx.ot_g[0] * (4096 + GP(D_OTLOW) * 32)) >> 12);   /* (LOW / HIGH BAND: +-0.5) */
     ot_gm = fx.ot_g[1];
@@ -1856,7 +1858,37 @@ static void fx_render(const int32_t *in, int32_t *out, uint32_t n)
                 if (c) R += mul15((y - x) >> 1, ph_mix); else L += mul15((y - x) >> 1, ph_mix);
             }
         }
-        if (P[DL_ON]) {                         /* the delay: PING-PONG, TAPE (wow, saturated, darker), DIGITAL, DUB */
+        if (!lfx_frz) fz_on = 0;
+        if (P[DL_ON] && lfx_frz) {              /* FREEZE: the delay's last cycle replayed as it is, read and written back unchanged (no input, no
+                                                 * filter, no gain: nothing can build up); the seam crossfaded once when it starts (1.0.48) */
+            int32_t o_fz[2];
+            uint32_t r;
+            if (!fz_on) {
+                uint32_t j, N = 256u;
+                fz_on = 1;
+                fz_T = (uint32_t)(fx.dl_t >> 8);
+                if (fz_T < 2u * N) fz_T = 2u * N;
+                if (fz_T > DL_N - 2u) fz_T = DL_N - 2u;
+                for (k = 0; k < 2u; k++)        /* (the loop's end eased into what came before its start: no click at the join) */
+                    for (j = 0; j < N; j++) {
+                        uint32_t e = (fx.dl_w - N + j) & (DL_N - 1u), sidx = (fx.dl_w - fz_T - N + j) & (DL_N - 1u);
+                        int32_t a = (int32_t)(j * 128u / N);
+                        dl_buf[k][e] = (int16_t)((dl_buf[k][e] * (128 - a) + dl_buf[k][sidx] * a) >> 7);
+                    }
+            }
+            r = (fx.dl_w - fz_T) & (DL_N - 1u);
+            for (k = 0; k < 2u; k++) {
+                int32_t v = dl_buf[k][r];
+                dl_buf[k][fx.dl_w & (DL_N - 1u)] = (int16_t)v;
+                o_fz[k] = v;
+            }
+            fx.dl_w++;
+            {
+                int32_t mx = dl_mix > 22000 ? dl_mix : 22000;   /* (heard even with a low MIX) */
+                L += mul15(o_fz[0], mx);
+                R += mul15(o_fz[1], mx);
+            }
+        } else if (P[DL_ON]) {                  /* the delay: PING-PONG, TAPE (wow, saturated, darker), DIGITAL, DUB */
             int32_t o[2], t = fx.dl_t, lpk = dlt == 2u ? 32767 : dlt == 3u ? dl_lpk * 2 / 3 : dlt == 1u ? dl_lpk * 3 / 4 : dl_lpk;
             int ping = dlt == 0u || dlt == 3u;
             dl_fbd = dlt == 1u ? dl_fb * 4 / 5 : dlt == 2u ? (dl_fb > 30000 ? 30000 : dl_fb) : dlt == 3u ? (dl_fb + (dl_fb >> 3) > 31500 ? 31500 : dl_fb + (dl_fb >> 3)) : dl_fb;
@@ -1990,11 +2022,19 @@ static void fx_render(const int32_t *in, int32_t *out, uint32_t n)
             L += ml - (fx.mb[0][1] >> 8);
             R += ml - (fx.mb[1][1] >> 8);
         }
-        if (shelf) {                            /* DEEP BASS: a low shelf, ~+4 dB (MAX +7) under 90 Hz, so the lows weigh more */
-            fx.lo[0] += ((((L << 8) - fx.lo[0]) >> 6) * 105) >> 7;
-            fx.lo[1] += ((((R << 8) - fx.lo[1]) >> 6) * 105) >> 7;
+        if (shelf || harm) {                    /* DEEP BASS: a low shelf, ~+4 dB (MAX +7) under 90 Hz, so the lows weigh more */
+            fx.lo[0] += ((((L * 256) - fx.lo[0]) >> 6) * 105) >> 7;
+            fx.lo[1] += ((((R * 256) - fx.lo[1]) >> 6) * 105) >> 7;
             L += ((fx.lo[0] >> 8) * shelf) >> 8;
             R += ((fx.lo[1] >> 8) * shelf) >> 8;
+            if (harm) {                         /* SUB HARMONICS (1.0.48): the lows (under ~90 Hz) driven into a soft clip, and only what it adds
+                                                 * above ~120 Hz mixed in: the sub heard on small speakers, the lows themselves not louder */
+                int32_t s = ((fx.lo[0] + fx.lo[1]) >> 9), h = sat15(s * 4), b;
+                fx.hh += (h - fx.hh) >> 6;     /* (a low pass at ~110 Hz: what is left over it is the harmonics) */
+                b = h - fx.hh;
+                L += mul15(b, 14000);
+                R += mul15(b, 14000);
+            }
         }
         L = mul15(L, fx.gain);
         R = mul15(R, fx.gain);

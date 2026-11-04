@@ -1177,22 +1177,22 @@ static void mx_knob(uint32_t k, int32_t d)      /* K1..K4 (SELECT and ALGO: K3 a
 /* ---- FX PADS (FX held, window 6): the 27 keys play effects, not notes. WHITE keys: the wobble (LFO 1) at once: its rate
  * 1 bar, 1/2, then 4 8 16 24 32 48 a bar; its depth OFF LOW MID FULL; its shape SINE TRI SQR S&H. BLACK keys: effects
  * for as long as the key is down: four stutters, tape stop, DJ filter low / high, pump, saturation, phaser, crush. */
-enum { PB_ST1, PB_ST2, PB_ST3, PB_ST4, PB_TAPE, PB_DJLP, PB_DJHP, PB_PUMP, PB_SAT, PB_PHASE, PB_CRUSH, NPB };
+enum { PB_ST1, PB_ST2, PB_ST3, PB_ST4, PB_TAPE, PB_DJLP, PB_DJHP, PB_PUMP, PB_SAT, PB_FRZ, PB_CRUSH, NPB };   /* (1.0.48: FREEZE where PHASER was) */
 static const char *const PB_NAME[NPB] = {"STUTTER 1/4", "STUTTER 1/8", "STUTTER 1/16", "STUTTER 1/32", "TAPE STOP", "DJ FILTER LOW",
-                                         "DJ FILTER HIGH", "PUMP", "SATURATE", "PHASER", "BIT CRUSH"};
-static const char *const PB_SHORT[NPB] = {"ST 1/4", "ST 1/8", "ST 1/16", "ST 1/32", "TAPE", "DJ LOW", "DJ HIGH", "PUMP", "SAT", "PHASER", "CRUSH"};
+                                         "DJ FILTER HIGH", "PUMP", "SATURATE", "FREEZE", "BIT CRUSH"};
+static const char *const PB_SHORT[NPB] = {"ST 1/4", "ST 1/8", "ST 1/16", "ST 1/32", "TAPE", "DJ LOW", "DJ HIGH", "PUMP", "SAT", "FREEZE", "CRUSH"};
 static const char *const PW_NAME[16] = {"1 BAR", "1/2", "4", "8", "16", "24", "32", "48", "OFF", "LOW", "MID", "FULL", "SINE", "TRI", "SQR", "S&H"};
 static const uint8_t PW_DIV[8] = {2, 3, 6, 9, 11, 12, 13, 14};      /* DIV: 1 bar, 1/2, 1/4, 1/8, 1/16, 1/16T, 1/32, 1/32T */
 static const uint8_t PW_DEP[4] = {0, 16, 40, 63}, PW_SHP[4] = {0, 1, 4, 5};
 static const uint8_t PK_WHITE[16] = {0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26};
 static const uint8_t PK_BLACK[NPB] = {1, 3, 5, 8, 10, 13, 15, 17, 20, 22, 25};
 static uint16_t pad_mask, pad_ov;               /* the black pads down; those that changed the patch (to put back) */
-static int8_t pad_sv[3][3];
+static int8_t pad_sv[2][3];
 static uint32_t pad_hot;                        /* the keys down now (the screen) */
 static void pad_apply(void)
 {
-    static const uint8_t F[3][3] = {{DR_ON, DR_AMT, DR_MIX}, {PH_ON, PH_DEP, PH_MIX}, {CR_ON, CR_BITS, CR_MIX}};
-    static const int8_t V[3][3] = {{1, 110, 127}, {1, 120, 127}, {1, 24, 127}};
+    static const uint8_t F[2][3] = {{DR_ON, DR_AMT, DR_MIX}, {CR_ON, CR_BITS, CR_MIX}}, EP[2] = {PB_SAT, PB_CRUSH};
+    static const int8_t V[2][3] = {{1, 110, 127}, {1, 24, 127}};
     uint32_t m = pad_mask, k, j;
     int32_t st = 0;
     for (k = 0; k < 4u; k++) if (m >> (PB_ST1 + k) & 1u) st = (int32_t)k + 1;
@@ -1200,8 +1200,9 @@ static void pad_apply(void)
     lfx_tape = m >> PB_TAPE & 1u ? 100u : 0u;
     lfx_flt = m >> PB_DJLP & 1u ? -55 : m >> PB_DJHP & 1u ? 55 : 0;
     lfx_pump = m >> PB_PUMP & 1u ? 100u : 0u;
-    for (k = 0; k < 3u; k++) {                  /* the effects with a patch of their own: set while down, put back after */
-        uint32_t on = m >> (PB_SAT + k) & 1u, was = pad_ov >> k & 1u;
+    lfx_frz = (uint8_t)(m >> PB_FRZ & 1u);      /* FREEZE: the delay's last cycle held (it needs the delay on) */
+    for (k = 0; k < 2u; k++) {                  /* the effects with a patch of their own: set while down, put back after */
+        uint32_t on = m >> EP[k] & 1u, was = pad_ov >> k & 1u;
         if (on && !was) { for (j = 0; j < 3u; j++) { pad_sv[k][j] = patch[F[k][j]]; patch[F[k][j]] = V[k][j]; } pad_ov |= (uint16_t)(1u << k); }
         else if (!on && was) { for (j = 0; j < 3u; j++) patch[F[k][j]] = pad_sv[k][j]; pad_ov &= (uint16_t)~(1u << k); }
     }
@@ -1211,7 +1212,12 @@ static void pad_key(uint32_t k, int down)
     uint32_t i;
     if (down) pad_hot |= 1u << k; else pad_hot &= ~(1u << k);
     for (i = 0; i < NPB; i++)
-        if (PK_BLACK[i] == k) { if (down) pad_mask |= (uint16_t)(1u << i); else pad_mask &= (uint16_t)~(1u << i); pad_apply(); return; }
+        if (PK_BLACK[i] == k) {
+            if (down && i == PB_FRZ && !patch[DL_ON]) toast("FREEZE: TURN THE DELAY ON");
+            if (down) pad_mask |= (uint16_t)(1u << i); else pad_mask &= (uint16_t)~(1u << i);
+            pad_apply();
+            return;
+        }
     if (!down) return;
     for (i = 0; i < 16u; i++)
         if (PK_WHITE[i] == k) {
@@ -1240,9 +1246,23 @@ static void pad_quant(uint32_t k, int down)
     pq_n++;
     if (down) pad_hot |= 1u << k;               /* (lit at once: it is coming) */
 }
+/* WOBBLE TAP (1.0.48): LFO held, a white key: LFO 1 on that division, at the next division of the FX PADS' QUANTIZE (1 BAR,
+ * 1/4: the next bar, the next beat; OFF: at once) */
+static const uint8_t WT_DIV[8] = {3, 6, 9, 11, 13, 8, 10, 12};   /* 1/2 1/4 1/8 1/16 1/32 1/4T 1/8T 1/16T (L_DIV) */
+static struct { uint8_t on, div; uint32_t at, wait; } wtap;
+static void wob_tap(uint32_t i)
+{
+    uint32_t q = PQ_DIV[set.pquant % 9u];
+    char t[32], *p;
+    wtap.on = 1; wtap.div = WT_DIV[i & 7u]; wtap.at = ks_beats; wtap.wait = q ? q - ks_beats % q : 0u;
+    p = str_cat(str_cat(t, "WOB "), L_DIV[wtap.div]);
+    if (q) str_cat(str_cat(p, " \xB7 NEXT "), L_PQ[set.pquant % 9u]);
+    toast(t);
+}
 static void pad_quant_tick(void)
 {
     uint32_t i = 0, j;
+    if (wtap.on && pq_since(wtap.at) >= wtap.wait) { wtap.on = 0; undo_mark(0xFFF2u); patch[L1_SYNC] = 1; patch[L1_DIV] = (int8_t)wtap.div; }
     while (i < pq_n) {
         if (pq_since(pq[i].at) >= pq[i].wait) {
             pad_key(pq[i].k, pq[i].down);
@@ -1439,7 +1459,7 @@ static void item_range(uint32_t id, int32_t *lo, int32_t *hi)
         return;
     }
     *lo = 0;
-    *hi = id == G_MIDICH ? 16 : id == G_BPM ? 2400 : id == G_CLOCK || id == G_QLFO || id == G_ENG8 || id == G_ASAVE || id == G_LANG || id == G_NORM || id == G_RS_GO || id == G_GRID || id == G_BROWSE || id == G_C3COL || id == G_UI || id == G_ASK || id == G_ZOOM || id == G_MLEARN || id == G_MSTART || id == G_MPROG || id == G_MCLK || id == G_SYNC || id == G_SQ_ON || id == G_NEWSONG || id == G_L3_SYNC ? 1 : id == G_MMAP ? 16 : id == I_ABMIX ? 127 : id == G_BRI ? 3 : id == G_ACCEL || id == G_CON || id == G_DEEP || id == G_RS_LEN ? 2 : id == G_THEME ? 7 : id == G_FONT ? (int32_t)NFONT - 1 : id == G_PAL ? (int32_t)(2u * NPAL_BASE - 1u) : id == G_OCT ? 6 : 0;
+    *hi = id == G_MIDICH ? 16 : id == G_BPM ? 2400 : id == G_CLOCK || id == G_QLFO || id == G_ENG8 || id == G_ASAVE || id == G_LANG || id == G_NORM || id == G_RS_GO || id == G_GRID || id == G_BROWSE || id == G_C3COL || id == G_UI || id == G_ASK || id == G_ZOOM || id == G_MLEARN || id == G_MSTART || id == G_MPROG || id == G_MCLK || id == G_SYNC || id == G_SQ_ON || id == G_NEWSONG || id == G_L3_SYNC ? 1 : id == G_MMAP ? 16 : id == I_ABMIX ? 127 : id == G_BRI ? 3 : id == G_DEEP ? 4 : id == G_ACCEL || id == G_CON || id == G_RS_LEN ? 2 : id == G_THEME ? 7 : id == G_FONT ? (int32_t)NFONT - 1 : id == G_PAL ? (int32_t)(2u * NPAL_BASE - 1u) : id == G_OCT ? 6 : 0;
     if (id == G_ACCEL) *hi = 3;                 /* (OFF, ON, FAST, ULTRA) */
     if (id == G_LANG) *hi = 2;                  /* (ENGLISH, FRANCAIS, ESPANOL) */
     if (id == G_BPM) *lo = 600;
@@ -2014,7 +2034,7 @@ static void item_text(uint32_t id, char *b)
         case G_LANG: { static const char *const LN[3] = {"ENGLISH", "FRANCAIS", "ESPANOL"}; str_cat(b, LN[v % 3]); break; }
         case G_BRI: str_cat(b, v == 3 ? "MAX" : v == 2 ? "BRIGHT" : v == 1 ? "NORMAL" : "ECO"); break;
         case G_NORM: str_cat(b, v ? "ON (EVEN LEVEL)" : "OFF"); break;
-        case G_DEEP: str_cat(b, v == 2 ? "MAX (+7 dB UNDER 90 Hz)" : v ? "DEEP (+4 dB)" : "OFF"); break;
+        case G_DEEP: str_cat(b, v == 4 ? "DEEP + HARMONICS" : v == 3 ? "SUB HARMONICS" : v == 2 ? "MAX (+7 dB UNDER 90 Hz)" : v ? "DEEP (+4 dB)" : "OFF"); break;
         case G_CON: str_cat(b, v == 2 ? "MAX (DEEP BLACK)" : v ? "HIGH" : "NORMAL"); break;
         case G_RST: str_cat(b, rst_why); break;
         case G_MLEARN: str_cat(b, ml_state == 1u ? "TURN A KNOB" : ml_state == 2u ? "SEND A CC" : "OFF"); break;
@@ -3029,6 +3049,14 @@ static void ui_input(void)
             else if (!(now & m) && (prev_keys & m)) {
                 dk_key_up(k);
                 if (phys[key_note[k]]) key_up(key_note[k]);   /* (a note held from another view: let go) */
+            }
+            continue;
+        }
+        if (hb.b == BTN_LFO && (fm1_in.buttons >> BTN_LFO & 1u) && !save_view()) {   /* WOBBLE TAP: LFO held, the first 8 white keys */
+            if ((ne & m) || ((now & m) && !(prev_keys & m))) {
+                uint32_t w;
+                for (w = 0; w < 8u && PK_WHITE[w] != k; w++) {}
+                if (w < 8u) { wob_tap(w); hb.used = 1; }
             }
             continue;
         }
