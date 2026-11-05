@@ -2432,7 +2432,7 @@ static void panic_all(void)                     /* PANIC (REC held, OCT- + OCT+,
 static void key_down(uint32_t n, uint32_t vel)
 {
     uint32_t i, any = 0;
-    if (sq_rec) {                               /* REC: the key goes to the step (stopped: the cursor's, then the next; playing: the one now) */
+    if (sq_rec || (win == 8u && !sq_play)) {    /* REC (or the PIANO ROLL, stopped: 1.0.59): the key goes to the step (stopped: the cursor's, then the next; playing: the one now) */
         uint32_t k = perf.cur % SQ_NPAT, c = sq_play ? sq_now_step() : sq_cur_step % SQ_MAX;
         uint8_t *f = sq_fp(k, c);
         *sq_np(k, c) = (uint8_t)clampi((int32_t)n - 24, 0, 48);   /* (the note as heard: the step plays 24 + this; 1.0.44: it was n - 48 - 12 OCT, an octave under what was played at OCT -1) */

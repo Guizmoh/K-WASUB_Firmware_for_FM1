@@ -2172,7 +2172,7 @@ static void draw_roll(void)
             g_text(g_fit(T_S, b, 48), x + 5, y + 14, b, i == 1u && !cur_on ? K_GREY : K_WHITE);
         }
     }
-    if (g_vis(226, 14)) g_text_c(T_XS, 120, 228, sq_rec ? "KEYS WRITE \xB7 REC: STOP WRITING" : "REC: KEYS WRITE \xB7 SAVE: NAME \xB7 SEQ: DRUMS", K_GREY);
+    if (g_vis(226, 14)) g_text_c(T_XS, 120, 228, sq_rec ? "KEYS WRITE \xB7 REC: STOP WRITING" : sq_play ? "REC: RECORD LIVE \xB7 SAVE: NAME \xB7 SEQ: DRUMS" : "KEYS WRITE THE NOTES \xB7 SAVE: NAME \xB7 SEQ: DRUMS", K_GREY);
     if (win == 9u && g_vis(64, 116)) {          /* PATTERN NAME: a card over the roll */
         int32_t cx = 26, j;
         g_box(14, 64, 212, 112, K_PANEL, K_LIME);
