@@ -275,7 +275,7 @@ def build(L):
     o.append(dbar)
     spec = "CAHIER-DES-CHARGES.md" if fr else "SPECIFICATIONS.md"
     o.append(f'<footer>{t(T("K-WASUB is free software (GPL-3.0), born from", "K-WASUB est un logiciel libre (GPL-3.0), né de"))} <a href="https://github.com/Guizmoh/Kawa-Tracker-Fm1">KAWA</a> (Omnipotard / Leo Kuroshita, Hügelton Instruments). '
-             f'{t(T("BETA version 1.0.60, tested on the FM-1. Tell me what you see on yours (GitHub, Issues).", "Version BÊTA 1.0.60, testée sur le FM-1. Dis-moi ce que tu vois sur le tien (GitHub, Issues)."))} <a href="index.html">← {t(T("Home", "Accueil"))}</a> · <a href="{spec}">{t(T("Specifications", "Cahier des charges"))}</a></footer>')
+             f'{t(T("BETA version 1.0.61, tested on the FM-1. Tell me what you see on yours (GitHub, Issues).", "Version BÊTA 1.0.61, testée sur le FM-1. Dis-moi ce que tu vois sur le tien (GitHub, Issues)."))} <a href="index.html">← {t(T("Home", "Accueil"))}</a> · <a href="{spec}">{t(T("Specifications", "Cahier des charges"))}</a></footer>')
     o.append('</main></div>')
     o.append(f'<a class="fab" href="{KOFI}" target="_blank" rel="noopener">☕ {t(T("Support K-WASUB", "Soutenir K-WASUB"))}</a>')
     o.append('''<script>

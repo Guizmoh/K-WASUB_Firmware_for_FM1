@@ -1888,7 +1888,7 @@ static void item_set(uint32_t id, int32_t v)
         case G_SQ_NOTE: *sq_np(perf.cur, sq_cur_step) = (uint8_t)v; if (!(*nf & SF_ON)) *nf = SF_ON; if (sq_cur_step >= 16u) sqx_mark(); sq_edited(); break;
         case G_SQ_TYPE: *nf = (uint8_t)(SQ_FL[v] | (*nf & 0xF8u)); if (sq_cur_step >= 16u) sqx_mark(); sq_edited(); break;
         case G_SQ_PAT: perf.cur = (uint8_t)v; sq_edited(); if (sq_cur_step >= sq_len()) sq_cur_step = 0; break;
-        case G_SQ_LEN: q->len = (uint8_t)v; if (sq_cur_step >= v) sq_cur_step = (uint8_t)(v - 1); if (sq_psel) sq_load_preset(sq_psel); else sq_edited(); break;
+        case G_SQ_LEN: q->len = (uint8_t)v; if (sq_cur_step >= v) sq_cur_step = (uint8_t)(v - 1); if (sq_psel) { sq_load_preset(sq_psel); q->len = (uint8_t)v; } else sq_edited(); break;   /* (a preset: rewritten at 16 / 32 / 64, the length kept: 1.0.61, it went back to 64) */
         case G_SQ_RATE: q->rate = (uint8_t)v; sq_edited(); break;
         case G_SQ_SWING: q->swing = (uint8_t)v; sq_edited(); break;
         case G_AR_ON: perf.ar_on = (uint8_t)v; break;
@@ -2538,6 +2538,14 @@ static void edit_item(uint32_t id, int32_t d)
     uint32_t k;
     if (id == I_NONE || id == G_CPU || id == G_FW || id == G_MIDIMON || id == G_MIDIRT || id == G_RST) return;
     if (ml_state == 1u && id != G_MLEARN && id != G_MMAP) { ml_id = (uint8_t)id; ml_state = 2; toast("LEARN: SEND A CC"); }
+    if (id == G_SQ_LEN && d) {                  /* PATTERN LENGTH: 1..8 one by one, then 12 16 24 32 48 64 (1.0.61) */
+        static const uint8_t SL[14] = {1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 24, 32, 48, 64};
+        int32_t j;
+        for (j = 0; j < 13 && SL[j] < v; j++) {}
+        j = d > 0 ? (SL[j] > v ? j : j + 1) : j - 1;
+        item_set(id, SL[clampi(j, 0, 13)]);
+        return;
+    }
     if (sq_rec && sq_play && !dk_view()) {      /* REC while it plays: a SEQ BASS setting turned is locked on the step now (the sound keeps its own) */
         uint32_t w, rid = rate_like(id);
         for (w = 0; w < NPKB && PB_ID[w] != rid; w++) {}
@@ -3421,6 +3429,7 @@ static void midi_in(void)
         else if (ty == 0xD0) ks_press = d1 * 258;
         else if (ty == 0xC0) {                  /* program change: bank A, then the user's B */
             if (!set.mprog) continue;
+            if (d1 < NFACTORY ? !set.bank && set.idx == d1 : set.bank && set.idx == d1 - NFACTORY) continue;   /* (the sound already loaded: kept as it is, with what was turned; a sequencer sends it at PLAY. 1.0.61) */
             if (d1 < NFACTORY) { load_preset(0, d1); toast(pname); }
             else if (up_valid(d1 - NFACTORY)) { load_preset(1, d1 - NFACTORY); toast(pname); }
         }
@@ -3430,9 +3439,7 @@ static void midi_in(void)
             case 1: ks_wheel = d2 * 258; break;
             case 74: patch[F_CUT] = (int8_t)d2; pdirty = 1; break;
             case 71: patch[F_RES] = (int8_t)d2; pdirty = 1; break;
-            case 76: patch[L1_DIV] = (int8_t)(set.grid ? DIV_NEAR[d2 >> 3] : d2 >> 3); break;
-            case 77: patch[L1_DEP] = (int8_t)(d2 - 64); break;
-            case 123: panic_all(); break;
+            case 123: notes_all_off(); ev_push(EV_PANIC, 0, 0); break;   /* (ALL NOTES OFF: the notes only, the effects and pads stay; 1.0.61. CC 76 / 77, the wobble, are MIDI LEARN only now: a sequencer's PLAY / STOP set them) */
             }
         }
     }

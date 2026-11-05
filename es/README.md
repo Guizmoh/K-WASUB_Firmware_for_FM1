@@ -5,7 +5,7 @@
 
 **English** : [README](../README.md) · **Français** : [README](../fr/README.md) · **Español** : esta página
 
-**Sintetizador de graves moderno para el M-VAVE FM-1**: DnB, dub, dubstep, techno. Wobble en vivo, reese, sub, 808, un EQ, un morph entre cuatro sonidos, efectos en las teclas. Gratuito y de código abierto (GPL-3.0). *Versión 1.0.60 **BETA**: probada en el FM-1 (hardware), en el emulador y con pruebas automáticas; dime qué ves (pestaña Issues).*
+**Sintetizador de graves moderno para el M-VAVE FM-1**: DnB, dub, dubstep, techno. Wobble en vivo, reese, sub, 808, un EQ, un morph entre cuatro sonidos, efectos en las teclas. Gratuito y de código abierto (GPL-3.0). *Versión 1.0.61 **BETA**: probada en el FM-1 (hardware), en el emulador y con pruebas automáticas; dime qué ves (pestaña Issues).*
 
 | | |
 |---|---|
@@ -45,8 +45,8 @@ Puedes volver a KAWA (`install/kawa-0.5.fwsc`) o al firmware de fábrica (M-UPGR
 
 ```sh
 cd source
-./build.sh --release 1.0.60          # -> build/k-wasub-1.0.60.fwsc
-APP_VER=1.0.60 bash web/make_emulator.sh      # emulador
+./build.sh --release 1.0.61          # -> build/k-wasub-1.0.61.fwsc
+APP_VER=1.0.61 bash web/make_emulator.sh      # emulador
 bash web/make_installer.sh                    # installer.html con el último paquete
 bash tests/run_stress.sh                      # pruebas de carga (UBSan)
 python3 tests/manual_shots.py                 # capturas del manual (docs/img)
