@@ -2041,6 +2041,142 @@ static void draw_perf(void)
         g_text(T_XS, 6, 229, "OCT+ HELD + KEYS: PADS \xB7 A PAGE BUTTON: BACK", K_GREY);
     }
 }
+
+/* ---------------------------------------------------------------- PIANO ROLL (1.0.53): SEQ BASS as notes on a keyboard
+ * the cursor's page of 16 steps across, 16 semitones up (they follow the cursor's note), each note as long as it lasts */
+static int roll_black(uint32_t n) { uint32_t m = n % 12u; return m == 1u || m == 3u || m == 6u || m == 8u || m == 10u; }
+static int32_t roll_lo = 10;
+static void draw_roll(void)
+{
+    enum { X0 = 30, CW = 13, Y0 = 44, RH = 9, NR = 16 };
+    uint32_t k = perf.cur % SQ_NPAT, len = sq_len(), cs = sq_cur_step % SQ_MAX, pg = cs / 16u, np = (len + 15u) / 16u, s, i;
+    int32_t cn = *sq_np(k, cs), lo, r, gh = NR * RH, ps = sq_play && sq_show != 0xFF && sq_show / 16u == pg ? (int32_t)(sq_show % 16u) : -1;
+    int cur_on = (*sq_fp(k, cs) & SF_ON) != 0;
+    uint64_t lkd = 0, aud = 0;
+    char t[40], b[24], *p;
+    uint16_t hi = sq_rec ? K_ORANGE : K_WHITE;
+    {                                           /* the view: the page's notes and the cursor's, centred when they fit, else the cursor kept in */
+        static uint32_t was = 0xFFFF;
+        int32_t mn = cn, mx = cn;
+        uint32_t j;
+        for (j = pg * 16u; j < pg * 16u + 16u && j < len; j++) if (*sq_fp(k, j) & SF_ON) { int32_t n = *sq_np(k, j); if (n < mn) mn = n; if (n > mx) mx = n; }
+        if (was != (k << 8 | pg)) { was = k << 8 | pg; roll_lo = mx - mn < NR ? (mn + mx + 1) / 2 - NR / 2 : cn - NR / 2; }
+        if (cn < roll_lo + 1) roll_lo = cn - 1;
+        if (cn > roll_lo + NR - 2) roll_lo = cn - NR + 2;
+        roll_lo = clampi(roll_lo, 0, 49 - NR);
+    }
+    lo = roll_lo;
+    { uint32_t j, n = pl.n <= PL_MAX ? pl.n : 0u; for (j = 0; j < n; j++) if (pl.l[j].step < 64u) { if (pl.l[j].pat == (PL_BASS | k)) lkd |= 1ull << pl.l[j].step; else if (pl.l[j].pat == (PL_AUTO | k)) aud |= 1ull << pl.l[j].step; } }
+    if (g_vis(0, 42)) {                         /* the head: where, the pattern and its name, what plays */
+        g_text(T_XS, 6, 3, "SEQ BASS \xB7 PIANO ROLL", K_LIME);
+        p = str_cat(t, L_SRATE[sq_pat()->rate % 6u]);
+        str_cat(p, sq_rec ? " \xB7 REC" : sq_play ? " \xB7 PLAYING" : "");
+        g_text_r(T_XS, 234, 3, t, sq_rec ? K_ORANGE : sq_play ? K_LIME : K_GREY);
+        p = str_cat(b, "P"); fmt_u(p, k + 1u, 2);
+        r = g_text(T_B, 6, 14, b, K_LIME);
+        g_text(g_fit(T_B, sq_name(k), 150), r + 8, 14, sq_name(k)[0] ? sq_name(k) : "MY PATTERN", sq_name(k)[0] ? K_WHITE : K_GREY);
+        if (sq_chain_on()) g_text_r(T_XS, 234, 16, "CHAIN", K_CYAN);
+        for (i = 0; np > 1u && i < np; i++)     /* the pages: this one white, the one playing in the accent */
+            g_box(234 - (int32_t)(np - i) * 12, 30, 10, 5, i == pg ? K_WHITE : sq_play && sq_show != 0xFF && sq_show / 16u == i ? K_LIME : K_LINE, i == pg ? K_WHITE : K_LINE);
+        g_hgrad(6, 39, 228, 1, K_LIME, K_BG);
+    }
+    if (g_vis(Y0, gh + 2)) {
+        for (r = 0; r < NR; r++) {              /* the rows: a keyboard on the left, the lanes (black keys darker) */
+            int32_t n = lo + NR - 1 - r, y = Y0 + r * RH, blk = roll_black(24u + (uint32_t)n), cur = n == cn;
+            uint16_t lane = blk ? g_mix(K_BG, K_PANEL, 120) : g_mix(K_BG, K_PANEL, 230);
+            if (cur) lane = g_mix(lane, hi, 34);
+            g_rect(X0, y, CW * 16, RH, lane);
+            if ((n % 12) == 0) g_rect(X0, y + RH - 1, CW * 16, 1, g_mix(K_BG, K_LINE, 200));   /* (each C: a line under it) */
+            {                                   /* the keyboard: ivory keys, black keys over them, the cursor's note lit */
+                uint16_t ivory = g_mix(K_PANEL, K_WHITE, 190);
+                g_rect(2, y, 25, RH, cur && !blk ? hi : ivory);
+                if (!blk && (n % 12 == 0 || n % 12 == 5)) g_rect(2, y + RH - 1, 25, 1, g_mix(ivory, K_BG, 120));   /* (B|C and E|F: two white keys meet) */
+                if (blk) { g_rect(2, y + 1, 15, RH - 2, cur ? hi : g_mix(K_BG, 0x0000u, 140)); g_rect(16, y + 2, 1, RH - 4, g_mix(K_BG, K_WHITE, 40)); g_rect(17, y + RH / 2, 10, 1, g_mix(ivory, K_BG, 120)); }
+                if ((n % 12) == 0) { p = str_cat(t, NOTE_N[0]); fmt_u(p, 1u + (uint32_t)n / 12u, 0); g_text_r(T_XS, 26, y + (RH - T_XS->h) / 2, t, cur ? K_BG : g_mix(K_BG, ivory, 70)); }
+                g_rect(27, y, 2, RH, g_mix(K_BG, 0x0000u, 100));   /* (a shadow at the keys' edge) */
+            }
+        }
+        for (i = 0; i < 16u; i++) {             /* the columns: beats brighter, past the pattern's end shaded, the step playing lit */
+            int32_t x = X0 + (int32_t)i * CW;
+            s = pg * 16u + i;
+            if (s >= len) { for (r = 0; r < NR; r++) g_rect(x, Y0 + r * RH, CW, RH - 1, g_mix(K_BG, K_PANEL, 40)); continue; }
+            if ((int32_t)i == ps) for (r = 0; r < NR; r++) g_rect(x, Y0 + r * RH, CW, RH - 1, g_mix(g_mix(K_BG, K_PANEL, 200), K_LIME, 46));
+            if (s == cs) for (r = 0; r < NR; r++) g_rect(x, Y0 + r * RH, CW, RH - 1, g_mix(g_mix(K_BG, K_PANEL, 200), hi, 26));
+            g_rect(x, Y0, 1, gh, (i & 3u) ? g_mix(K_BG, K_LINE, 60) : g_mix(K_BG, K_LINE, 200));
+        }
+        for (i = 0; i < 16u; i++) {             /* the notes: rounded, as long as they last, accents warm, the one playing lit */
+            int32_t x = X0 + (int32_t)i * CW, n, y, w, yo;
+            uint32_t f, gi;
+            uint16_t c;
+            s = pg * 16u + i;
+            if (s >= len) break;
+            f = *sq_fp(k, s);
+            if (!(f & SF_ON)) continue;
+            n = *sq_np(k, s);
+            gi = *sq_cp(k, s) >> 4;
+            if (gi == 15u) {                    /* HOLD: to the next note */
+                uint32_t j = s + 1u;
+                while (j < len && !(*sq_fp(k, j) & SF_ON)) j++;
+                w = (int32_t)(j - s) * CW;
+            } else w = (int32_t)(((uint64_t)SQ_GL[gi] * CW) >> 24);
+            if (w < CW - 4) w = CW - 4;            /* (a short note: still a little pill) */
+            if (x + w > X0 + CW * 16) w = X0 + CW * 16 - x;
+            c = (int32_t)i == ps ? K_LIME : (f & SF_ACC) ? K_ORANGE : K_WAVE;
+            if (n < lo || n > lo + NR - 1) {    /* (out of view: a mark at the edge, toward it) */
+                yo = n < lo ? Y0 + gh - 3 : Y0 + 1;
+                g_rect(x + CW / 2 - 2, yo, 5, 2, c);
+                continue;
+            }
+            y = Y0 + (lo + NR - 1 - n) * RH;
+            g_box(x + 1, y + 1, w - 1, RH - 2, g_mix(K_BG, c, 190), c);
+            g_rect(x + 2, y + 2, w - 3 > 0 ? w - 3 : 1, 1, g_mix(c, 0xFFFFu, 110));
+            if ((*sq_cp(k, s) & 15u) || *sq_pp(k, s) < 100u) g_rect(x + 3, y + 4, 2, 2, K_WHITE);   /* (a chance or a condition) */
+            if (lkd >> s & 1u) g_rect(x + 1, y, 3, 2, K_CYAN);   /* (a PARAMETER LOCK) */
+            if (f & SF_SLIDE) {                 /* (a slide: a line into the next note) */
+                uint32_t j = s + 1u;
+                if (j < len && (*sq_fp(k, j) & SF_ON) && j / 16u == pg) {
+                    int32_t n2 = clampi(*sq_np(k, j), lo, lo + NR - 1), y2 = Y0 + (lo + NR - 1 - n2) * RH + RH / 2;
+                    g_line(x + w - 1, y + RH / 2 - 1, X0 + (int32_t)(j % 16u) * CW + 1, y2 - 1, c);
+                }
+            }
+            if (aud >> s & 1u) g_rect(x + 2, Y0 + gh - 2, CW - 3, 2, K_MOD);   /* (automated) */
+        }
+        {                                       /* the cursor: a frame on its step and note (a rest: dotted) */
+            int32_t x = X0 + (int32_t)(cs % 16u) * CW, y = Y0 + (lo + NR - 1 - cn) * RH;
+            if (cn >= lo && cn <= lo + NR - 1) {
+                if (cur_on) { g_rect(x, y, CW, 1, hi); g_rect(x, y + RH - 1, CW, 1, hi); g_rect(x, y, 1, RH, hi); g_rect(x + CW - 1, y, 1, RH, hi); }
+                else for (r = 0; r < CW; r += 3) { g_rect(x + r, y, 2, 1, hi); g_rect(x + r, y + RH - 1, 2, 1, hi); }
+            }
+            g_rect(x + 2, Y0 + gh + 1, CW - 3, 2, hi);
+        }
+        if (ps >= 0) g_rect(X0 + ps * CW, Y0, 2, gh, K_LIME);   /* (the playhead) */
+    }
+    {                                           /* the four knobs, their values */
+        static const uint8_t RK[4] = {G_SQ_STEP, G_SQ_NOTE, G_SQ_GATE, G_SQ_TYPE};
+        static const char *const KL[4] = {"K1 STEP", "K2 NOTE", "K3 LENGTH", "K4 TYPE"};
+        for (i = 0; i < 4u; i++) {
+            int32_t x = 4 + (int32_t)i * 58, y = 194;
+            if (!g_vis(y, 30)) break;
+            g_box(x, y, 56, 30, K_PANEL, i == 1u && cur_on ? g_mix(K_LINE, K_LIME, 140) : K_LINE);
+            g_text(T_XS, x + 5, y + 3, KL[i], K_GREY);
+            item_text(RK[i], b);
+            g_text(g_fit(T_S, b, 48), x + 5, y + 14, b, i == 1u && !cur_on ? K_GREY : K_WHITE);
+        }
+    }
+    if (g_vis(226, 14)) g_text_c(T_XS, 120, 228, sq_rec ? "KEYS WRITE \xB7 REC: STOP WRITING" : "REC: KEYS WRITE \xB7 SAVE: NAME \xB7 SEQ: DRUMS", K_GREY);
+    if (win == 9u && g_vis(64, 116)) {          /* PATTERN NAME: a card over the roll */
+        int32_t cx = 26, j;
+        g_box(14, 64, 212, 112, K_PANEL, K_LIME);
+        g_vgrad(15, 65, 210, 40, g_mix(K_PANEL, K_LIME, 40), K_PANEL);
+        p = str_cat(t, "PATTERN NAME \xB7 P"); fmt_u(p, k + 1u, 2);
+        g_text(T_XS, 26, 72, t, K_LIME);
+        g_text(T_B, 26, 90, sq_nbuf, K_WHITE);
+        for (j = 0; j < (int32_t)sq_npos; j++) { char ch[2] = {sq_nbuf[j], 0}; cx += g_text_w(T_B, ch); }
+        { char ch[2] = {sq_nbuf[sq_npos % 10u] != ' ' ? sq_nbuf[sq_npos % 10u] : 'M', 0}; g_rect(cx, 90 + T_B->h + 1, g_text_w(T_B, ch), 2, K_LIME); }
+        g_text(T_XS, 26, 130, "KEYS: LETTERS \xB7 K1 PLACE \xB7 K2 LETTER", K_GREY);
+        g_text(T_XS, 26, 148, "SAVE: KEEP IT \xB7 SEL: LEAVE", K_CYAN);
+    }
+}
 static void draw_win(void)
 {
     uint32_t k;
@@ -2389,6 +2525,7 @@ static void draw_all(void)
     }
     if (ask_on && !splash_until) { draw_ask(); return; }   /* (the picture first) */
     if (win == 3u) draw_eq();
+    else if (win == 8u || win == 9u) draw_roll();
     else if (win) draw_win();
     else if (C3_ON) draw_c3();
     else

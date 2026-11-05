@@ -634,6 +634,36 @@ static const char *const SC_NAME[NSC] = {"ALWAYS", "1/2", "2/2", "1/4", "2/4", "
 /* the libraries: PRESET 0 is the pattern as it was before turning (MY PATTERN), kept until something is changed by hand */
 static uint8_t sq_psel, dk_psel, dk_trk, dk_cur;
 static uint8_t sq_chpos;                        /* the CHAIN's place being edited (1.0.53) */
+/* PIANO ROLL (1.0.53, win 8: SEQ pressed again on SEQ BASS) and PATTERN NAME (win 9: SAVE in it) */
+static char sq_nbuf[11];
+static uint8_t sq_npos, sq_nfresh;              /* (fresh: the first letter typed replaces the whole name) */
+static const char *sq_name(uint32_t k)          /* the pattern's name: its own, or the library's (P01..P08), or none */
+{
+    static char b[11];
+    uint32_t i, n = 0;
+    k %= SQ_NPAT;
+    if (sqy.magic == SY_MAGIC)
+        for (i = 0; i < 10u && sqy.name[k][i]; i++) { b[i] = sqy.name[k][i]; if (b[i] != ' ') n = i + 1u; }
+    b[n] = 0;
+    return n ? b : k < 8u ? SQ_DEF[k][0] : "";
+}
+static void sq_name_open(void)
+{
+    uint32_t i;
+    const char *s = sq_name(perf.cur);
+    for (i = 0; i < 10u; i++) sq_nbuf[i] = ' ';
+    for (i = 0; i < 10u && s[i]; i++) sq_nbuf[i] = s[i];
+    sq_nbuf[10] = 0; sq_npos = 0; sq_nfresh = 1; win = 9; g_force = 1;
+}
+static void sq_name_keep(void)
+{
+    uint32_t i, k = perf.cur % SQ_NPAT;
+    for (i = 0; i < 10u; i++) sqy.name[k][i] = sq_nbuf[i];
+    sqy_mark(); perf_touch();
+    win = 8; g_force = 1;
+    toast("NAME SAVED");
+}
+
 static struct { uint8_t note[SQ_MAX], fl[SQ_MAX], cond[SQ_MAX], prob[SQ_MAX], len, rate, swing, k, ok; } sq_bk;
 static struct { dkpat_t p; uint8_t k, ok; } dk_bk;
 static void sq_edited(void) { sq_psel = 0; sq_bk.ok = 0; }
@@ -1474,6 +1504,20 @@ static void save_key(uint32_t k)
     g_force = 1;
 }
 
+static void sq_name_key(uint32_t key)           /* the keys as on SAVE: black A..K, white L..Z and a space */
+{
+    static const char BL[11] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'}, WH[16] = {'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' '};
+    uint32_t i;
+    char ch = 0;
+    for (i = 0; i < 11u; i++) if (PK_BLACK[i] == key) ch = BL[i];
+    for (i = 0; i < 16u; i++) if (PK_WHITE[i] == key) ch = WH[i];
+    if (!ch) return;
+    if (sq_nfresh) { for (i = 0; i < 10u; i++) sq_nbuf[i] = ' '; sq_npos = 0; sq_nfresh = 0; }
+    sq_nbuf[sq_npos % 10u] = ch;
+    sq_npos = (uint8_t)(sq_npos < 9u ? sq_npos + 1u : 9u);
+    g_force = 1;
+}
+
 /* ---- items: a parameter of the patch, or one of the globals */
 static int item_patch(uint32_t id) { return id < NP; }
 static uint32_t rate_id(uint32_t id) { uint32_t o = id == I_L2RATE ? LFO_2 : 0u; return patch[L1_SYNC + o] ? L1_DIV + o : L1_RATE + o; }
@@ -2193,7 +2237,7 @@ static void item_text(uint32_t id, char *b)
         case G_NEWSONG: str_cat(b, new_arm == 2u ? "TURN AGAIN: ERASES ALL" : "TURN ALGO"); break;
         case G_DK_MODE: str_cat(b, v == 2 ? "BASS ONLY" : v ? "DRUMS ONLY" : "BASS + DRUMS"); break;
         case G_DK_SWING: if (v) { b = fmt_u(b, 50u + (uint32_t)v / 2u, 0); str_cat(b, "%"); } else str_cat(b, "OFF"); break;
-        case G_SQ_PAT: b = str_cat(b, "P"); b = fmt_u(b, (uint32_t)v + 1u, 2); if (v < 8) { b = str_cat(b, " "); str_cat(b, SQ_DEF[v][0]); } break;
+        case G_SQ_PAT: { const char *nm = sq_name((uint32_t)v); b = str_cat(b, "P"); b = fmt_u(b, (uint32_t)v + 1u, 2); if (nm[0]) { b = str_cat(b, " "); str_cat(b, nm); } break; }
         case G_SQ_LEN: b = fmt_u(b, (uint32_t)v, 0); str_cat(b, " STEPS"); break;
         case G_SQ_COPY:
             if (sq_paste_arm && fm1_ms - sq_paste_ms <= 3000u) { str_cat(b, "LEFT AGAIN: PASTE"); break; }
@@ -2627,6 +2671,13 @@ static void on_button(uint32_t b)
         else toast("KEPT");
         return;
     }
+    if (b == BTN_SEQ && (win == 8u || win == 9u)) { win = 0; view_next(); g_force = 1; return; }   /* (PIANO ROLL: on to DRUMS) */
+    if (b == BTN_SEQ && !win && page == PG_FILT && vidx() == V_SEQ && !C3_ON) { win = 8; g_force = 1; return; }   /* (SEQ BASS: the PIANO ROLL next) */
+    if ((win == 8u || win == 9u) && (b == BTN_SEL || b == BTN_SAVE)) {   /* (the roll: SAVE names the pattern, SEL back to SEQ BASS; the name: SAVE keeps it, SEL leaves it) */
+        if (b == BTN_SAVE) { if (win == 8u) sq_name_open(); else sq_name_keep(); }
+        else { win = win == 9u ? 8u : 0u; g_force = 1; }
+        return;
+    }
     for (i = 0; i < NPAGE; i++)
         if (PAGE_BTN[i] == b) {
             if (win && win != 3u) { win = 0; vpop_ms = 0; page = (uint8_t)i; first_view(i); if (i == PG_PRE) vcur[i] = ARP_VIEW; name_trim(); return; }   /* (a window open: back to that page) */
@@ -2707,6 +2758,25 @@ static void on_enc(uint32_t e, int32_t d)
     if (dk_view() && e != ENC_PRESETS) {        /* DRUMS: a step held, its locks (K1-K4 LEVEL TUNE DECAY TONE, ALGO RATCHET, SELECT ECHO); REC playing: K1-K4 locked on the step now */
         if (dk_hold) { dk_lock_at(dk_hold - 1u, e == ENC_ALGORITHM ? PK_RAT : e == ENC_SELECT ? PK_ECHO : e - ENC_KNOB1, d); return; }
         if (sq_rec && sq_play && e >= ENC_KNOB1 && e <= ENC_KNOB4) { dk_lock_at(dk_now_step(), e - ENC_KNOB1, d); return; }
+    }
+    if (win == 9u) {                            /* PATTERN NAME: K1 / SELECT the place, K2 / ALGO the letter */
+        sq_nfresh = 0;
+        if (e == ENC_KNOB1 || e == ENC_SELECT) sq_npos = (uint8_t)clampi(sq_npos + d, 0, 9);
+        else if (e == ENC_KNOB2 || e == ENC_ALGORITHM) {
+            static const char CH[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/.#";
+            int32_t i, n = (int32_t)sizeof CH - 1;
+            for (i = 0; i < n && CH[i] != sq_nbuf[sq_npos % 10u]; i++) {}
+            sq_nbuf[sq_npos % 10u] = CH[((i + d) % n + n) % n];
+        }
+        g_force = 1;
+        return;
+    }
+    if (win == 8u) {                            /* PIANO ROLL: K1 / SELECT the step, K2 / ALGO the note, K3 its length, K4 its type, PRESETS the pattern */
+        static const uint8_t RK[4] = {G_SQ_STEP, G_SQ_NOTE, G_SQ_GATE, G_SQ_TYPE};
+        vpop_pre[0] = 0;
+        edit_item(e == ENC_PRESETS ? G_SQ_PAT : e == ENC_SELECT ? G_SQ_STEP : e == ENC_ALGORITHM ? G_SQ_NOTE : RK[(e - ENC_KNOB1) & 3u], d);
+        g_force = 1;
+        return;
     }
     if (win == 3u && e != ENC_PRESETS) {        /* the EQ: the band chosen (SELECT); K1 FREQ, K2 GAIN, K3 Q, K4 SHAPE; ALGO its frequency */
         static const uint8_t EK[4] = {G_EQ_F, G_EQ_G, G_EQ_Q, G_EQ_T};
@@ -3152,6 +3222,11 @@ static void ui_input(void)
     }
     for (k = 0; k < 27u; k++) {
         uint32_t m = 1u << k;
+        if (win == 9u) {                        /* PATTERN NAME: the keys type it */
+            if ((ne & m) || ((now & m) && !(prev_keys & m))) sq_name_key(k);
+            else if (!(now & m) && (prev_keys & m) && phys[key_note[k]]) key_up(key_note[k]);
+            continue;
+        }
         if (save_view()) {                      /* SAVE: the keys type the name */
             if ((ne & m) || ((now & m) && !(prev_keys & m))) save_key(k);
             else if (!(now & m) && (prev_keys & m) && phys[key_note[k]]) key_up(key_note[k]);
