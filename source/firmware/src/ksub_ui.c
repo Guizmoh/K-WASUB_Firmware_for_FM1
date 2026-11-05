@@ -841,9 +841,11 @@ static const col3_t COL3[NPAGE] = {
                {{"SAT", "OTT", "MIX", "TYP"}, {"CMP", "PMP", "MNO", "VOL"}, {"DLY", "DT", "FB", "REV"}}},
 };
 static uint8_t c3_show[NPAGE] = {1, 1, 1, 1, 1, 1, 0, 0}, c3_cur;
+static int filt_zone(void);
 static uint8_t ask_on, ask_sel;                 /* the start's question: CLASSIC or SHIFT (ask_on 2: then the look, the very first start only) */
 static uint8_t theme_ask;                       /* the very first start (no settings yet): the look is asked too */
-static const uint8_t ASK_TH[4] = {7, 1, 2, 6};  /* CLASSIC, STUDIO, PURE, RIBBON CLASSIC */
+static const uint8_t ASK_TH[4] = {7, 6, 1, 2};  /* CLASSIC, RIBBON CLASSIC, STUDIO, PURE (1.0.53: RIBBON CLASSIC second) */
+static const uint8_t TH_ORD[8] = {0, 6, 1, 2, 3, 4, 5, 7}, TH_POS[8] = {0, 2, 3, 4, 5, 6, 1, 7};   /* SYSTEM > THEME: the order shown (RIBBON CLASSIC second) */
 static uint32_t ask_ms;
 #define C3_ON (set.ui && COL3[page].title && c3_show[page])
 static uint32_t c3_col(void) { return hb.b == BTN_OCT_DOWN ? 1u : hb.b == BTN_OCT_UP ? 2u : 0u; }
@@ -1515,7 +1517,7 @@ static int32_t item_get(uint32_t id)
     case G_L3_DST: return set.l3[L3_DST];
     case G_L3_SYNC: return set.l3[L3_SYNC];
     case G_OCT: return OCT + 3;
-    case G_THEME: return set.theme;
+    case G_THEME: return TH_POS[set.theme % 8u];
     case G_PAL: return set.pal;
     case G_FONT: return set.font;
     case G_GRID: return set.grid;
@@ -1732,7 +1734,7 @@ static void item_set(uint32_t id, int32_t v)
     case G_L3_DST: set.l3[L3_DST] = (int8_t)v; l3_push(); break;
     case G_L3_SYNC: set.l3[L3_SYNC] = (int8_t)v; l3_push(); break;
     case G_OCT: set.oct = (uint8_t)(int8_t)(v - 3); break;
-    case G_THEME: set.theme = (uint8_t)v; theme_set(set.theme, set.pal); g_force = 1; break;
+    case G_THEME: set.theme = TH_ORD[(uint32_t)v % 8u]; theme_set(set.theme, set.pal); g_force = 1; break;
     case G_PAL:
         set.pal = (uint8_t)v;
         theme_set(set.theme, set.pal); font_set(set.font, set.zoom); g_force = 1; break;
@@ -2012,7 +2014,7 @@ static void item_text(uint32_t id, char *b)
         case G_L3_DST: str_cat(b, dst_name((uint32_t)v)); break;
         case G_L3_SYNC: lk_text(L1_SYNC, v, b); break;
         case G_OCT: fmt_s(b, v - 3); break;
-        case G_THEME: { static const char *const TN[8] = {"CLASSIC GLOW", "STUDIO", "PURE", "RACK", "TECH", "RIBBON", "RIBBON CLASSIC", "CLASSIC"}; str_cat(b, TN[(uint32_t)v % 8u]); break; }
+        case G_THEME: { static const char *const TN[8] = {"CLASSIC GLOW", "RIBBON CLASSIC", "STUDIO", "PURE", "RACK", "TECH", "RIBBON", "CLASSIC"}; str_cat(b, TN[(uint32_t)v % 8u]); break; }
         case G_PAL: { static const char *const PN[11] = {"SYNTHWAVE", "MINT", "BLACK / WHITE", "INVERTED", "RED", "ICE", "FLUO", "PINK", "GOLD", "SKY", "BLAZE"}; int32_t q = v >= (int32_t)NPAL_BASE ? v - (int32_t)NPAL_BASE : v; str_cat(b, q < 2 ? PAL_NAME[set.theme % 7u][q] : PN[(q - 2) % 11]); if (v >= (int32_t)NPAL_BASE) str_cat(b, " RAD"); break; }
         case G_GRID: str_cat(b, v ? "STRAIGHT" : "ALL (T, D)"); break;
         case G_BROWSE: str_cat(b, v ? "FAVORITES" : "ALL"); break;
@@ -2242,7 +2244,8 @@ static void ui_leds(void)
     uint32_t i, beat = ((ks_beats >> 24) & 1u) == 0u && ((ks_beats >> 21) & 7u) < 2u;
     for (i = 0; i < 41u; i++) led_want[i] = 0;
     if (new_arm && fm1_ms - new_ms > 3000u) { new_arm = 0; g_force = 1; }
-    for (i = 0; i < NPAGE; i++) led(PAGE_BTN[i], i == page ? 2u : 1u);
+    for (i = 0; i < NPAGE; i++) led(PAGE_BTN[i], i == page && !(i == PG_FILT && filt_zone()) ? 2u : 1u);
+    led(BTN_SEL, win || filt_zone() ? 2u : 1u);
     led(BTN_PLAY, sq_play ? (beat ? 2u : 1u) : hold ? 1u : 0u);
     led(BTN_REC, sq_rec ? 2u : beat ? 1u : 0u);
     led(BTN_SAVE, VIEWS[vidx()].lay == LY_SAVE ? 2u : 0u);
@@ -2477,9 +2480,11 @@ static void new_step(uint32_t which)            /* 1 NEW PRESET, 2 NEW SONG: the
 }
 static void name_trim(void) { int32_t i; for (i = 12; i >= 0 && pname[i] == ' '; i--) pname[i] = 0; }
 
-static void first_view(uint32_t pg) { vcur[pg] = 0; c3_show[pg] = COL3[pg].title ? 1u : 0u; }
+static void first_view(uint32_t pg) { vcur[pg] = 0; c3_show[pg] = COL3[pg].title ? 1u : 0u; if (pg == PG_FILT) { vcur[pg] = 2; c3_show[pg] = 0; } }   /* (SEQ: SEQ BASS first; the filter is on SEL, 1.0.53) */
+static int filt_zone(void) { return page == PG_FILT && !win && (c3_show[PG_FILT] || vcur[PG_FILT] < 2u); }   /* FILTER / COLOUR, FILTER MOD (and SHIFT's 3 columns): SEL's */
 static void view_next(void)                     /* the page's next view (SHIFT: the 3 columns first) */
 {
+    if (page == PG_FILT) { c3_show[PG_FILT] = 0; vcur[PG_FILT] = vcur[PG_FILT] == 2u ? 3u : 2u; return; }   /* (SEQ: SEQ BASS, DRUMS) */
     uint32_t nv = (uint32_t)(PAGE_V0[page + 1u] - PAGE_V0[page]);
     if (set.ui && COL3[page].title) {
         if (c3_show[page]) { c3_show[page] = 0; vcur[page] = 0; }
@@ -2492,6 +2497,13 @@ static void view_next(void)                     /* the page's next view (SHIFT: 
 static void view_step(int32_t d)               /* the PRESET knob off HOME and PRESETS: the page's views, either way, round (SHIFT: its 3 columns first) */
 {
     uint32_t nv = (uint32_t)(PAGE_V0[page + 1u] - PAGE_V0[page]), c3 = set.ui && COL3[page].title, n = nv + c3, at;
+    if (page == PG_FILT) {                      /* (the filter's views and SEQ's apart: 1.0.53) */
+        if (filt_zone()) { n = 2u + c3; at = c3 ? (c3_show[page] ? 0u : vcur[page] + 1u) : vcur[page]; at = (uint32_t)(((int32_t)at + d % (int32_t)n + (int32_t)n) % (int32_t)n);
+                           if (c3) { c3_show[page] = (uint8_t)(at == 0u); vcur[page] = (uint8_t)(at ? at - 1u : 0u); } else vcur[page] = (uint8_t)at; }
+        else { c3_show[page] = 0; vcur[page] = (uint8_t)(2u + ((uint32_t)(vcur[page] - 2u) + (uint32_t)(d & 1)) % 2u); }
+        vpop_ms = 0; g_force = 1;
+        return;
+    }
     at = c3 ? (c3_show[page] ? 0u : vcur[page] + 1u) : vcur[page];
     at = (uint32_t)(((int32_t)at + d % (int32_t)n + (int32_t)n) % (int32_t)n);
     if (c3) { c3_show[page] = (uint8_t)(at == 0u); vcur[page] = (uint8_t)(at ? at - 1u : 0u); }
@@ -2519,7 +2531,8 @@ static void on_button(uint32_t b)
     for (i = 0; i < NPAGE; i++)
         if (PAGE_BTN[i] == b) {
             if (win && win != 3u) { win = 0; vpop_ms = 0; page = (uint8_t)i; first_view(i); if (i == PG_PRE) vcur[i] = ARP_VIEW; name_trim(); return; }   /* (a window open: back to that page) */
-            if (page == i) view_next();
+            if (page == i && !(i == PG_FILT && filt_zone())) view_next();
+            else if (i == PG_FILT) { page = (uint8_t)i; first_view(i); }
             else { page = (uint8_t)i; first_view(i); if (i == PG_PRE) vcur[i] = ARP_VIEW; }   /* (another page: always its first view; the ARP button's: the ARPEGGIATOR, then PRESETS A, B; 1.0.45) */
             if (VIEWS[vidx()].lay == LY_SAVE) vcur[i]++;   /* (SAVE opens from SAVE only: on to the ARP) */
             name_trim();
@@ -2527,7 +2540,11 @@ static void on_button(uint32_t b)
         }
     switch (b) {
     case BTN_SEL:                               /* the windows: FX LIVE, MACROS, back (held: COMPARE) */
-        { static const uint8_t NEXTW[8] = {7, 2, 5, 7, 1, 0, 0, 4}; win = NEXTW[win % 8u]; }   /* PERFORM, MORPH X/Y, FX LIVE, MACROS, MORPH A/B (from the EQ view: PERFORM) */
+        if (win == 5u || (!win && !filt_zone())) {   /* (1.0.53: FILTER / COLOUR first, FILTER MOD, then the windows; MORPH A/B: round to the filter) */
+            win = 0; page = PG_FILT; vcur[PG_FILT] = 0; c3_show[PG_FILT] = set.ui && COL3[PG_FILT].title ? 1u : 0u;
+        } else if (!win && c3_show[PG_FILT]) { c3_show[PG_FILT] = 0; vcur[PG_FILT] = 0; }
+        else if (!win && !vcur[PG_FILT]) vcur[PG_FILT] = 1;
+        else { static const uint8_t NEXTW[8] = {7, 2, 5, 7, 1, 0, 0, 4}; win = NEXTW[win % 8u]; }   /* PERFORM, MORPH X/Y, FX LIVE, MACROS, MORPH A/B (from the EQ view: PERFORM) */
         if (win == 4u || win == 5u || win == 7u) mx_open();
         win_cur = 0;
         vpop_ms = 0;
@@ -2892,7 +2909,7 @@ static void favorite(void)                       /* the preset under the PRESETS
 
 static void ask_theme_done(uint32_t sel)       /* the very first start: the look chosen */
 {
-    static const char *const N[4] = {"CLASSIC", "STUDIO", "PURE", "RIBBON CLASSIC"};
+    static const char *const N[4] = {"CLASSIC", "RIBBON CLASSIC", "STUDIO", "PURE"};
     ask_on = 0;
     set.theme = ASK_TH[sel & 3u];
     theme_set(set.theme, set.pal); font_set(set.font, set.zoom);
