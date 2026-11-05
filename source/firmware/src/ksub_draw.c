@@ -263,10 +263,10 @@ static void vis_seq(int32_t x, int32_t y, int32_t w, int32_t h)   /* SEQ BASS: 1
             g_rect(bx + 1, top + H - nh, bw - 2, 3, c);
             g_rect(bx + 2, top + H - nh + 3, bw - 4, nh - 3, g_mix(K_TRACK, c, 45));
             if (f & SF_SLIDE) g_rect(bx + bw - 2, top + H - nh + 1, 3, 1, c);   /* (into the next) */
-            if ((sqx.p[k].cond[s] & 15u) || sqx.p[k].prob[s] < 100u) g_rect(bx + bw / 2 - 1, top + H - nh - 4, 3, 2, K_WHITE);   /* (a chance or a condition: a dot above) */
+            if ((*sq_cp(k, (uint32_t)s) & 15u) || *sq_pp(k, (uint32_t)s) < 100u) g_rect(bx + bw / 2 - 1, top + H - nh - 4, 3, 2, K_WHITE);   /* (a chance or a condition: a dot above) */
             if (lkd >> s & 1u) { g_rect(bx + 1, top, bw - 2, 2, K_CYAN); g_rect(bx + 1, top + 2, 2, 3, K_CYAN); }   /* (locked: a corner at the top) */
             {                                   /* (a note longer than its step: a tail over the next ones, to the page's end) */
-                uint32_t gi = sqx.p[k].cond[s] >> 4, tail = gi == 15u ? (uint32_t)(16 - i) * (uint32_t)bw : (uint32_t)(((uint64_t)SQ_GL[gi] * (uint32_t)bw) >> 24);
+                uint32_t gi = *sq_cp(k, (uint32_t)s) >> 4, tail = gi == 15u ? (uint32_t)(16 - i) * (uint32_t)bw : (uint32_t)(((uint64_t)SQ_GL[gi] * (uint32_t)bw) >> 24);
                 int32_t tw = (int32_t)tail - bw, room = (16 - i - 1) * bw;
                 if (tw > 0) g_rect(bx + bw - 1, top + H - nh + 1, tw < room ? tw : room, 1, c);
             }

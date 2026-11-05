@@ -20,7 +20,8 @@
  * the chances and conditions), then dk (DRUMS); the total size tells the layouts apart. Little endian. */
 #define LK_PROTO 1u
 #define LK_HEAD 10u
-#define LK_SIZE (LK_HEAD + sizeof ustore + sizeof perf + sizeof uext + sizeof sqx + sizeof dk + sizeof pl)   /* (a backup from before 0.9.57: without pl) */
+#define LK_SIZE (LK_HEAD + sizeof ustore + sizeof perf + sizeof uext + sizeof sqx + sizeof dk + sizeof pl + sizeof sqy)   /* (a backup from before 1.0.53: without sqy; before 0.9.57: without pl either) */
+#define LK_SIZE_PL (LK_SIZE - sizeof sqy)
 typedef char lk_fits[LK_SIZE < 65536u ? 1 : -1];
 static uint8_t lk_stage[LK_SIZE], lk_out[2 + 3 + 1 + 160];
 static uint32_t lk_got, lk_want;                /* staged bytes; the size BEGIN announced (0: no restore under way) */
@@ -62,7 +63,7 @@ static uint32_t lk_unpack7(const uint8_t *in, uint32_t n, uint8_t *out, uint32_t
 }
 static void lk_blob_read(uint32_t off, uint8_t *d, uint32_t n)   /* the backup as it is now, byte by byte */
 {
-    static const uint32_t S1 = sizeof ustore, S2 = sizeof perf, S3 = sizeof uext, S4 = sizeof sqx, S5 = sizeof dk, S6 = sizeof pl;
+    static const uint32_t S1 = sizeof ustore, S2 = sizeof perf, S3 = sizeof uext, S4 = sizeof sqx, S5 = sizeof dk, S6 = sizeof pl, S7 = sizeof sqy;
     uint32_t i;
     for (i = 0; i < n; i++, off++) {
         uint32_t o = off;
@@ -76,6 +77,7 @@ static void lk_blob_read(uint32_t off, uint8_t *d, uint32_t n)   /* the backup a
         else if ((o -= S3) < S4) b = ((const uint8_t *)&sqx)[o];
         else if ((o -= S4) < S5) b = ((const uint8_t *)&dk)[o];
         else if ((o -= S5) < S6) b = ((const uint8_t *)&pl)[o];
+        else if ((o -= S6) < S7) b = ((const uint8_t *)&sqy)[o];
         else b = 0;
         d[i] = b;
     }
@@ -130,7 +132,7 @@ static int app_sysex(const uint8_t *p, uint32_t n)
     case 0x03: {                                /* BEGIN */
         uint32_t sz = d >= 2u ? (uint32_t)b[0] | (uint32_t)b[1] << 8 : 0u;
         if (lk_commit) { lk_status(0x03, 5); break; }
-        if (sz != LK_SIZE && sz != LK_SIZE - sizeof pl) { lk_want = 0; lk_status(0x03, 3); break; }
+        if (sz != LK_SIZE && sz != LK_SIZE_PL && sz != LK_SIZE_PL - sizeof pl) { lk_want = 0; lk_status(0x03, 3); break; }
         lk_want = sz; lk_got = 0;
         lk_status(0x03, 0);
         break;
@@ -236,8 +238,11 @@ static void link_service(void)                  /* the main loop: a restore aske
         memcpy(&dk, lk_stage + LK_HEAD + sizeof ustore + sizeof perf + sizeof uext + sizeof sqx, sizeof dk);
         sqx_dirty = 1;
         dk_dirty = 1;
-        if (lk_want == LK_SIZE) memcpy(&pl, lk_stage + LK_HEAD + sizeof ustore + sizeof perf + sizeof uext + sizeof sqx + sizeof dk, sizeof pl);
+        if (lk_want >= LK_SIZE_PL) memcpy(&pl, lk_stage + LK_HEAD + sizeof ustore + sizeof perf + sizeof uext + sizeof sqx + sizeof dk, sizeof pl);
         else pl_defaults();
+        if (lk_want == LK_SIZE) memcpy(&sqy, lk_stage + LK_SIZE_PL, sizeof sqy);   /* (1.0.53: SEQ BASS 17..32 and the CHAIN) */
+        else sqy_defaults();
+        sqy_dirty = 1;
         pl_dirty = 1;
         store_fixup();
         if (store_save() || perf_save()) st = 4;

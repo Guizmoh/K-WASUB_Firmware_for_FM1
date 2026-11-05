@@ -34,7 +34,10 @@ enum { I_L1RATE = 140, I_L2RATE, I_ABMIX, G_MIDICH, G_BPM, G_CLOCK, G_OCT, G_COR
        G_L3_RATE, G_L3_DEP, G_L3_SHP, G_L3_DST, G_L3_SYNC,                           /* LFO 3 (in the settings: whatever the patch) */
        G_DK_KSAT, G_DK_SNAP, G_DK_ECHO,                                              /* DRUMS: KICK DRIVE, SNAPPY, DUB ECHO (1.0.32, in dk.pad) */
        G_MIDIMON, G_MIDIRT,                                                          /* MIDI: the last message that came in, and the last system one (1.0.46) */
+       G_SQ_COPY, G_SQ_CHAIN, G_SQ_CHPOS, G_SQ_CHPAT,                                /* SEQ BASS (1.0.53): COPY / PASTE a pattern; the CHAIN, its place, the pattern there */
+       G_LAST_ID,
        I_NONE = 255 };
+typedef char item_ids_fit[G_LAST_ID < I_NONE ? 1 : -1];
 
 typedef struct {
     uint8_t lay;
@@ -56,7 +59,7 @@ static const view_t VIEWS[] = {
     {LY_BOX, "MOD ENVELOPE", 4, {ME_A, ME_D, ME_AMT, ME_DST}, "ENV"},
     {LY_BOX, "FILTER / COLOUR", 4, {F_CUT, F_RES, F_DRV, F_TYPE}, "FX"},
     {LY_LIST, "FILTER MOD", 6, {F_ENV, F_KEY, F_VEL, F_TYPE, F_CUT, F_RES}, "FX"},
-    {LY_LIST, "SEQ BASS", 14, {G_SQ_ON, G_SQ_STEP, G_SQ_NOTE, G_SQ_GATE, G_SQ_TYPE, G_SQ_PROB, G_SQ_COND, G_SQ_LKP, G_SQ_LKV, G_SQ_PAT, G_SQ_PRESET, G_SQ_LEN, G_SQ_RATE, G_SQ_SWING}, "SEQ"},
+    {LY_LIST, "SEQ BASS", 18, {G_SQ_ON, G_SQ_STEP, G_SQ_NOTE, G_SQ_GATE, G_SQ_TYPE, G_SQ_PROB, G_SQ_COND, G_SQ_LKP, G_SQ_LKV, G_SQ_PAT, G_SQ_COPY, G_SQ_PRESET, G_SQ_LEN, G_SQ_RATE, G_SQ_SWING, G_SQ_CHAIN, G_SQ_CHPOS, G_SQ_CHPAT}, "SEQ"},
     {LY_LIST, "DRUMS", 19, {G_DK_LVL, G_DK_TUNE, G_DK_DEC, G_DK_TONE, G_DK_TRK, G_DK_STEP, G_DK_HIT, G_DK_PROB, G_DK_COND, G_DK_PAT, G_DK_PRE,
                             G_DK_LEN, G_DK_KIT, G_DK_VOL, G_DK_KSAT, G_DK_SNAP, G_DK_ECHO, G_DK_MODE, G_DK_SWING}, "SEQ"},   /* (black keys: the track, white: its steps, OCT: the page) */
     {LY_LFO, "LFO 1 \xB7 WOBBLE", 9, {I_L1RATE, L1_DEP, L1_SHP, L1_DST, G_GRID, L1_SYNC, L1_TRIG, L1_PH, L1_SMO}, "LFO"},
@@ -202,10 +205,25 @@ static uint8_t sqx_dirty;
 typedef char sqx_fits[sizeof sqx <= 4096u ? 1 : -1];
 static uint8_t sqx_sum(void) { const uint8_t *b = (const uint8_t *)sqx.p; uint32_t i, x = 0x29; for (i = 0; i < sizeof sqx.p; i++) x = (x * 5u + b[i]) & 0xFFu; return (uint8_t)x; }
 static void sqx_mark(void) { sqx.sum = sqx_sum(); sqx_dirty = 1; }   /* (the sum kept current: a backup taken any time loads back) */
+/* 1.0.53: the patterns 17..32 and the CHAIN, the 7th and 8th sectors (sqy is 4 KiB and a bit) */
+static uint8_t sqy_dirty;
+typedef char sqy_fits[sizeof sqy <= 8192u ? 1 : -1];
+static uint8_t sqy_sum(void) { const uint8_t *b = (const uint8_t *)&sqy; uint32_t i, x = 0x5A; for (i = 2; i < sizeof sqy; i++) x = (x * 5u + b[i]) & 0xFFu; return (uint8_t)x; }
+static void sqy_mark(void) { sqy.sum = sqy_sum(); sqy_dirty = 1; }
+static void sqy_defaults(void)                  /* the 16 more patterns empty (16 steps, 1/16), every step 100 %; the CHAIN off and empty */
+{
+    uint32_t k;
+    memset(&sqy, 0, sizeof sqy);
+    sqy.magic = SY_MAGIC;
+    memset(sqy.chain, 0xFF, sizeof sqy.chain);
+    for (k = 0; k < SQ_NPAT - SQ_NLO; k++) { sqy.p[k].h.len = 16; sqy.p[k].h.rate = 3; memset(sqy.p[k].prob, 100, SQ_MAX); }
+    sqy_mark();
+}
+static void sq_mark_k(uint32_t k) { if (k % SQ_NPAT < SQ_NLO) sqx_mark(); else sqy_mark(); }   /* (where pattern k's steps past 16, chances and conditions live) */
 static void sqx_defaults(void)                  /* steps 17..64 rests, every step 100 % and ALWAYS */
 {
     memset(&sqx, 0, sizeof sqx);
-    { uint32_t k; for (k = 0; k < SQ_NPAT; k++) memset(sqx.p[k].prob, 100, SQ_MAX); }
+    { uint32_t k; for (k = 0; k < SQ_NLO; k++) memset(sqx.p[k].prob, 100, SQ_MAX); }
     sqx.magic = SX_MAGIC;
     sqx_mark();
 }
@@ -232,11 +250,11 @@ static uint8_t pl_sum(void) { const uint8_t *b = (const uint8_t *)&pl; uint32_t 
 static void pl_mark(void) { pl.sum = pl_sum(); pl_dirty = 1; }
 static void pl_defaults(void) { memset(&pl, 0, sizeof pl); pl.magic = PL_MAGIC; pl_mark(); }
 #if defined(KAWA_WASM)
-static uint8_t w_store[24576];
+static uint8_t w_store[32768];
 static uint32_t w_store_gen;
-static void store_load(void) { memcpy(ustore, w_store, sizeof ustore); memcpy(&perf, w_store + 4096, sizeof perf); memcpy(&uext, w_store + 4096 + UX_AT, sizeof uext); memcpy(&work, w_store + 4096 + WK_AT, sizeof work); memcpy(&sqx, w_store + 8192, sizeof sqx); memcpy(&dk, w_store + 12288, sizeof dk); memcpy(&pl, w_store + 20480, sizeof pl); }
+static void store_load(void) { memcpy(ustore, w_store, sizeof ustore); memcpy(&perf, w_store + 4096, sizeof perf); memcpy(&uext, w_store + 4096 + UX_AT, sizeof uext); memcpy(&work, w_store + 4096 + WK_AT, sizeof work); memcpy(&sqx, w_store + 8192, sizeof sqx); memcpy(&dk, w_store + 12288, sizeof dk); memcpy(&pl, w_store + 20480, sizeof pl); memcpy(&sqy, w_store + 24576, sizeof sqy); }
 static int store_save(void) { memcpy(w_store, ustore, sizeof ustore); w_store_gen++; return 0; }
-static int perf_save(void) { memcpy(w_store + 4096, &perf, sizeof perf); memcpy(w_store + 4096 + UX_AT, &uext, sizeof uext); memcpy(w_store + 4096 + WK_AT, &work, sizeof work); if (sqx_dirty) { memcpy(w_store + 8192, &sqx, sizeof sqx); sqx_dirty = 0; } if (dk_dirty) { memcpy(w_store + 12288, &dk, sizeof dk); dk_dirty = 0; } if (pl_dirty) { memcpy(w_store + 20480, &pl, sizeof pl); pl_dirty = 0; } w_store_gen++; return 0; }
+static int perf_save(void) { memcpy(w_store + 4096, &perf, sizeof perf); memcpy(w_store + 4096 + UX_AT, &uext, sizeof uext); memcpy(w_store + 4096 + WK_AT, &work, sizeof work); if (sqx_dirty) { memcpy(w_store + 8192, &sqx, sizeof sqx); sqx_dirty = 0; } if (dk_dirty) { memcpy(w_store + 12288, &dk, sizeof dk); dk_dirty = 0; } if (pl_dirty) { memcpy(w_store + 20480, &pl, sizeof pl); pl_dirty = 0; } if (sqy_dirty) { memcpy(w_store + 24576, &sqy, sizeof sqy); sqy_dirty = 0; } w_store_gen++; return 0; }
 static int settings_write(void) { return settings_save(&set, sizeof set); }
 #else
 static void store_load(void)
@@ -248,6 +266,7 @@ static void store_load(void)
     if (!flash_ok || st_read(STORE_LO + 0x2000u, &sqx, sizeof sqx)) memset(&sqx, 0xFF, sizeof sqx);
     if (!flash_ok || st_read(STORE_LO + 0x3000u, &dk, sizeof dk)) memset(&dk, 0xFF, sizeof dk);
     if (!flash_ok || st_read(STORE_LO + 0x5000u, &pl, sizeof pl)) memset(&pl, 0xFF, sizeof pl);
+    if (!flash_ok || st_read(STORE_LO + 0x6000u, &sqy, sizeof sqy)) memset(&sqy, 0xFF, sizeof sqy);
 }
 static int perf_save(void)                      /* the store's second sector: SEQ BASS, ARP, MACROS, the slots' rest */
 {
@@ -274,6 +293,12 @@ static int perf_save(void)                      /* the store's second sector: SE
         rc = fl_erase4k(STORE_LO + 0x5000u, &took);
         if (!rc) rc = fl_write(STORE_LO + 0x5000u, (const uint8_t *)&pl, sizeof pl);
         if (!rc) pl_dirty = 0;
+    }
+    if (!rc && sqy_dirty) {                     /* (1.0.53: SEQ BASS 17..32 and the CHAIN, the 7th and 8th sectors) */
+        rc = fl_erase4k(STORE_LO + 0x6000u, &took);
+        if (!rc) rc = fl_erase4k(STORE_LO + 0x7000u, &took);
+        if (!rc) rc = fl_write(STORE_LO + 0x6000u, (const uint8_t *)&sqy, sizeof sqy);
+        if (!rc) sqy_dirty = 0;
     }
     c1_resume();
     return rc;
@@ -577,7 +602,7 @@ static void perf_defaults(void)
     uint32_t k, i;
     memset(&perf, 0, sizeof perf);
     perf.magic = PF_MAGIC; perf.ar_rate = 3; perf.ar_oct = 0; perf.ar_gate = 5;
-    for (k = 0; k < SQ_NPAT; k++) {
+    for (k = 0; k < SQ_NLO; k++) {
         seqpat_t *q = &perf.pat[k];
         uint8_t gl[16];
         q->len = 16; q->rate = 3;
@@ -588,8 +613,8 @@ static void perf_defaults(void)
     mc_defaults();
 }
 static void perf_touch(void) { perf.sum = perf_sum(); perf_dirty = 1; perf_ms = fm1_ms; }
-static void sqx_touch(void) { sqx_mark(); perf_touch(); }
-static seqpat_t *sq_pat(void) { return &perf.pat[perf.cur % SQ_NPAT]; }
+static void sqx_touch(void) { sq_mark_k(perf.cur); perf_touch(); }
+static seqpat_t *sq_pat(void) { return sq_hd(perf.cur); }
 static void dk_touch(void) { dk_mark(); perf_touch(); }
 static dkpat_t *dk_pp(void) { return &dk.pat[dk.cur % DK_NPAT]; }
 static uint32_t dk_len(void) { uint32_t l = dk_pp()->len; return l >= 1u && l <= DK_MAX ? l : 16u; }
@@ -608,6 +633,7 @@ static const char *dk_kname(uint32_t k)
 static const char *const SC_NAME[NSC] = {"ALWAYS", "1/2", "2/2", "1/4", "2/4", "3/4", "4/4", "START", "NOT START", "IF BEFORE", "IF AFTER"};
 /* the libraries: PRESET 0 is the pattern as it was before turning (MY PATTERN), kept until something is changed by hand */
 static uint8_t sq_psel, dk_psel, dk_trk, dk_cur;
+static uint8_t sq_chpos;                        /* the CHAIN's place being edited (1.0.53) */
 static struct { uint8_t note[SQ_MAX], fl[SQ_MAX], cond[SQ_MAX], prob[SQ_MAX], len, rate, swing, k, ok; } sq_bk;
 static struct { dkpat_t p; uint8_t k, ok; } dk_bk;
 static void sq_edited(void) { sq_psel = 0; sq_bk.ok = 0; }
@@ -615,11 +641,11 @@ static void dk_edited(void) { dk_psel = 0; dk_bk.ok = 0; }
 static void sq_backup(int restore)
 {
     uint32_t k = perf.cur % SQ_NPAT, i;
-    seqpat_t *q = &perf.pat[k];
+    seqpat_t *q = sq_hd(k);
     if (restore && (!sq_bk.ok || sq_bk.k != k)) return;
     for (i = 0; i < SQ_MAX; i++) {
-        if (restore) { *sq_np(k, i) = sq_bk.note[i]; *sq_fp(k, i) = sq_bk.fl[i]; sqx.p[k].cond[i] = sq_bk.cond[i]; sqx.p[k].prob[i] = sq_bk.prob[i]; }
-        else { sq_bk.note[i] = *sq_np(k, i); sq_bk.fl[i] = *sq_fp(k, i); sq_bk.cond[i] = sqx.p[k].cond[i]; sq_bk.prob[i] = sqx.p[k].prob[i]; }
+        if (restore) { *sq_np(k, i) = sq_bk.note[i]; *sq_fp(k, i) = sq_bk.fl[i]; *sq_cp(k, i) = sq_bk.cond[i]; *sq_pp(k, i) = sq_bk.prob[i]; }
+        else { sq_bk.note[i] = *sq_np(k, i); sq_bk.fl[i] = *sq_fp(k, i); sq_bk.cond[i] = *sq_cp(k, i); sq_bk.prob[i] = *sq_pp(k, i); }
     }
     if (restore) { q->len = sq_bk.len; q->rate = sq_bk.rate; q->swing = sq_bk.swing; }
     else { sq_bk.len = q->len; sq_bk.rate = q->rate; sq_bk.swing = q->swing; sq_bk.k = (uint8_t)k; sq_bk.ok = 1; }
@@ -639,25 +665,25 @@ static void sq_load_preset(uint32_t sel)        /* 1.. : SQP[sel - 1], at the pa
     uint8_t n[16], f[16], g[16];
     sq_parse(SQP[pi].t, n, f, g);
     for (i = 0; i < 16u; i++) if (f[i] & SF_ON) { root = n[i]; break; }
-    for (i = 0; i < SQ_MAX; i++) { *sq_np(k, i) = (uint8_t)root; *sq_fp(k, i) = 0; sqx.p[k].cond[i] = 0; sqx.p[k].prob[i] = 100; }
+    for (i = 0; i < SQ_MAX; i++) { *sq_np(k, i) = (uint8_t)root; *sq_fp(k, i) = 0; *sq_cp(k, i) = 0; *sq_pp(k, i) = 100; }
     if (SQP[pi].stretch) {
         for (i = 0; i < 16u; i++)
-            if (f[i] & SF_ON) { *sq_np(k, i * m) = n[i]; *sq_fp(k, i * m) = f[i]; sqx.p[k].cond[i * m] = (uint8_t)(sq_gl_near(g[i], m) << 4); }
+            if (f[i] & SF_ON) { *sq_np(k, i * m) = n[i]; *sq_fp(k, i * m) = f[i]; *sq_cp(k, i * m) = (uint8_t)(sq_gl_near(g[i], m) << 4); }
     } else {
         for (seg = 0; seg < m; seg++)
             for (i = 0; i < 16u; i++) {
                 uint32_t at = seg * 16u + i;
                 *sq_np(k, at) = (uint8_t)clampi(n[i] + (m == 4u && seg == 2u ? 5 : 0), 0, 48);
                 *sq_fp(k, at) = f[i];
-                sqx.p[k].cond[at] = (uint8_t)(g[i] << 4);
+                *sq_cp(k, at) = (uint8_t)(g[i] << 4);
             }
         if (m > 1u) {                           /* the fill: the root, its fifth, the octave, the fifth */
             static const uint8_t UP[4] = {0, 7, 12, 7}, FL[4] = {SF_ON | SF_ACC, SF_ON, SF_ON | SF_SLIDE, SF_ON};
-            for (i = 0; i < 4u; i++) { uint32_t at = size - 4u + i; *sq_np(k, at) = (uint8_t)clampi((int32_t)(root + UP[i]), 0, 48); *sq_fp(k, at) = FL[i]; sqx.p[k].cond[at] = 0; }
+            for (i = 0; i < 4u; i++) { uint32_t at = size - 4u + i; *sq_np(k, at) = (uint8_t)clampi((int32_t)(root + UP[i]), 0, 48); *sq_fp(k, at) = FL[i]; *sq_cp(k, at) = 0; }
         }
     }
-    perf.pat[k].len = (uint8_t)size;
-    perf.pat[k].rate = 3;
+    sq_hd(k)->len = (uint8_t)size;
+    sq_hd(k)->rate = 3;
     if (sq_cur_step >= size) sq_cur_step = 0;
     sqx_touch();
 }
@@ -1469,7 +1495,7 @@ static void item_range(uint32_t id, int32_t *lo, int32_t *hi)
     if (id == G_L3_SHP) { *lo = PD[L1_SHP].lo; *hi = PD[L1_SHP].hi; }
     if (id == G_L3_DST) *hi = ND - 1;
     if (id >= G_SQ_STEP && id <= G_AR_GATE) {
-        static const int8_t LO[12] = {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1}, HI[12] = {15, 48, 4, 15, 16, 5, 50, 1, 4, 5, 3, 10};
+        static const int8_t LO[12] = {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1}, HI[12] = {15, 48, 4, SQ_NPAT - 1, 16, 5, 50, 1, 4, 5, 3, 10};
         *lo = LO[id - G_SQ_STEP]; *hi = HI[id - G_SQ_STEP];
         if (id == G_SQ_STEP) *hi = (int32_t)sq_len() - 1;
         if (id == G_SQ_LEN) *hi = SQ_MAX;
@@ -1480,6 +1506,10 @@ static void item_range(uint32_t id, int32_t *lo, int32_t *hi)
     if (id == G_SQ_LKV) { *lo = PD[PB_ID[sq_lkp % NPKB]].lo - 1; *hi = PD[PB_ID[sq_lkp % NPKB]].hi; }   /* (under the setting's range: OFF) */
     if (id == G_SQ_GATE) *hi = 15;
     if (id == G_SQ_PRESET) *hi = (int32_t)NSQP;
+    if (id == G_SQ_COPY) { *lo = -1; *hi = 1; }   /* (a button: right COPY, left PASTE) */
+    if (id == G_SQ_CHAIN) *hi = 1;
+    if (id == G_SQ_CHPOS) *hi = SQ_NCH - 1;
+    if (id == G_SQ_CHPAT) { *lo = -1; *hi = SQ_NPAT - 1; }   /* (-1: END, the CHAIN stops there and starts again) */
     if (id == G_DK_KSAT || id == G_DK_SNAP) { *lo = 0; *hi = 7; }
     if (id == G_DK_ECHO) { *lo = 0; *hi = 1; }
     if (id >= G_DK_LVL && id <= G_DK_SWING) {
@@ -1548,11 +1578,15 @@ static int32_t item_get(uint32_t id)
     case G_SQ_STEP: return sq_cur_step;
     case G_SQ_NOTE: return *sq_np(perf.cur, sq_cur_step);
     case G_SQ_TYPE: return (int32_t)sq_type(*sq_fp(perf.cur, sq_cur_step));
-    case G_SQ_PROB: return sqx.p[perf.cur % SQ_NPAT].prob[sq_cur_step % SQ_MAX];
-    case G_SQ_COND: return sqx.p[perf.cur % SQ_NPAT].cond[sq_cur_step % SQ_MAX] & 15u;
+    case G_SQ_PROB: return *sq_pp(perf.cur, sq_cur_step);
+    case G_SQ_COND: return *sq_cp(perf.cur, sq_cur_step) & 15u;
     case G_SQ_LKP: return sq_lkp % NPKB;
     case G_SQ_LKV: { int32_t i = pl_find(PL_BASS | perf.cur % SQ_NPAT, sq_cur_step % SQ_MAX, sq_lkp % NPKB); return i >= 0 ? pl.l[i].v : PD[PB_ID[sq_lkp % NPKB]].lo - 1; }
-    case G_SQ_GATE: return sqx.p[perf.cur % SQ_NPAT].cond[sq_cur_step % SQ_MAX] >> 4;
+    case G_SQ_GATE: return *sq_cp(perf.cur, sq_cur_step) >> 4;
+    case G_SQ_COPY: return 0;
+    case G_SQ_CHAIN: return sqy.ch_on ? 1 : 0;
+    case G_SQ_CHPOS: return sq_chpos;
+    case G_SQ_CHPAT: { uint32_t c = sqy.chain[sq_chpos % SQ_NCH]; return c < SQ_NPAT ? (int32_t)c : -1; }
     case G_SQ_PRESET: return sq_psel;
     case G_DK_KSAT: return dk.pad & 7u;
     case G_DK_SNAP: return dk.pad >> 3 & 7u;
@@ -1598,6 +1632,38 @@ static int32_t item_get(uint32_t id)
     }
 }
 static void new_step(uint32_t which);
+/* COPY / PASTE (1.0.53): COPY remembers the pattern; PASTE (turned twice) puts that pattern, as it is then, in the one
+ * shown: its 64 steps, chances, conditions, note lengths, length, rate, swing, PARAMETER LOCKS and AUTOMATION */
+static uint8_t sq_clip = 0xFF, sq_paste_arm;
+static uint32_t sq_paste_ms;
+static void sq_paste(void)
+{
+    uint32_t src = sq_clip % SQ_NPAT, dst = perf.cur % SQ_NPAT, i, n0, full = 0;
+    if (sq_clip >= SQ_NPAT) { toast("COPY A PATTERN FIRST"); return; }
+    if (src == dst) { toast("SAME PATTERN"); return; }
+    if (!sq_paste_arm || fm1_ms - sq_paste_ms > 3000u) { sq_paste_arm = 1; sq_paste_ms = fm1_ms; g_force = 1; toast("PASTE? TURN LEFT AGAIN"); return; }
+    sq_paste_arm = 0;
+    sq_backup(0);                               /* (PRESET back to MY PATTERN puts it back) */
+    for (i = 0; i < SQ_MAX; i++) { *sq_np(dst, i) = *sq_np(src, i); *sq_fp(dst, i) = *sq_fp(src, i); *sq_cp(dst, i) = *sq_cp(src, i); *sq_pp(dst, i) = *sq_pp(src, i); }
+    sq_hd(dst)->len = sq_hd(src)->len; sq_hd(dst)->rate = sq_hd(src)->rate; sq_hd(dst)->swing = sq_hd(src)->swing;
+    pl_drop(PL_BASS | dst, -1, -1, -1);
+    pl_drop(PL_AUTO | dst, -1, -1, -1);
+    n0 = pl.n <= PL_MAX ? pl.n : 0u;
+    for (i = 0; i < n0; i++) {
+        plk_t e = pl.l[i];
+        if (e.pat != (PL_BASS | src) && e.pat != (PL_AUTO | src)) continue;
+        if (pl.n >= PL_MAX) { full = 1; break; }
+        e.pat = (uint8_t)((e.pat & ~(uint32_t)(SQ_NPAT - 1u)) | dst);
+        pl.l[pl.n] = e;
+        pl.n++;
+    }
+    pl_mark();
+    sq_psel = 0;
+    if (sq_cur_step >= sq_len()) sq_cur_step = 0;
+    sq_mark_k(dst); perf_touch();
+    { char t[24], *b = str_cat(t, "P"); b = fmt_u(b, src + 1u, 2); b = str_cat(b, full ? " PASTED, LOCKS FULL" : " PASTED IN P"); if (!full) fmt_u(b, dst + 1u, 2); toast(t); }
+    g_force = 1;
+}
 static void item_set(uint32_t id, int32_t v)
 {
     int32_t lo, hi;
@@ -1645,12 +1711,36 @@ static void item_set(uint32_t id, int32_t v)
     }
     if (id == G_SQ_PROB || id == G_SQ_COND || id == G_SQ_GATE) {
         uint32_t k = perf.cur % SQ_NPAT, i = sq_cur_step % SQ_MAX;
-        uint8_t *c = &sqx.p[k].cond[i];
-        if (id == G_SQ_PROB) sqx.p[k].prob[i] = (uint8_t)v;
+        uint8_t *c = sq_cp(k, i);
+        if (id == G_SQ_PROB) *sq_pp(k, i) = (uint8_t)v;
         else if (id == G_SQ_COND) *c = (uint8_t)((*c & 0xF0u) | (uint32_t)v);
         else *c = (uint8_t)((*c & 15u) | (uint32_t)v << 4);
         sq_edited();
         sqx_touch();
+        return;
+    }
+    if (id == G_SQ_COPY) {
+        if (v > 0) { char t[20], *b; sq_clip = (uint8_t)(perf.cur % SQ_NPAT); sq_paste_arm = 0; b = str_cat(t, "P"); b = fmt_u(b, sq_clip + 1u, 2); str_cat(b, " COPIED"); toast(t); }
+        else if (v < 0) sq_paste();
+        g_force = 1;
+        return;
+    }
+    if (id == G_SQ_CHAIN || id == G_SQ_CHPOS || id == G_SQ_CHPAT) {   /* the CHAIN (1.0.53) */
+        if (id == G_SQ_CHPOS) { sq_chpos = (uint8_t)v; return; }
+        if (id == G_SQ_CHAIN) {
+            if (v && sqy.chain[0] >= SQ_NPAT) { sqy.chain[0] = perf.cur; sq_chpos = 0; }   /* (an empty CHAIN: it starts with the pattern shown) */
+            if (v && !sqy.ch_on) { sq_k = perf.cur; sq_chi = 0xFF; }   /* (playing: the CHAIN's start after this pattern) */
+            sqy.ch_on = (uint8_t)v;
+        } else {
+            uint32_t c = sq_chpos % SQ_NCH, i;
+            if (v < 0) { for (i = c; i < SQ_NCH; i++) sqy.chain[i] = 0xFF; }   /* (END: the rest goes) */
+            else {
+                for (i = 0; i < c; i++) if (sqy.chain[i] >= SQ_NPAT) sqy.chain[i] = (uint8_t)v;   /* (no holes before it) */
+                sqy.chain[c] = (uint8_t)v;
+            }
+        }
+        sqy_mark(); perf_touch();
+        g_force = 1;
         return;
     }
     if (id == G_SQ_ON) {                        /* the sequence on / off (the drums go on) */
@@ -1718,6 +1808,7 @@ static void item_set(uint32_t id, int32_t v)
         case G_AR_OCT: perf.ar_oct = (uint8_t)v; break;
         case G_AR_GATE: perf.ar_gate = (uint8_t)v; break;
         }
+        if (id <= G_SQ_SWING && id != G_SQ_PAT && perf.cur % SQ_NPAT >= SQ_NLO) sqy_mark();   /* (1.0.53: patterns 17..32 live in sqy, whole) */
         perf_touch();
         return;
     }
@@ -1840,6 +1931,10 @@ static const char *item_name(uint32_t id)
     case G_SQ_LKP: return "P-LOCK";
     case G_SQ_LKV: return "LOCK VALUE";
     case G_SQ_PAT: return "PATTERN";
+    case G_SQ_COPY: return "COPY / PASTE";
+    case G_SQ_CHAIN: return "CHAIN";
+    case G_SQ_CHPOS: return "CHAIN PLACE";
+    case G_SQ_CHPAT: return "CHAIN PATTERN";
     case G_SQ_LEN: return "PATTERN LENGTH";
     case G_SQ_GATE: return "NOTE LENGTH";
     case G_SQ_PRESET: return "PRESET";
@@ -2100,6 +2195,21 @@ static void item_text(uint32_t id, char *b)
         case G_DK_SWING: if (v) { b = fmt_u(b, 50u + (uint32_t)v / 2u, 0); str_cat(b, "%"); } else str_cat(b, "OFF"); break;
         case G_SQ_PAT: b = str_cat(b, "P"); b = fmt_u(b, (uint32_t)v + 1u, 2); if (v < 8) { b = str_cat(b, " "); str_cat(b, SQ_DEF[v][0]); } break;
         case G_SQ_LEN: b = fmt_u(b, (uint32_t)v, 0); str_cat(b, " STEPS"); break;
+        case G_SQ_COPY:
+            if (sq_paste_arm && fm1_ms - sq_paste_ms <= 3000u) { str_cat(b, "LEFT AGAIN: PASTE"); break; }
+            if (sq_clip < SQ_NPAT) { b = str_cat(b, "P"); b = fmt_u(b, sq_clip + 1u, 2); str_cat(b, " \xB7 LEFT: PASTE"); }   /* (right: COPY) */
+            else str_cat(b, "RIGHT: COPY");
+            break;
+        case G_SQ_CHAIN: {                      /* OFF, or the CHAIN: 1 2 2 3 ... */
+            uint32_t i;
+            if (!v) { str_cat(b, sqy.chain[0] < SQ_NPAT ? "OFF (KEPT)" : "OFF"); break; }
+            b = str_cat(b, "ON");
+            for (i = 0; i < SQ_NCH && sqy.chain[i] < SQ_NPAT && i < 8u; i++) { b = str_cat(b, i ? " " : " "); b = fmt_u(b, sqy.chain[i] + 1u, 0); }
+            if (i == 8u && sqy.chain[8] < SQ_NPAT) str_cat(b, "..");
+            break;
+        }
+        case G_SQ_CHPOS: b = fmt_u(b, (uint32_t)v + 1u, 0); str_cat(b, sq_chain_on() && sq_play && sq_chi == (uint8_t)v ? " / 16 \xB7 PLAYING" : " / 16"); break;
+        case G_SQ_CHPAT: if (v < 0) str_cat(b, "END"); else { b = str_cat(b, "P"); fmt_u(b, (uint32_t)v + 1u, 2); } break;
         case G_SQ_RATE: case G_AR_RATE: str_cat(b, L_SRATE[v % 6]); break;
         case G_SQ_SWING: if (v) { b = fmt_u(b, 50u + (uint32_t)v / 2u, 0); str_cat(b, "%"); } else str_cat(b, "OFF"); break;
         case G_AR_ON: str_cat(b, v ? "ON" : "OFF"); break;
@@ -2279,8 +2389,8 @@ static void key_down(uint32_t n, uint32_t vel)
         *sq_np(k, c) = (uint8_t)clampi((int32_t)n - 24, 0, 48);   /* (the note as heard: the step plays 24 + this; 1.0.44: it was n - 48 - 12 OCT, an octave under what was played at OCT -1) */
         if (sq_play) {
             *f = SF_ON;
-            sqx.p[k].cond[c] &= 15u;
-            sqx.p[k].prob[c] = 100;
+            *sq_cp(k, c) &= 15u;
+            *sq_pp(k, c) = 100;
             rec_hold.on = 1; rec_hold.n = (uint8_t)n; rec_hold.step = (uint8_t)c; rec_hold.at = ks_beats;
         } else {
             if (!(*f & SF_ON)) *f = SF_ON;
@@ -2302,7 +2412,7 @@ static void key_up(uint32_t n)
         uint32_t k = perf.cur % SQ_NPAT, held = (ks_beats + BEATS_WRAP - rec_hold.at) % BEATS_WRAP, i, best = 0;
         uint64_t q24 = (uint64_t)held * STEP_PB[sq_pat()->rate % 6u], bd = ~0ull;
         for (i = 0; i < 15u; i++) { uint64_t d = SQ_GL[i] > q24 ? SQ_GL[i] - q24 : q24 - SQ_GL[i]; if (d < bd) { bd = d; best = i; } }
-        sqx.p[k].cond[rec_hold.step % SQ_MAX] = (uint8_t)((sqx.p[k].cond[rec_hold.step % SQ_MAX] & 15u) | best << 4);
+        *sq_cp(k, rec_hold.step) = (uint8_t)((*sq_cp(k, rec_hold.step) & 15u) | best << 4);
         rec_hold.on = 0;
         sqx_touch();
     }
@@ -2456,10 +2566,11 @@ static void song_new(void)                      /* NEW SONG: the INIT sound, the
     notes_all_off();
     init_sound();
     dk_defaults(); pl_defaults(); sqx_defaults(); eq_defaults(); eq_dirty = 1;
-    for (k = 0; k < SQ_NPAT; k++) { memset(&perf.pat[k], 0, sizeof perf.pat[k]); perf.pat[k].len = 32; perf.pat[k].rate = 3; }
+    sqy_defaults();
+    for (k = 0; k < SQ_NPAT; k++) { memset(sq_hd(k), 0, sizeof(seqpat_t)); sq_hd(k)->len = 32; sq_hd(k)->rate = 3; }
     perf.cur = 0; sq_cur_step = 0; sq_psel = dk_psel = 0; sq_bk.ok = dk_bk.ok = 0;
     dk_cur = dk_trk = 0;
-    sqx_touch(); dk_touch(); pl_mark(); perf_touch();
+    sqx_mark(); sqy_mark(); dk_touch(); pl_mark(); perf_touch();
     toast("NEW SONG");
     g_force = 1;
 }
@@ -3190,6 +3301,7 @@ static void store_fixup(void)                   /* the store as read (or restore
     for (i = 0; i < NUSER; i++) if (!up_valid(i)) ustore[i].magic = 0;
     if (perf.magic != PF_MAGIC || perf.sum != perf_sum()) perf_defaults();
     if (sqx.magic != SX_MAGIC || sqx.sum != sqx_sum()) { sqx_defaults(); perf_touch(); }
+    if (sqy.magic != SY_MAGIC || sqy.sum != sqy_sum()) { sqy_defaults(); perf_touch(); }   /* (1.0.53: a store from before: those sectors empty) */
     if (dk.magic != DK_MAGIC || dk.sum != dk_sum()) { dk_defaults(); perf_touch(); }
     if (pl.magic != PL_MAGIC || pl.sum != pl_sum() || pl.n > PL_MAX) { pl_defaults(); perf_touch(); }
     perf.ar_on = 0;                             /* (the ARP starts off: a key does what it says) */
@@ -3379,6 +3491,12 @@ static void app_step(void)
         g_frame_send(draw_all);
     }
     if (sq_rec && !sq_play && vidx() != V_SEQ && vidx() != V_DRUM) { sq_rec = 0; rec_hold.on = 0; }
+    if (sq_play && sq_chain_on() && perf.cur != sq_k % SQ_NPAT) {   /* (the CHAIN went on to its next pattern: the page shows it) */
+        perf.cur = (uint8_t)(sq_k % SQ_NPAT); perf.sum = perf_sum();
+        sq_psel = 0; sq_bk.ok = 0;
+        if (sq_cur_step >= sq_len()) sq_cur_step = 0;
+        g_force = 1;
+    }
     aut_play();
     if (dk_hold && !dk_view()) dk_hold = 0;   /* (playing, REC goes on in every view: the knobs record locks) */
     if (perf_dirty && !sq_play && !ks_sounding && fm1_ms - perf_ms > 2000u) { perf_dirty = 0; if (perf_save()) toast("SEQ NOT SAVED"); }

@@ -22,8 +22,8 @@
 #define FELUCCA_ID "FM-1_970"                   /* K-WASUB's identity (KAWA's are 95N / 96N) */
 #endif
 #if !defined(DINGHY_HOST) && !defined(KAWA_WASM)
-#define STORE_LO 0x00097000u                    /* the store: 32 user patches; SEQ BASS, ARP, MACROS, the slots' rest; SEQ BASS's steps 17..64; DRUMS (2); PARAMETER LOCKS */
-#define STORE_HI 0x0009D000u
+#define STORE_LO 0x00097000u                    /* the store: 32 user patches; SEQ BASS, ARP, MACROS, the slots' rest; SEQ BASS's steps 17..64; DRUMS (2); PARAMETER LOCKS; SEQ BASS 17..32 + CHAIN (2) */
+#define STORE_HI 0x0009F000u                    /* (1.0.53: two sectors more, SEQ BASS 17..32 and the CHAIN) */
 #endif
 #include "platform.c"
 #if !defined(DINGHY_HOST) && !defined(KAWA_WASM)
