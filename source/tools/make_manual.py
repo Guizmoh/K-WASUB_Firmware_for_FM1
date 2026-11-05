@@ -68,7 +68,7 @@ def build(L):
             ("FX", T("SAT, VERB, DELAY, OTT, COMP, EQ, CHORUS, PHASER, CRUSH, MASTER", "SAT, VERB, DELAY, OTT, COMP, EQ, CHORUS, PHASER, CRUSH, MASTER"), T("<b>FX PADS</b>", "<b>FX PADS</b>")),
             ("ARP", T("presets A / B, SAVE, ARP", "presets A / B, SAVE, ARP"), T("random of the page", "aléatoire de la page")),
             ("GLO", T("SYSTEM, MIDI", "SYSTEM, MIDI"), T("CLASSIC ↔ SHIFT", "CLASSIC ↔ SHIFT")),
-            ("SEL", T("PERFORM → MORPH X/Y → FX LIVE → MACROS → MORPH A/B", "PERFORM → MORPH X/Y → FX LIVE → MACROS → MORPH A/B"), T("hear the saved sound (compare)", "écouter le son enregistré (comparer)")),
+            ("SEL", T("FILTER / COLOUR → FILTER MOD → PERFORM → MORPH X/Y → FX LIVE → MACROS → MORPH A/B", "FILTRE / COULEUR → MOD DU FILTRE → PERFORM → MORPH X/Y → FX LIVE → MACROS → MORPH A/B"), T("hear the saved sound (compare)", "écouter le son enregistré (comparer)")),
             ("SAVE", T("save", "enregistrer"), T("+ OCT− UNDO / OCT+ REDO (16 steps); on presets: favourite", "+ OCT− UNDO / OCT+ REDO (16 pas) ; sur les presets : favori")),
             ("PLAY", T("SEQ start / stop", "SEQ marche / arrêt"), T("HOLD: the keys stay on", "HOLD : les touches restent tenues")),
             ("REC", T("tap tempo · on SEQ: step record", "tap tempo · sur SEQ : enregistrement des pas"), T("stopped: <b>PANIC</b> · playing: <b>AUTOMATION</b> (turn knobs), alone: erase", "à l’arrêt : <b>PANIC</b> · en lecture : <b>AUTOMATION</b> (tourner des potards), seul : effacer")),
@@ -91,7 +91,8 @@ def build(L):
     pages = [("HOME", T("CURRENT PATCH, LIVE MIX", "CURRENT PATCH, LIVE MIX")),
              ("EDIT", T("OSCILLATOR A, OSCILLATOR B, SUB + NOISE, COMBINE A + B, OSCILLATOR C · SAMPLE", "OSCILLATEUR A, OSCILLATEUR B, SUB + BRUIT, COMBINER A + B, OSCILLATEUR C · SAMPLE")),
              ("ENV", T("AMP ENVELOPE, FILTER ENVELOPE, MOD ENVELOPE", "ENVELOPPE AMPLI, ENVELOPPE FILTRE, ENVELOPPE MOD")),
-             ("SEQ", T("FILTER / COLOUR, FILTER MOD, SEQ BASS, DRUMS", "FILTRE / COULEUR, MOD DU FILTRE, SEQ BASS, DRUMS")),
+             ("SEL", T("FILTER / COLOUR, FILTER MOD, then the windows (PERFORM, MORPH, FX LIVE, MACROS)", "FILTRE / COULEUR, MOD DU FILTRE, puis les fenêtres (PERFORM, MORPH, FX LIVE, MACROS)")),
+             ("SEQ", T("SEQ BASS, DRUMS", "SEQ BASS, DRUMS")),
              ("LFO", T("LFO 1 · WOBBLE, LFO 2 · MOTION, STEP FX, MOD MATRIX, LFO 3 · GLOBAL", "LFO 1 · WOBBLE, LFO 2 · MOUVEMENT, STEP FX, MATRICE DE MOD, LFO 3 · GLOBAL")),
              ("FX", T("SATURATION, REVERB, DELAY, MULTIBAND (OTT), COMPRESSOR, EQ, CHORUS, PHASER, CRUSH, MASTER (each effect\'s first row: its ON / OFF)", "SATURATION, REVERB, DELAY, MULTIBANDE (OTT), COMPRESSEUR, EQ, CHORUS, PHASER, CRUSH, MASTER (la première ligne de chaque effet : son ON / OFF)")),
              ("ARP", T("PRESET BANK A, PRESET BANK B, SAVE PATCH, ARPEGGIATOR", "BANQUE DE PRESETS A, BANQUE DE PRESETS B, ENREGISTRER LE PATCH, ARPEGIATEUR")),
@@ -273,7 +274,7 @@ def build(L):
     o.append(dbar)
     spec = "CAHIER-DES-CHARGES.md" if fr else "SPECIFICATIONS.md"
     o.append(f'<footer>{t(T("K-WASUB is free software (GPL-3.0), born from", "K-WASUB est un logiciel libre (GPL-3.0), né de"))} <a href="https://github.com/Guizmoh/Kawa-Tracker-Fm1">KAWA</a> (Omnipotard / Leo Kuroshita, Hügelton Instruments). '
-             f'{t(T("BETA version 1.0.52, tested on the FM-1. Tell me what you see on yours (GitHub, Issues).", "Version BÊTA 1.0.52, testée sur le FM-1. Dis-moi ce que tu vois sur le tien (GitHub, Issues)."))} <a href="index.html">← {t(T("Home", "Accueil"))}</a> · <a href="{spec}">{t(T("Specifications", "Cahier des charges"))}</a></footer>')
+             f'{t(T("BETA version 1.0.53, tested on the FM-1. Tell me what you see on yours (GitHub, Issues).", "Version BÊTA 1.0.53, testée sur le FM-1. Dis-moi ce que tu vois sur le tien (GitHub, Issues)."))} <a href="index.html">← {t(T("Home", "Accueil"))}</a> · <a href="{spec}">{t(T("Specifications", "Cahier des charges"))}</a></footer>')
     o.append('</main></div>')
     o.append(f'<a class="fab" href="{KOFI}" target="_blank" rel="noopener">☕ {t(T("Support K-WASUB", "Soutenir K-WASUB"))}</a>')
     o.append('''<script>

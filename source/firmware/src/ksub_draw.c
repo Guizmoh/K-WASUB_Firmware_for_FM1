@@ -13,7 +13,7 @@ static const uint8_t VZ_OF[] = {VZ_SCOPE, VZ_SCOPE, VZ_OSCA, VZ_OSCB, VZ_SUB, VZ
                                 VZ_SEQ, VZ_DRUM, VZ_LFO1, VZ_LFO2, VZ_STEP, VZ_NONE, VZ_NONE, VZ_DRIVE, VZ_REVERB, VZ_DELAY, VZ_OTT, VZ_COMP, VZ_NONE,
                                 VZ_CHORUS, VZ_PHASER, VZ_CRUSH, VZ_MASTER, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_CPU, VZ_NONE};
 typedef char vz_fits[sizeof VZ_OF == sizeof VIEWS / sizeof VIEWS[0] ? 1 : -1];
-static const char *const PAGE_SHORT[NPAGE] = {"PLAY", "BASS", "ENV", "FILT", "LFO", "FX", "PRE", "SYS"};
+static const char *const PAGE_SHORT[NPAGE] = {"PLAY", "BASS", "ENV", "SEQ", "LFO", "FX", "PRE", "SYS"};   /* (1.0.53: the filter on SEL, SEQ BASS and DRUMS on SEQ) */
 /* LANGUAGE (SYSTEM): only the view titles (v->cat, top of every screen) are translated; parameter names and values
  * stay in English, as on most hardware synths, and to keep every screen's layout untouched */
 static const char *const L_CAT[27][3] = {
@@ -986,9 +986,11 @@ static const char *foot_fixed(uint32_t vi)
 }
 static void view_dots(int32_t xr, int32_t y)    /* the page's views: one dot each, the one shown lit */
 {
-    uint32_t nv = (uint32_t)(PAGE_V0[page + 1u] - PAGE_V0[page]), i;
-    int32_t x = xr - (int32_t)nv * 5;
-    for (i = 0; nv > 1u && i < nv; i++) g_rect(x + (int32_t)i * 5, y + 1, 3, 3, i == vcur[page] ? K_LIME : K_LINE);
+    uint32_t nv = (uint32_t)(PAGE_V0[page + 1u] - PAGE_V0[page]), i, lo = 0;
+    int32_t x;
+    if (page == PG_FILT) { lo = filt_zone() ? 0u : 2u; nv = 2u; }   /* (SEL's two filter views, or SEQ's two) */
+    x = xr - (int32_t)nv * 5;
+    for (i = 0; nv > 1u && i < nv; i++) g_rect(x + (int32_t)i * 5, y + 1, 3, 3, lo + i == vcur[page] ? K_LIME : K_LINE);
 }
 /* the battery, top right: five segments (the percentage only in SYSTEM); returns its left edge */
 static int32_t batt_draw(int32_t xr, int32_t y, int pct)
@@ -1307,7 +1309,8 @@ static void th_pure(const view_t *v, uint32_t vi)
         for (y = 0; y < 17; y++) if (g_vis(y, 1)) g_rect(0, y, w + (16 - y) / 2 + 4, 1, K_LIME);
         g_text(T_S, 7, 4, cc, K_INK);
         p = fmt_u(s, (uint32_t)page + 1u, 2);
-        if (nv > 1u) { p = str_cat(p, " \xB7 "); p = fmt_u(p, vcur[page] + 1u, 0); p = str_cat(p, "/"); fmt_u(p, nv, 0); }
+        if (page == PG_FILT) nv = 2u;           /* (SEL's filter views, SEQ's views: two each) */
+        if (nv > 1u) { p = str_cat(p, " \xB7 "); p = fmt_u(p, vcur[page] % 2u + 1u, 0); p = str_cat(p, "/"); fmt_u(p, nv, 0); }
         g_text_r(T_XS, batt_draw(234, 4, v->lay == LY_SYS) - 6, 5, s, K_GREY);
     }
     if (v->lay == LY_PRESET || v->lay == LY_SAVE || v->lay == LY_SYS || !vz) {   /* lists: rows under the title */
@@ -2388,14 +2391,14 @@ static void draw_ask(void)
         {"SHIFT", "12 SETTINGS A PAGE, 3 COLUMNS", "KNOBS: LEFT  HOLD OCT-: MIDDLE", "HOLD OCT+: RIGHT  TAP: OCTAVE"}};
     uint32_t k;
     if (ask_on == 2u) {                         /* the very first start: the look, four little pictures (each in its own colours) */
-        static const char *const TT[4] = {"CLASSIC", "STUDIO", "PURE", "RIBBON CLASSIC"};
+        static const char *const TT[4] = {"CLASSIC", "RIBBON CLASSIC", "STUDIO", "PURE"};
         g_text_c(T_XS, 120, 6, "CHOOSE A LOOK", K_GREY);
         for (k = 0; k < 4u; k++) {
             int32_t x = 4 + (int32_t)(k & 1u) * 118, y = 18 + (int32_t)(k >> 1) * 100, sx = x + 5, sy = y + 5, i;
             if (!g_vis(y, 98)) continue;
             theme_set(ASK_TH[k], set.pal);      /* (the tile in that look's colours) */
             g_box(x, y, 114, 96, K_BG, K_LINE);
-            switch (k) {
+            switch (ASK_TH[k] == 7u ? 0u : ASK_TH[k] == 1u ? 1u : ASK_TH[k] == 2u ? 2u : 3u) {   /* (by the look, not the place) */
             case 0:                             /* CLASSIC: a title, a picture, the rows (flat) */
                 g_rect(sx, sy, 50, 3, K_LIME); g_rect(sx, sy + 6, 104, 1, K_LIME);
                 g_rect(sx, sy + 10, 70, 7, K_WHITE);
