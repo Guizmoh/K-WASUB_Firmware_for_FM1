@@ -297,7 +297,7 @@ def gen_samples():
     vin = np.convolve(vin, np.exp(-np.arange(12) / 2), "same") + rng.standard_normal(len(tt)) * .03
     out.append(("VINYL", norm(loopify(vin, 150), .7), S2, 0, 0))
     hs = rng.standard_normal(len(tt)); hs = hs - np.convolve(hs, np.ones(3) / 3, "same")
-    out.append(("TAPE HISS", norm(loopify(hs * (1 + .2 * np.sin(2 * np.pi * 3 * tt)), 150), .5), S2, 0, 0))
+    out.append(("TAPE HISS", norm(loopify((hs * (1 + .2 * np.sin(2 * np.pi * 3 * tt)))[:int(.6 * S2)], 150), .5), S2, 0, 0))   # (1.0.60: 0.6 s, the same hiss; 4 KB of flash for the code)
     rn = np.zeros(len(tt)); idx = rng.integers(0, len(tt), 400); rn[idx] = rng.uniform(.2, 1, 400)
     rn = np.convolve(rn, np.sin(np.arange(30) * .9) * np.exp(-np.arange(30) / 6), "same") + rng.standard_normal(len(tt)) * .08
     out.append(("RAIN", norm(loopify(rn, 150), .8), S2, 0, 0))

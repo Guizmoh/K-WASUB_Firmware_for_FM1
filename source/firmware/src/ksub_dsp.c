@@ -1231,7 +1231,7 @@ static void seq_step_on(void)
                 if (e->pat == (PL_BASS | k) && e->step == i && (e->tp & 15u) < NPKB) { mk |= 1u << (e->tp & 15u); sq_lkv[e->tp & 15u] = e->v; }
             }
             sq_lkm = (uint8_t)mk;
-            sq_sound((uint32_t)clampi(24 + *sq_np(k, i) + sq_tr, 0, 127), f & SF_ACC ? 127u : 90u, slide, SQ_GL[*sq_cp(k, i) >> 4]);
+            sq_sound((uint32_t)clampi(24 + *sq_np(k, i) + sq_tr, 0, 127), f >> 3 ? (f >> 3) * 4u + 3u : f & SF_ACC ? 127u : 90u, slide, SQ_GL[*sq_cp(k, i) >> 4]);   /* (fl bits 3-7: the step's velocity, 0 as before; 1.0.60) */
             sq_slide = (uint8_t)(f & SF_SLIDE);
         } else if (sq_slide || !SQ_BASS_ON) sq_off();   /* (a rest: a slide stops; a long note goes on to its end) */
         return;

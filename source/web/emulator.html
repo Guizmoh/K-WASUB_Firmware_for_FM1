@@ -134,7 +134,7 @@ button.primary { background: var(--lime); color: #11160a; border-color: var(--li
     <details>
       <summary><span class="help-title"><span lang="en">PAGES</span><span lang="fr">PAGES</span></span></summary>
       <ul>
-        <li><span lang="en"><b>HOME</b> 01 PLAY &middot; <b>EDIT</b> 02 BASS &middot; <b>ENV</b> 03 ENVELOPE &middot; <b>SEQ</b> 04 SEQ BASS, PIANO ROLL, DRUMS &middot; <b>LFO</b> 05 &middot; <b>FX</b> 06 &middot; <b>ARP</b> 07 PRESETS &middot; <b>GLO</b> 08 SYSTEM</span><span lang="fr"><b>HOME</b> 01 PLAY &middot; <b>EDIT</b> 02 BASS &middot; <b>ENV</b> 03 ENVELOPE &middot; <b>SEQ</b> 04 SEQ BASS, PIANO ROLL, DRUMS &middot; <b>LFO</b> 05 &middot; <b>FX</b> 06 &middot; <b>ARP</b> 07 PRESETS &middot; <b>GLO</b> 08 SYSTEM</span></li>
+        <li><span lang="en"><b>HOME</b> 01 PLAY &middot; <b>EDIT</b> 02 BASS &middot; <b>ENV</b> 03 ENVELOPE &middot; <b>SEQ</b> 04 SEQ BASS, PIANO ROLL, DRUMS &middot; <b>LFO</b> 05 &middot; <b>FX</b> 06 &middot; <b>ARP</b> 07 ARPEGGIATOR &middot; <b>SAVE</b> SAVE, PRESETS &middot; <b>GLO</b> 08 SYSTEM</span><span lang="fr"><b>HOME</b> 01 PLAY &middot; <b>EDIT</b> 02 BASS &middot; <b>ENV</b> 03 ENVELOPE &middot; <b>SEQ</b> 04 SEQ BASS, PIANO ROLL, DRUMS &middot; <b>LFO</b> 05 &middot; <b>FX</b> 06 &middot; <b>ARP</b> 07 ARPEGGIATOR &middot; <b>SAVE</b> SAVE, PRESETS &middot; <b>GLO</b> 08 SYSTEM</span></li>
         <li><span lang="en">A page button opens the <b>first view</b> of its page; press it again for the next view (the dots at the top right show the views)</span><span lang="fr">Un bouton de page ouvre la <b>première vue</b> de sa page ; appuyer encore : vue suivante (les points en haut à droite montrent les vues)</span></li>
         <li><span lang="en"><b>SELECT</b> chooses the row, <b>ALGO</b> changes its value, <b>K1–K4</b> do what the bottom of the screen says</span><span lang="fr"><b>SELECT</b> choisit la ligne, <b>ALGO</b> change sa valeur, <b>K1–K4</b> font ce que dit le bas de l'écran</span></li>
         <li><span lang="en"><b>PRESETS</b> changes the sound at once, on HOME and on the PRESETS page (<b>ARP</b>)</span><span lang="fr"><b>PRESETS</b> change le son tout de suite, sur HOME et sur la page PRESETS (<b>ARP</b>)</span></li>
@@ -276,8 +276,8 @@ const BTN = { OCT_DOWN: 0, OCT_UP: 1, FX: 2, SEL: 3, ENV: 4, LFO: 5, EDIT: 6, GL
 const BTN_GRID = [["FX", "FX"], ["SEL", "SEL"], ["ENV", "ENV"], ["LFO", "LFO"], ["EDIT", "EDIT"], ["GLO", "GLO"],
                   ["HOME", "HOME"], ["SAVE", "SAVE"], ["ARP", "ARP"], ["SEQ", "SEQ"], ["PLAY", "PLAY<br>STOP"], ["REC", "REC"]];
 const BTN_TITLE = { HOME: "HOME \xB7 PLAY", EDIT: "EDIT \xB7 BASS", ENV: "ENV \xB7 ENVELOPE", SEQ: "SEQ \xB7 SEQ BASS \xB7 PIANO ROLL \xB7 DRUMS", LFO: "LFO",
-                    FX: "FX \xB7 held: FX PADS", ARP: "ARP \xB7 PRESETS \xB7 ARP", GLO: "GLO \xB7 SYSTEM \xB7 held: CLASSIC/SHIFT",
-                    SEL: "SEL \xB7 FILTER \xB7 PERFORM \xB7 MORPH \xB7 FX LIVE \xB7 held: A/B", SAVE: "SAVE \xB7 held: UNDO/REDO",
+                    FX: "FX \xB7 held: FX PADS", ARP: "ARP \xB7 ARPEGGIATOR", GLO: "GLO \xB7 SYSTEM \xB7 held: CLASSIC/SHIFT",
+                    SEL: "SEL \xB7 FILTER \xB7 PERFORM \xB7 MORPH \xB7 FX LIVE \xB7 held: A/B", SAVE: "SAVE \xB7 SOUNDS A / B \xB7 held: WRITE (on SAVE) / UNDO-REDO",
                     PLAY: "PLAY/STOP \xB7 held: HOLD", REC: "REC \xB7 TAP tempo" };
 const ENC = { SELECT: 0, ALGO: 1, K1: 2, K2: 3, K3: 4, K4: 5, PRESETS: 6 };
 const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };

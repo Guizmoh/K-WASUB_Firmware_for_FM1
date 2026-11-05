@@ -1245,6 +1245,7 @@ static const char *const PW_NAME[16] = {"1 BAR", "1/2", "4", "8", "16", "24", "3
 static const uint8_t PW_DIV[8] = {2, 3, 6, 9, 11, 12, 13, 14};      /* DIV: 1 bar, 1/2, 1/4, 1/8, 1/16, 1/16T, 1/32, 1/32T */
 static const uint8_t PW_DEP[4] = {0, 16, 40, 63}, PW_SHP[4] = {0, 1, 4, 5};
 static const uint8_t PK_WHITE[16] = {0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26};
+#define PK_IS_WHITE(k) ((0x5ad5ad5u >> (k)) & 1u)
 static const uint8_t PK_BLACK[NPB] = {1, 3, 5, 8, 10, 13, 15, 17, 20, 22, 25};
 static uint16_t pad_mask, pad_ov;               /* the black pads down; those that changed the patch (to put back) */
 static int8_t pad_sv[2][3];
@@ -1488,6 +1489,47 @@ static void dk_key_up(uint32_t k)
         dk_edited(); dk_touch();
     }
     dk_hold = 0;
+}
+
+/* ---- SEQ BASS (its view, no REC, no window): the WHITE keys are the steps of the page shown (OCT- / OCT+ the page), as on
+ * DRUMS; a key held + K1 NOTE, K2 LENGTH, K3 CONDITION, K4 VELOCITY (fl bits 3-7); a key tapped turns its step on / off (1.0.60) */
+static uint8_t sb_hold, sb_used, sb_was;
+static void edit_item(uint32_t id, int32_t d);
+static int sb_view(void) { return page == PG_FILT && vidx() == V_SEQ && !win && !ask_on && !C3_ON && !sq_rec; }
+static void sb_key(uint32_t k, int down)
+{
+    uint32_t i, s, kk = perf.cur % SQ_NPAT;
+    uint8_t *f;
+    for (i = 0; i < 16u && PK_WHITE[i] != k; i++) {}
+    if (i >= 16u) return;
+    s = sq_cur_step / 16u * 16u + i;
+    f = sq_fp(kk, s);
+    if (down) {
+        if (s >= sq_len()) { toast("PAST THE PATTERN'S END"); return; }
+        sq_cur_step = (uint8_t)s; sb_hold = (uint8_t)(s + 1u); sb_used = 0; sb_was = (uint8_t)(*f & SF_ON);
+        if (!sb_was) { *f |= SF_ON; sq_edited(); sqx_touch(); }
+        if (!sq_play) ev_push(EV_ON, 24u + *sq_np(kk, s), 100);
+        g_force = 1;
+    } else if (sb_hold == s + 1u) {
+        if (!sq_play) ev_push(EV_OFF, 24u + *sq_np(kk, s), 0);
+        if (sb_was && !sb_used) { *f &= (uint8_t)~SF_ON; sq_edited(); sqx_touch(); }
+        sb_hold = 0; g_force = 1;
+    }
+}
+static void sb_knob(uint32_t w, int32_t d)     /* (a step held: its note, length, condition, velocity) */
+{
+    static const uint8_t SK[3] = {G_SQ_NOTE, G_SQ_GATE, G_SQ_COND};
+    char t[24];
+    sb_used = 1;
+    if (w < 3u) { uint32_t kk = perf.cur % SQ_NPAT, s = sq_cur_step; if (!sq_play && w == 0u) ev_push(EV_OFF, 24u + *sq_np(kk, s), 0); edit_item(SK[w], d); if (!sq_play && w == 0u) ev_push(EV_ON, 24u + *sq_np(kk, s), 100); return; }
+    {
+        uint8_t *f = sq_fp(perf.cur % SQ_NPAT, sq_cur_step);
+        int32_t v = *f >> 3 ? *f >> 3 : *f & SF_ACC ? 31 : 22;
+        v = clampi(v + d, 1, 31);
+        *f = (uint8_t)((*f & 7u) | (uint32_t)v << 3);
+        str_cat(fmt_u(str_cat(t, "VELOCITY "), (uint32_t)v * 100u / 31u, 0), "%");
+        toast(t); sq_edited(); sqx_touch();
+    }
 }
 
 /* ---- SAVE (the patch's name): the keys are a letter keyboard, as drawn: black A B C | D E | F G H | I J | K, white L M N O P Q R S
@@ -1844,7 +1886,7 @@ static void item_set(uint32_t id, int32_t v)
         switch (id) {
         case G_SQ_STEP: sq_cur_step = (uint8_t)v; return;
         case G_SQ_NOTE: *sq_np(perf.cur, sq_cur_step) = (uint8_t)v; if (!(*nf & SF_ON)) *nf = SF_ON; if (sq_cur_step >= 16u) sqx_mark(); sq_edited(); break;
-        case G_SQ_TYPE: *nf = SQ_FL[v]; if (sq_cur_step >= 16u) sqx_mark(); sq_edited(); break;
+        case G_SQ_TYPE: *nf = (uint8_t)(SQ_FL[v] | (*nf & 0xF8u)); if (sq_cur_step >= 16u) sqx_mark(); sq_edited(); break;
         case G_SQ_PAT: perf.cur = (uint8_t)v; sq_edited(); if (sq_cur_step >= sq_len()) sq_cur_step = 0; break;
         case G_SQ_LEN: q->len = (uint8_t)v; if (sq_cur_step >= v) sq_cur_step = (uint8_t)(v - 1); if (sq_psel) sq_load_preset(sq_psel); else sq_edited(); break;
         case G_SQ_RATE: q->rate = (uint8_t)v; sq_edited(); break;
@@ -2400,11 +2442,15 @@ static void ui_leds(void)
     for (i = 0; i < 41u; i++) led_want[i] = 0;
     if (new_arm && fm1_ms - new_ms > 3000u) { new_arm = 0; g_force = 1; }
     { uint32_t sw = win && win != 8u && win != 9u;   /* (a SEL window; the PIANO ROLL is SEQ's) */
-      for (i = 0; i < NPAGE; i++) led(PAGE_BTN[i], i == page && !sw && !(i == PG_FILT && filt_zone()) ? 2u : 1u);
+      for (i = 0; i < NPAGE; i++) led(PAGE_BTN[i], i == page && !sw && !(i == PG_FILT && filt_zone()) && !(i == PG_PRE && vcur[PG_PRE] != ARP_VIEW) ? 2u : 1u);
       led(BTN_SEL, sw || filt_zone() ? 2u : 1u); }   /* (a SEL window or the filter: SEL lit, not the page under it; 1.0.54) */
     led(BTN_PLAY, sq_play ? (beat ? 2u : 1u) : hold ? 1u : 0u);
     led(BTN_REC, sq_rec ? 2u : beat ? 1u : 0u);
-    led(BTN_SAVE, VIEWS[vidx()].lay == LY_SAVE ? 2u : 0u);
+    led(BTN_SAVE, page == PG_PRE && vcur[PG_PRE] != ARP_VIEW && !win ? 2u : 0u);   /* (SAVE and the sounds' lists) */
+    if (sb_view()) {                            /* SEQ BASS: the white keys light on its steps that play, on the page shown */
+        uint32_t len = sq_len(), base = sq_cur_step / 16u * 16u;
+        for (i = 0; i < 16u; i++) if (base + i < len && (*sq_fp(perf.cur % SQ_NPAT, base + i) & SF_ON)) led(KEY_LED(PK_WHITE[i]), 2u);
+    }
     if (dk_view()) {                            /* DRUMS: the white keys light where the chosen instrument hits on the page shown (a landmark, as the dots on the screen) */
         const dkpat_t *q = dk_pp();
         uint32_t len = dk_len(), t = dk_trk % NDK, base = dk_cur / 16u * 16u;
@@ -2707,7 +2753,8 @@ static void on_button(uint32_t b)
     for (i = 0; i < NPAGE; i++)
         if (PAGE_BTN[i] == b) {
             if (win && win != 3u) { win = 0; vpop_ms = 0; page = (uint8_t)i; first_view(i); if (i == PG_PRE) vcur[i] = ARP_VIEW; name_trim(); return; }   /* (a window open: back to that page) */
-            if (page == i && !(i == PG_FILT && filt_zone())) view_next();
+            if (page == i && i == PG_PRE) vcur[i] = ARP_VIEW;   /* (ARP: the ARPEGGIATOR only; the sounds are on SAVE, 1.0.60) */
+            else if (page == i && !(i == PG_FILT && filt_zone())) view_next();
             else if (i == PG_FILT) { page = (uint8_t)i; first_view(i); }
             else { page = (uint8_t)i; first_view(i); if (i == PG_PRE) vcur[i] = ARP_VIEW; }   /* (another page: always its first view; the ARP button's: the ARPEGGIATOR, then PRESETS A, B; 1.0.45) */
             if (VIEWS[vidx()].lay == LY_SAVE) vcur[i]++;   /* (SAVE opens from SAVE only: on to the ARP) */
@@ -2726,9 +2773,11 @@ static void on_button(uint32_t b)
         vpop_ms = 0;
         g_force = 1;
         break;
-    case BTN_SAVE:
-        if (VIEWS[vidx()].lay == LY_SAVE) { name_trim(); save_user(save_slot); vcur[PG_PRE] = 1; pre_cur[1] = save_slot; }
+    case BTN_SAVE:                              /* (1.0.60) SAVE, then SELECT PATCH A, B, round; SAVE held on SAVE writes */
+        if (page == PG_PRE && vcur[PG_PRE] == 2u) { name_trim(); vcur[PG_PRE] = 0; }
+        else if (page == PG_PRE && vcur[PG_PRE] == 0u) vcur[PG_PRE] = 1;
         else save_open();
+        g_force = 1;
         break;
     case BTN_PLAY:                              /* SEQ BASS: play / stop (held: HOLD, ui_input); in MORPH A/B: across */
         if (win == 5u) { ab_go(); break; }
@@ -2757,6 +2806,16 @@ static void on_button(uint32_t b)
     case BTN_OCT_DOWN:
     case BTN_OCT_UP:
         if ((fm1_in.buttons & 3u) == 3u) { panic_all(); break; }
+        if (sb_view()) {                        /* SEQ BASS: OCT- / OCT+ the page of 16 steps (1.0.60) */
+            uint32_t len = sq_len(), np = (len + 15u) / 16u, pg = sq_cur_step / 16u;
+            char t[16], *p;
+            pg = b == BTN_OCT_UP ? (pg + 1u) % np : (pg + np - 1u) % np;
+            sq_cur_step = (uint8_t)(pg * 16u + sq_cur_step % 16u);
+            if (sq_cur_step >= len) sq_cur_step = (uint8_t)(len - 1u);
+            p = fmt_u(str_cat(t, "PAGE "), pg + 1u, 0); p = str_cat(p, "/"); fmt_u(p, np, 0);
+            toast(t); g_force = 1;
+            break;
+        }
         if (dk_view()) {                        /* DRUMS: OCT- / OCT+ the page of 16 steps */
             uint32_t len = dk_len(), np = (len + 15u) / 16u, pg = dk_cur / 16u;
             char t[16], *p;
@@ -2786,6 +2845,7 @@ static void on_enc(uint32_t e, int32_t d)
 {
     const view_t *v = view();
     uint32_t vi = vidx();
+    if (sb_hold && sb_view() && e >= ENC_KNOB1 && e <= ENC_KNOB4) { sb_knob(e - ENC_KNOB1, d); g_force = 1; return; }   /* (SEQ BASS: a step held) */
     if (dk_view() && e != ENC_PRESETS) {        /* DRUMS: a step held, its locks (K1-K4 LEVEL TUNE DECAY TONE, ALGO RATCHET, SELECT ECHO); REC playing: K1-K4 locked on the step now */
         if (dk_hold) { dk_lock_at(dk_hold - 1u, e == ENC_ALGORITHM ? PK_RAT : e == ENC_SELECT ? PK_ECHO : e - ENC_KNOB1, d); return; }
         if (sq_rec && sq_play && e >= ENC_KNOB1 && e <= ENC_KNOB4) { dk_lock_at(dk_now_step(), e - ENC_KNOB1, d); return; }
@@ -2887,7 +2947,7 @@ static void on_enc(uint32_t e, int32_t d)
             uint32_t k;
             pre_tag = (uint8_t)clampi(pre_tag + d, 0, NTAG);
             if (!pre_match(bank, pre_cur[bank])) for (k = 0; k < n; k++) if (pre_match(bank, k)) { pre_cur[bank] = (uint8_t)k; break; }
-            q = str_cat(str_cat(t, "TAG "), L_TAG[pre_tag]); q = str_cat(q, " \xB7 "); fmt_u(q, pre_count(bank), 0);
+            q = str_cat(str_cat(t, "CAT "), L_TAG[pre_tag]); q = str_cat(q, " \xB7 "); fmt_u(q, pre_count(bank), 0);
             toast(t);
         }
         else if (e == ENC_KNOB3 || e == ENC_ALGORITHM) ask_load(bank, pre_cur[bank]);
@@ -2942,7 +3002,7 @@ static uint32_t hold_time(uint32_t b)           /* how long until the held actio
     if (b == BTN_HOME || b == BTN_REC) return 800u;
     if (b == BTN_GLO) return 900u;
     if (b == BTN_OCT_UP && win == 7u) return 0u;   /* (PERFORM: OCT+ held is the pads) */
-    if (b <= BTN_OCT_UP && dk_view()) return 0u;   /* (DRUMS: OCT- held + a black key mutes; no UNDO there, SAVE held + OCT- still) */
+    if (b <= BTN_OCT_UP && (dk_view() || sb_view())) return 0u;   /* (DRUMS: OCT- held + a black key mutes; no UNDO there, SAVE held + OCT- still) */
     if (b <= BTN_OCT_UP) return 1000u;      /* (no knob turned: UNDO / REDO; with one it is SHIFT) */
     if (b == BTN_PLAY) return 600u;
     if (b == BTN_ARP) return 0u;
@@ -2955,7 +3015,7 @@ static const char *hold_label(uint32_t b)
     int pg = page_of_btn(b);
     if (b == BTN_SAVE && PRE_BROWSING) { uint32_t bk = vcur[PG_PRE] ? 1u : 0u;
         return fav_is(bk, pre_cur[bk]) ? "REMOVE FROM FAVORITES" : "ADD TO FAVORITES"; }
-    if (b == BTN_SAVE) return "UNDO / REDO";
+    if (b == BTN_SAVE) return save_view() ? "WRITE THE SOUND" : "UNDO / REDO";
     if (b == BTN_SEL) return "COMPARE: THE SAVED SOUND";
     if (b == BTN_FX) return win == 6u ? "BACK" : "FX PADS: THE KEYS PLAY EFFECTS";
     if (b == BTN_HOME) return "A + B: THE TWO OSCILLATORS";
@@ -3196,6 +3256,7 @@ static void ui_input(void)
         uint32_t held = (fm1_in.buttons >> hb.b) & 1u;
         if (held && !hb.used && hb.next && fm1_ms - hb.at >= hb.next) {
             if (hb.b == BTN_SAVE && PRE_BROWSING) { favorite(); hb.next = 0; }
+            else if (hb.b == BTN_SAVE && save_view() && !hb.fired) { name_trim(); save_user(save_slot); vcur[PG_PRE] = 1; pre_cur[1] = save_slot; hb.next = 0; }   /* (SAVE held on SAVE: write; 1.0.60) */
             else if (hb.b == BTN_SAVE) { ur_on = 1; hb.next = 0; }   /* (then OCT- UNDO, OCT+ REDO) */
             else if (hb.b == BTN_SEL) { compare(1); hb.next = 0; }
             else if (hb.b == BTN_PLAY) { hold_toggle(); hb.next = 0; }
@@ -3264,6 +3325,11 @@ static void ui_input(void)
         if (save_view()) {                      /* SAVE: the keys type the name */
             if ((ne & m) || ((now & m) && !(prev_keys & m))) save_key(k);
             else if (!(now & m) && (prev_keys & m) && phys[key_note[k]]) key_up(key_note[k]);
+            continue;
+        }
+        if (sb_view() && PK_IS_WHITE(k)) {      /* SEQ BASS: the white keys are its steps (1.0.60) */
+            if ((ne & m) || ((now & m) && !(prev_keys & m))) sb_key(k, 1);
+            else if (!(now & m) && (prev_keys & m)) { sb_key(k, 0); if (phys[key_note[k]]) key_up(key_note[k]); }
             continue;
         }
         if (dk_view()) {                        /* DRUMS: the keys program the drums */

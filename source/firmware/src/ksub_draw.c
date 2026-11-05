@@ -13,6 +13,7 @@ static const uint8_t VZ_OF[] = {VZ_SCOPE, VZ_SCOPE, VZ_SCOPE, VZ_MIX, VZ_OSCA, V
                                 VZ_SEQ, VZ_DRUM, VZ_LFO1, VZ_LFO2, VZ_NONE, VZ_STEP, VZ_NONE, VZ_DRIVE, VZ_REVERB, VZ_DELAY, VZ_COMP, VZ_NONE,
                                 VZ_CHORUS, VZ_CRUSH, VZ_MASTER, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_CPU, VZ_NONE};   /* (1.0.54's order) */
 typedef char vz_fits[sizeof VZ_OF == sizeof VIEWS / sizeof VIEWS[0] ? 1 : -1];
+#define K_FOOT g_mix(K_GREY, K_WHITE, 180)       /* (1.0.60: the knobs' line at the bottom, lighter) */
 static const char *const PAGE_SHORT[NPAGE] = {"PLAY", "BASS", "ENV", "SEQ", "LFO", "FX", "PRE", "SYS"};   /* (1.0.53: the filter on SEL, SEQ BASS and DRUMS on SEQ) */
 /* LANGUAGE (SYSTEM): only the view titles (v->cat, top of every screen) are translated; parameter names and values
  * stay in English, as on most hardware synths, and to keep every screen's layout untouched */
@@ -768,10 +769,10 @@ static const char *view_title(uint32_t vi, char *t, char *sub)
     case LY_PRESET:
         p = str_cat(sub, vi == PAGE_V0[PG_PRE] ? "FACTORY \xB7 " : "USER \xB7 ");
         p = fmt_u(p, vi == PAGE_V0[PG_PRE] ? NFACTORY : NUSER, 0);
-        p = str_cat(p, " \xB7 TAG ");
+        p = str_cat(p, " \xB7 CAT ");
         str_cat(p, L_TAG[pre_tag]);
         return "SELECT PATCH";
-    case LY_SAVE: str_cat(sub, "SAVE: WRITE \xB7 SEL: LOAD THIS SLOT"); return pname;
+    case LY_SAVE: str_cat(sub, "HOLD SAVE: WRITE \xB7 SEL: LOAD THIS SLOT"); return pname;
     case LY_SYS:
         if (vi == PAGE_V0[PG_SYS] + 1u) { str_cat(sub, "THEME \xB7 PALETTE \xB7 FONT \xB7 LOUPE \xB7 BRIGHTNESS"); return "DISPLAY"; }
         if (vi == PAGE_V0[PG_SYS] + 2u) { str_cat(sub, "CPU \xB7 LAST STOP \xB7 KNOBS \xB7 NEW SONG"); return "ADVANCED"; }
@@ -985,7 +986,7 @@ static void foot_text(const view_t *v, char *b, int32_t maxw)   /* all four if t
 static const char *foot_fixed(uint32_t vi)
 {
     switch (VIEWS[vi].lay) {
-    case LY_PRESET: return "K1 SCROLL \xB7 K2 FAVS \xB7 K3 LOAD \xB7 K4 TAG";
+    case LY_PRESET: return "K1 SCROLL \xB7 K2 FAVS \xB7 K3 LOAD \xB7 K4 CAT";
     case LY_SAVE: return "KEYS TYPE \xB7 K1 SLOT \xB7 K2 PLACE \xB7 SEL LOAD";
     default: return 0;
     }
@@ -1020,8 +1021,17 @@ static void presets_g(uint32_t bank, int32_t x, int32_t y0, int32_t w, int32_t h
 {
     uint32_t c = pre_cur[bank], n = bank ? NUSER : NFACTORY, top, i, m = 0, ci = 0, k;
     uint8_t lst[NFACTORY > NUSER ? NFACTORY : NUSER];
-    for (k = 0; k < n; k++) if (pre_match(bank, k)) { if (k == c) ci = m; lst[m++] = (uint8_t)k; }   /* (a TAG: only those) */
-    if (!m) { if (g_vis(y0, 30)) { char t[32]; str_cat(str_cat(t, "NO SOUND TAGGED "), L_TAG[pre_tag]); g_text_c(T_S, x + w / 2, y0 + 8, t, K_GREY); } return; }
+    for (k = 0; k < n; k++) if (pre_match(bank, k)) { if (k == c) ci = m; lst[m++] = (uint8_t)k; }   /* (a CAT: only those) */
+    if (g_vis(y0, h)) {                         /* (1.0.60: the category, a bar of its own, in every theme) */
+        char t[24];
+        g_box(x, y0, w, h, pre_tag ? K_LIMED : K_PANEL, K_LIME);
+        str_cat(str_cat(t, "CAT  "), L_TAG[pre_tag]);
+        g_text(f, x + 8, y0 + (h - f->h) / 2 + 1, t, pre_tag ? K_LIME : K_WHITE);
+        g_text_r(T_XS, x + w - 8, y0 + (h - T_XS->h) / 2 + 1, "K4: CAT", K_WHITE);
+    }
+    y0 += step;
+    if (vis > 1u) vis--;
+    if (!m) { if (g_vis(y0, 30)) { char t[32]; str_cat(str_cat(t, "NO SOUND IN CAT "), L_TAG[pre_tag]); g_text_c(T_S, x + w / 2, y0 + 8, t, K_GREY); } return; }
     top = ci >= 2u ? ci - 2u : 0u;
     if (vis > m) vis = m;
     if (top + vis > m) top = m - vis;
@@ -1137,7 +1147,7 @@ static void th_glow(const view_t *v, uint32_t vi)
     if (g_vis(218, 20)) {
         g_hgrad(6, 220, 228, 1, K_BG, g_mix(K_BG, K_LIME, 160));
         if (ff) str_cat(fb, ff); else foot_text(v, fb, 180);
-        g_text(T_XS, 8, 226, fb, K_GREY);
+        g_text(T_XS, 8, 226, fb, K_FOOT);
         g_text_r(T_XS, 232, 226, v->tag, K_LIME);
     }
 }
@@ -1233,7 +1243,7 @@ static void th_tech(const view_t *v, uint32_t vi)
 foot:
     if (g_vis(224, 14)) {
         if (ff) str_cat(fb, ff); else str_cat(fb, v->n > 4u ? "SELECT: ROW \xB7 ALGO: VALUE" : "K1-K4: THE FOUR");
-        g_text(T_XS, 6, 227, fb, K_GREY);
+        g_text(T_XS, 6, 227, fb, K_FOOT);
         g_text_r(T_XS, 234, 227, v->tag, K_LIME);
     }
 }
@@ -1299,7 +1309,7 @@ static void th_studio(const view_t *v, uint32_t vi)
     }
     if (g_vis(222, 12)) {
         if (ff) str_cat(fb, ff); else foot_text(v, fb, 200);
-        g_text(T_XS, 5, 226, fb, K_GREY);
+        g_text(T_XS, 5, 226, fb, K_FOOT);
         g_text_r(T_XS, 235, 226, v->tag, K_CYAN);
     }
 }
@@ -1325,7 +1335,7 @@ static void th_pure(const view_t *v, uint32_t vi)
         if (v->lay == LY_PRESET) presets_g(vi - PAGE_V0[PG_PRE], 6, 52, 228, 28, 32, 5, T_S);
         else if (v->lay == LY_SAVE) save_g(8, 70, 228, 22);
         else rows_g(v, 6, 52, 226, 24, 29, 6, T_S);
-        if (g_vis(222, 12)) { char fb[64]; const char *ff = foot_fixed(vi); if (ff) str_cat(fb, ff); else foot_text(v, fb, 220); g_text(T_XS, 8, 228, fb, K_GREY); }
+        if (g_vis(222, 12)) { char fb[64]; const char *ff = foot_fixed(vi); if (ff) str_cat(fb, ff); else foot_text(v, fb, 220); g_text(T_XS, 8, 228, fb, K_FOOT); }
         return;
     }
     if (g_vis(20, 28)) {                        /* the title between chevrons */
@@ -1556,8 +1566,8 @@ static int32_t rb_content(const view_t *v, uint32_t vi, int32_t x, int32_t y0, i
 static uint32_t hint_vi = 0xFFFFu, hint_ms;
 static void hint_overlay(const view_t *v, uint32_t vi)   /* (the themes with no footer) what the knobs do, then the buttons: see-through, at the bottom */
 {
-    const char *ff = foot_fixed(vi), *l2 = v->lay == LY_PRESET ? "SAVE: KEEP THIS SOUND \xB7 SAVE HELD: FAVORITE" :
-                     v->lay == LY_SAVE ? "SAVE: WRITE \xB7 SEL: LOAD \xB7 PAGE: CANCEL" : "SELECT: ROW \xB7 ALGO: VALUE \xB7 SAVE: SAVE";
+    const char *ff = foot_fixed(vi), *l2 = v->lay == LY_PRESET ? "SAVE: NEXT LIST \xB7 SAVE HELD: FAVORITE" :
+                     v->lay == LY_SAVE ? "SAVE HELD: WRITE \xB7 SEL: LOAD \xB7 SAVE: SOUNDS" : "SELECT: ROW \xB7 ALGO: VALUE \xB7 SAVE: SAVE";
     char fb[64];
     int32_t y, x;
     if (vi != hint_vi) { hint_vi = vi; hint_ms = fm1_ms; }
@@ -1686,7 +1696,7 @@ static void th_rack(const view_t *v, uint32_t vi)
         rows_g(v, 35, 51, 197, 24, 26, 6, T_M);
     if (g_vis(222, 12)) {
         if (ff) str_cat(fb, ff); else foot_text(v, fb, 190);
-        g_text(T_XS, 37, 228, fb, K_GREY);
+        g_text(T_XS, 37, 228, fb, K_FOOT);
     }
 }
 
