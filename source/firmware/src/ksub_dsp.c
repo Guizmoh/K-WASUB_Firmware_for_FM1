@@ -37,12 +37,13 @@ static void ev_push(uint32_t t, uint32_t a, uint32_t b)
 static int8_t patch[NP_MAX];                    /* the sound (the main loop writes, the voices read) */
 typedef struct { uint8_t note[16], fl[16], len, rate, swing, pad; } seqpat_t;   /* 36 B */
 enum { SF_ON = 1, SF_ACC = 2, SF_SLIDE = 4 };
-#define SQ_NPAT 16u
+#define SQ_NLO 16u                              /* the patterns perf and sqx hold (as before 1.0.53) */
+#define SQ_NPAT 32u                             /* 1.0.53: 32, the 16 more on the store's 7th and 8th sectors (sqy) */
 #define PF_MAGIC 0x5Bu
 #define MC_MAGIC 0x4Du
 static struct {                                 /* stored (the store's second sector): what plays, whatever the patch */
     uint8_t magic, sum, cur, ar_on, ar_mode, ar_rate, ar_oct, ar_gate;
-    seqpat_t pat[SQ_NPAT];                      /* (sum: up to here) */
+    seqpat_t pat[SQ_NLO];                       /* (sum: up to here) */
     uint8_t mc_magic, mc_dst[16];               /* MACROS: four targets each (a destination, an amount) */
     int8_t mc_amt[16];
     uint8_t cc_magic, cc_num[16], cc_id[16];    /* MIDI LEARN: a CC (0xFF: none) and what it moves */
@@ -57,8 +58,21 @@ static struct {                                 /* stored (the store's second se
 enum { SC_ALWAYS, SC_1_2, SC_2_2, SC_1_4, SC_2_4, SC_3_4, SC_4_4, SC_START, SC_NSTART, SC_BEFORE, SC_AFTER, NSC };
 static struct {
     uint8_t magic, sum, pad[2];
-    struct { uint8_t note[SQ_MAX - 16u], fl[SQ_MAX - 16u], cond[SQ_MAX], prob[SQ_MAX]; } p[SQ_NPAT];   /* prob: 0..100 % */
+    struct { uint8_t note[SQ_MAX - 16u], fl[SQ_MAX - 16u], cond[SQ_MAX], prob[SQ_MAX]; } p[SQ_NLO];   /* prob: 0..100 % */
 } sqx;
+/* 1.0.53: SEQ BASS's patterns 17..32, whole (their first 16 steps, length, rate and swing too), and the CHAIN (up to 16
+ * patterns played one after the other; 0xFF ends it): the store's 7th and 8th sectors */
+#define SY_MAGIC 0x59u
+#define SQ_NCH 16u
+typedef struct { seqpat_t h; uint8_t note[SQ_MAX - 16u], fl[SQ_MAX - 16u], cond[SQ_MAX], prob[SQ_MAX]; } sqhi_t;   /* 260 B */
+static struct {
+    uint8_t magic, sum, ch_on, pad;
+    uint8_t chain[SQ_NCH];
+    sqhi_t p[SQ_NPAT - SQ_NLO];
+    char name[SQ_NPAT][10];                     /* each pattern's name (0: none, the library's for P01..P08) */
+} sqy;                                          /* (in .bss: the pool is full, 1.0.53) */
+static volatile uint8_t sq_k;                   /* the pattern playing: perf.cur, or the CHAIN's (the main loop then shows it) */
+static uint8_t sq_chi;                          /* the CHAIN: the place playing */
 /* a step's note length: cond's high nibble (the condition is the low one); 0 is half a step, as before 0.9.53 */
 #define SQ_HOLD 0xFFFFFFFFu
 static const uint32_t SQ_GL[16] = {0x800000u, 0x200000u, 0x400000u, 0xC00000u, 1u << 24, 2u << 24, 3u << 24, 4u << 24,
@@ -95,8 +109,11 @@ static uint32_t dk_rc[NDK], dk_riv[NDK];        /* ... the samples to the next r
 static volatile uint8_t sq_lkm;                 /* SEQ BASS: the note playing's locks (bits) and values */
 static int8_t sq_lkv[NPKB];
 #define LKB(b, x) (sq_lkm >> (b) & 1u ? (int32_t)sq_lkv[b] : (int32_t)(x))
-static uint8_t *sq_np(uint32_t k, uint32_t i) { k %= SQ_NPAT; i %= SQ_MAX; return i < 16u ? &perf.pat[k].note[i] : &sqx.p[k].note[i - 16u]; }
-static uint8_t *sq_fp(uint32_t k, uint32_t i) { k %= SQ_NPAT; i %= SQ_MAX; return i < 16u ? &perf.pat[k].fl[i] : &sqx.p[k].fl[i - 16u]; }
+static seqpat_t *sq_hd(uint32_t k) { k %= SQ_NPAT; return k < SQ_NLO ? &perf.pat[k] : &sqy.p[k - SQ_NLO].h; }   /* (a pattern's length, rate, swing, first 16 steps) */
+static uint8_t *sq_np(uint32_t k, uint32_t i) { k %= SQ_NPAT; i %= SQ_MAX; return i < 16u ? &sq_hd(k)->note[i] : k < SQ_NLO ? &sqx.p[k].note[i - 16u] : &sqy.p[k - SQ_NLO].note[i - 16u]; }
+static uint8_t *sq_fp(uint32_t k, uint32_t i) { k %= SQ_NPAT; i %= SQ_MAX; return i < 16u ? &sq_hd(k)->fl[i] : k < SQ_NLO ? &sqx.p[k].fl[i - 16u] : &sqy.p[k - SQ_NLO].fl[i - 16u]; }
+static uint8_t *sq_cp(uint32_t k, uint32_t i) { k %= SQ_NPAT; i %= SQ_MAX; return k < SQ_NLO ? &sqx.p[k].cond[i] : &sqy.p[k - SQ_NLO].cond[i]; }   /* (condition | note length << 4) */
+static uint8_t *sq_pp(uint32_t k, uint32_t i) { k %= SQ_NPAT; i %= SQ_MAX; return k < SQ_NLO ? &sqx.p[k].prob[i] : &sqy.p[k - SQ_NLO].prob[i]; }
 /* the EQ (held FX), on every sound: 4 biquads a side, Q24 (b0 b1 b2 a1 a2); the main loop works them out (eq_n),
  * the audio takes them at the next block (eq_new) */
 enum { EQ_OFF, EQ_LOCUT, EQ_LOSH, EQ_BELL, EQ_NOTCH, EQ_HISH, EQ_HICUT, NEQT };
@@ -916,13 +933,13 @@ static void voice_block(voice_t *v, int32_t *acc)
     qa.p2 = q8to15(pv(P[A_P2], m[D_AP2]));
     qa.p3 = q8to15(pv(P[A_P3], m[D_AP3]));
     qa.p4 = GP(D_AP4) * 258;
-    qa.inc = pitch_inc(p + m[D_APIT] + ((P[A_OCT] * 12 + P[A_SEMI]) << 8) + P[A_FINE] * 256 / 100 + ((v->drift_a * GP(D_DRIFT)) >> 9));
+    qa.inc = pitch_inc(p + m[D_APIT] + ((P[A_OCT] * 12 + P[A_SEMI]) * 256) + P[A_FINE] * 256 / 100 + ((v->drift_a * GP(D_DRIFT)) >> 9));
     qb.eng = (uint8_t)P[B_ENG];
     qb.p1 = q8to15(pv(P[B_P1], m[D_BP1]));
     qb.p2 = q8to15(pv(P[B_P2], m[D_BP2]));
     qb.p3 = q8to15(pv(P[B_P3], m[D_BP3]));
     qb.p4 = GP(D_BP4) * 258;
-    qb.inc = pitch_inc(p + m[D_BPIT] + ((P[B_OCT] * 12 + P[B_SEMI]) << 8) + P[B_FINE] * 256 / 100 + ((v->drift_b * GP(D_DRIFT)) >> 9)
+    qb.inc = pitch_inc(p + m[D_BPIT] + ((P[B_OCT] * 12 + P[B_SEMI]) * 256) + P[B_FINE] * 256 / 100 + ((v->drift_b * GP(D_DRIFT)) >> 9)
                        + (P[X_MODE] == 3 ? (pv(P[X_AMT], m[D_XMOD]) >> 8) * 6144 / 127 : 0));   /* (SYNC: X-MOD = +0..24 semitones) */
     qa.sync = 0;
     qb.sync = P[X_MODE] == 3;
@@ -1143,9 +1160,17 @@ static uint32_t sq_tick = 0xFFFFFFFFu, sq_step, sq_glen, ar_i;   /* sq_glen: wha
 static uint32_t sq_at;                          /* (the control block's place in the audio block: a drum hit lands there) */
 static uint32_t sq_pass, sq_nx_i = 0xFFFFFFFFu;  /* the times round since PLAY; the next step drawn (pattern << 8 | step) */
 static uint8_t sq_last, sq_nx_ok;               /* the last step played; the next one's draw */
+static int sq_chain_on(void) { return sqy.ch_on && sqy.chain[0] < SQ_NPAT; }
+static uint32_t sq_kplay(void) { return (sq_chain_on() && sq_play ? sq_k : perf.cur) % SQ_NPAT; }   /* (the sequencer's pattern) */
+static uint32_t sq_chnext(uint32_t c)           /* the CHAIN's place after c (0xFF: before its start); past its end, its start */
+{
+    uint32_t n = c >= SQ_NCH ? 0u : c + 1u;
+    return n >= SQ_NCH || sqy.chain[n] >= SQ_NPAT ? 0u : n;
+}
+static uint32_t sq_plen(uint32_t k) { uint32_t l = sq_hd(k)->len; return l >= 1u && l <= SQ_MAX ? l : 16u; }
 static uint32_t sq_draw(uint32_t k, uint32_t i, uint32_t pass)   /* on, its chance, its condition (IF BEFORE / AFTER: later) */
 {
-    uint32_t c = (sqx.p[k].cond[i] & 15u) % NSC, pr = sqx.p[k].prob[i];
+    uint32_t c = (*sq_cp(k, i) & 15u) % NSC, pr = *sq_pp(k, i);
     if (!(*sq_fp(k, i) & SF_ON)) return 0;
     if (pr < 100u && (rnd() >> 8) % 100u >= pr) return 0;
     if (c >= SC_1_2 && c <= SC_2_2) return pass % 2u == c - SC_1_2;
@@ -1177,16 +1202,22 @@ static void ar_del(uint32_t n)
 static void seq_step_on(void)
 {
     if (sq_play) {
-        uint32_t k = perf.cur % SQ_NPAT, l = perf.pat[k].len, len = l >= 1u && l <= SQ_MAX ? l : 16u, i, j, c, ok, f;
-        if (sq_step == 0xFFFFFFFFu) { sq_step = 0; sq_pass = 0; }
-        else if (++sq_step >= len) { sq_step = 0; sq_pass++; }
+        uint32_t k, len, i, j, c, ok, f, nk, ch = (uint32_t)sq_chain_on();
+        if (sq_step == 0xFFFFFFFFu) { sq_step = 0; sq_pass = 0; sq_chi = 0; sq_k = (uint8_t)(ch ? sqy.chain[0] : perf.cur); }
+        else if (++sq_step >= sq_plen(sq_kplay())) {   /* (the pattern's end: the CHAIN's next, if it is on) */
+            sq_step = 0; sq_pass++;
+            if (ch) { sq_chi = (uint8_t)sq_chnext(sq_chi); sq_k = sqy.chain[sq_chi]; }
+        }
+        k = sq_kplay(); len = sq_plen(k);
+        if (sq_step >= len) sq_step = 0;        /* (a shorter pattern now) */
         i = sq_step;
         if (sq_note != 0xFF && sq_glen != SQ_HOLD) sq_glen = sq_glen > (1u << 24) ? sq_glen - (1u << 24) : 0u;   /* (a long note goes on) */
         ok = sq_nx_i == (k << 8 | i) ? sq_nx_ok : sq_draw(k, i, sq_pass);
         j = i + 1u >= len ? 0u : i + 1u;
-        sq_nx_ok = (uint8_t)sq_draw(k, j, j ? sq_pass : sq_pass + 1u);
-        sq_nx_i = k << 8 | j;
-        c = (sqx.p[k].cond[i] & 15u) % NSC;
+        nk = !j && ch ? sqy.chain[sq_chnext(sq_chi)] % SQ_NPAT : k;
+        sq_nx_ok = (uint8_t)sq_draw(nk, j, j ? sq_pass : sq_pass + 1u);
+        sq_nx_i = nk << 8 | j;
+        c = (*sq_cp(k, i) & 15u) % NSC;
         if (c == SC_BEFORE) ok = ok && sq_last;
         if (c == SC_AFTER) ok = ok && sq_nx_ok;   /* (and a next IF BEFORE: the two together) */
         sq_last = (uint8_t)ok;
@@ -1200,7 +1231,7 @@ static void seq_step_on(void)
                 if (e->pat == (PL_BASS | k) && e->step == i && (e->tp & 15u) < NPKB) { mk |= 1u << (e->tp & 15u); sq_lkv[e->tp & 15u] = e->v; }
             }
             sq_lkm = (uint8_t)mk;
-            sq_sound((uint32_t)clampi(24 + *sq_np(k, i) + sq_tr, 0, 127), f & SF_ACC ? 127u : 90u, slide, SQ_GL[sqx.p[k].cond[i] >> 4]);
+            sq_sound((uint32_t)clampi(24 + *sq_np(k, i) + sq_tr, 0, 127), f & SF_ACC ? 127u : 90u, slide, SQ_GL[*sq_cp(k, i) >> 4]);
             sq_slide = (uint8_t)(f & SF_SLIDE);
         } else if (sq_slide || !SQ_BASS_ON) sq_off();   /* (a rest: a slide stops; a long note goes on to its end) */
         return;
@@ -1539,7 +1570,7 @@ static void dk_render(uint32_t n)               /* the drums for this block -> d
 
 static void seq_clock(uint32_t beats)
 {
-    const seqpat_t *p = &perf.pat[perf.cur % SQ_NPAT];
+    const seqpat_t *p = sq_hd(sq_kplay());
     uint32_t rate = sq_play ? p->rate : perf.ar_rate, sw = sq_play ? p->swing : 0u, tick, fr;
     uint64_t t = (uint64_t)beats * STEP_PB[rate % 6u];
     if (ar_was && !perf.ar_on) ar_n = 0;        /* (the ARP turned off: what it held is let go) */

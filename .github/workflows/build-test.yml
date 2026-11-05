@@ -1,0 +1,35 @@
+# Builds a test .fwsc on GitHub's Linux machines, for the test branches only (never main, never the site).
+# The package is attached to the run (Actions > the run > Artifacts); nothing is released.
+name: build-test
+on:
+  push:
+    branches: ["test/**"]
+  workflow_dispatch:
+jobs:
+  fwsc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pil xz-utils
+      - name: JieLi toolchain
+        run: source/tools/get_toolchain.sh "$HOME/.jieli"
+      - name: JieLi AC79 SDK (three files used, checked by SHA-256)
+        run: git clone --depth 1 --branch AC79NN_SDK_V1.2.1_2023-12-13 https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK.git "$HOME/fw-AC79_AIoT_SDK"
+      - name: Build
+        working-directory: source
+        shell: bash
+        run: |
+          VER=$(echo "${GITHUB_REF_NAME}" | sed -n 's#^test/\([0-9][0-9.]*[0-9]\).*#\1#p')
+          mkdir -p build
+          JIELI_TOOLCHAIN="$HOME/.jieli/toolchain" AC79_SDK="$HOME/fw-AC79_AIoT_SDK" ./build.sh --release "${VER:-1.0.53}" 2>&1 | tee build/log.txt
+          exit "${PIPESTATUS[0]}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k-wasub-test
+          path: |
+            source/build/k-wasub-*.fwsc
+            source/build/log.txt
