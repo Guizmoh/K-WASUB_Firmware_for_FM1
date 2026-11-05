@@ -65,7 +65,7 @@ def build(L):
             ("ENV", T("amp, filter, mod envelopes", "enveloppes ampli, filtre, mod"), T("+ knob: the mod envelope on it", "+ potard : l’enveloppe de mod dessus")),
             ("SEQ", T("filter, filter mod, SEQ BASS, DRUMS", "filtre, mod du filtre, SEQ BASS, DRUMS"), T("random of the page", "aléatoire de la page")),
             ("LFO", T("LFO 1 (wobble), LFO 2, STEP, matrix, LFO 3", "LFO 1 (wobble), LFO 2, STEP, matrice, LFO 3"), T("+ knob: LFO 2 on it · with OCT−: LFO 1 · with OCT+: LFO 3", "+ potard : LFO 2 dessus · avec OCT− : LFO 1 · avec OCT+ : LFO 3")),
-            ("FX", T("SAT, VERB, DELAY, OTT, COMP, EQ, CHORUS, PHASER, CRUSH, MASTER", "SAT, VERB, DELAY, OTT, COMP, EQ, CHORUS, PHASER, CRUSH, MASTER"), T("<b>FX PADS</b>", "<b>FX PADS</b>")),
+            ("FX", T("SAT, VERB, DELAY, DYNAMICS, EQ, MOD FX, CRUSH, MASTER", "SAT, VERB, DELAY, DYNAMICS, EQ, MOD FX, CRUSH, MASTER"), T("<b>FX PADS</b>", "<b>FX PADS</b>")),
             ("ARP", T("presets A / B, SAVE, ARP", "presets A / B, SAVE, ARP"), T("random of the page", "aléatoire de la page")),
             ("GLO", T("SYSTEM, MIDI", "SYSTEM, MIDI"), T("CLASSIC ↔ SHIFT", "CLASSIC ↔ SHIFT")),
             ("SEL", T("FILTER / COLOUR → FILTER MOD → PERFORM → MORPH X/Y → FX LIVE → MACROS → MORPH A/B", "FILTRE / COULEUR → MOD DU FILTRE → PERFORM → MORPH X/Y → FX LIVE → MACROS → MORPH A/B"), T("hear the saved sound (compare)", "écouter le son enregistré (comparer)")),
@@ -88,15 +88,15 @@ def build(L):
 
     # 3 pages -- one picture (HOME); every view listed as text, grouped by the button that opens it (complete, not a
     # sample: FX alone has 10 views, showing a thumbnail of each would not fit a short manual)
-    pages = [("HOME", T("CURRENT PATCH, LIVE MIX", "CURRENT PATCH, LIVE MIX")),
-             ("EDIT", T("OSCILLATOR A, OSCILLATOR B, SUB + NOISE, COMBINE A + B, OSCILLATOR C · SAMPLE", "OSCILLATEUR A, OSCILLATEUR B, SUB + BRUIT, COMBINER A + B, OSCILLATEUR C · SAMPLE")),
-             ("ENV", T("AMP ENVELOPE, FILTER ENVELOPE, MOD ENVELOPE", "ENVELOPPE AMPLI, ENVELOPPE FILTRE, ENVELOPPE MOD")),
+    pages = [("HOME", T("CURRENT PATCH, LIVE MIX, QUICK (CUTOFF, RESONANCE, ENV AMOUNT, DRIVE)", "CURRENT PATCH, LIVE MIX, QUICK (CUTOFF, RÉSONANCE, ENV AMOUNT, DRIVE)")),
+             ("EDIT", T("COMBINE A + B, OSCILLATOR A, OSCILLATOR B, SUB + NOISE, OSCILLATOR C · SAMPLE", "COMBINER A + B, OSCILLATEUR A, OSCILLATEUR B, SUB + BRUIT, OSCILLATEUR C · SAMPLE")),
+             ("ENV", T("FILTER ENVELOPE, AMP ENVELOPE, MOD ENVELOPE", "ENVELOPPE FILTRE, ENVELOPPE AMPLI, ENVELOPPE MOD")),
              ("SEL", T("FILTER / COLOUR, FILTER MOD, then the windows (PERFORM, MORPH, FX LIVE, MACROS)", "FILTRE / COULEUR, MOD DU FILTRE, puis les fenêtres (PERFORM, MORPH, FX LIVE, MACROS)")),
              ("SEQ", T("SEQ BASS, DRUMS", "SEQ BASS, DRUMS")),
-             ("LFO", T("LFO 1 · WOBBLE, LFO 2 · MOTION, STEP FX, MOD MATRIX, LFO 3 · GLOBAL", "LFO 1 · WOBBLE, LFO 2 · MOUVEMENT, STEP FX, MATRICE DE MOD, LFO 3 · GLOBAL")),
-             ("FX", T("SATURATION, REVERB, DELAY, MULTIBAND (OTT), COMPRESSOR, EQ, CHORUS, PHASER, CRUSH, MASTER (each effect\'s first row: its ON / OFF)", "SATURATION, REVERB, DELAY, MULTIBANDE (OTT), COMPRESSEUR, EQ, CHORUS, PHASER, CRUSH, MASTER (la première ligne de chaque effet : son ON / OFF)")),
+             ("LFO", T("LFO 1 · WOBBLE, LFO 2 · MOTION, LFO 3 · GLOBAL, STEP FX, MOD MATRIX", "LFO 1 · WOBBLE, LFO 2 · MOUVEMENT, LFO 3 · GLOBAL, STEP FX, MATRICE DE MOD")),
+             ("FX", T("SATURATION, REVERB, DELAY, DYNAMICS (compressor + OTT), EQ, MOD FX (chorus + phaser), CRUSH, MASTER (each effect\'s first row: its ON / OFF)", "SATURATION, REVERB, DELAY, DYNAMICS (compresseur + OTT), EQ, MOD FX (chorus + phaser), CRUSH, MASTER (la première ligne de chaque effet : son ON / OFF)")),
              ("ARP", T("PRESET BANK A, PRESET BANK B, SAVE PATCH, ARPEGGIATOR", "BANQUE DE PRESETS A, BANQUE DE PRESETS B, ENREGISTRER LE PATCH, ARPEGIATEUR")),
-             ("GLO", T("GLOBAL SETUP, MIDI", "REGLAGES GENERAUX, MIDI"))]
+             ("GLO", T("GLOBAL SETUP (tempo, voice, glide, deep bass…), DISPLAY (theme, palette, font, loupe, brightness, contrast), ADVANCED (CPU, last stop, knobs, new song), MIDI", "REGLAGES GENERAUX (tempo, voix, glide, deep bass…), AFFICHAGE (thème, palette, police, loupe, luminosité, contraste), AVANCÉ (CPU, dernier arrêt, potards, nouveau morceau), MIDI"))]
     chaps.append(("pages", t(T("3 · The pages", "3 · Les pages")),
                   '<div class="row">' + fig("p-home", T("HOME, the first view", "HOME, la première vue"))
                   + '<div><ul class="tight">' + "".join(f'<li>{key(b)} {t(v)}</li>' for b, v in pages) + '</ul></div></div>'
@@ -274,7 +274,7 @@ def build(L):
     o.append(dbar)
     spec = "CAHIER-DES-CHARGES.md" if fr else "SPECIFICATIONS.md"
     o.append(f'<footer>{t(T("K-WASUB is free software (GPL-3.0), born from", "K-WASUB est un logiciel libre (GPL-3.0), né de"))} <a href="https://github.com/Guizmoh/Kawa-Tracker-Fm1">KAWA</a> (Omnipotard / Leo Kuroshita, Hügelton Instruments). '
-             f'{t(T("BETA version 1.0.53, tested on the FM-1. Tell me what you see on yours (GitHub, Issues).", "Version BÊTA 1.0.53, testée sur le FM-1. Dis-moi ce que tu vois sur le tien (GitHub, Issues)."))} <a href="index.html">← {t(T("Home", "Accueil"))}</a> · <a href="{spec}">{t(T("Specifications", "Cahier des charges"))}</a></footer>')
+             f'{t(T("BETA version 1.0.54, tested on the FM-1. Tell me what you see on yours (GitHub, Issues).", "Version BÊTA 1.0.54, testée sur le FM-1. Dis-moi ce que tu vois sur le tien (GitHub, Issues)."))} <a href="index.html">← {t(T("Home", "Accueil"))}</a> · <a href="{spec}">{t(T("Specifications", "Cahier des charges"))}</a></footer>')
     o.append('</main></div>')
     o.append(f'<a class="fab" href="{KOFI}" target="_blank" rel="noopener">☕ {t(T("Support K-WASUB", "Soutenir K-WASUB"))}</a>')
     o.append('''<script>

@@ -9,16 +9,19 @@
 enum { TH_GLOW, TH_STUDIO, TH_PURE, TH_RACK, TH_TECH, TH_RIBBON, TH_RIBBONC, TH_CLASSIC, NTHEMES };   /* (CLASSIC: GLOW flat, 1.0.19) */
 enum { VZ_NONE, VZ_SCOPE, VZ_OSCA, VZ_OSCB, VZ_SUB, VZ_MIX, VZ_ENV0, VZ_ENV1, VZ_ENV2, VZ_FILT, VZ_LFO1, VZ_LFO2, VZ_STEP,
        VZ_SEQ, VZ_SMP, VZ_DRIVE, VZ_CRUSH, VZ_CHORUS, VZ_DELAY, VZ_REVERB, VZ_MASTER, VZ_COMP, VZ_PHASER, VZ_OTT, VZ_CPU, VZ_DRUM };
-static const uint8_t VZ_OF[] = {VZ_SCOPE, VZ_SCOPE, VZ_OSCA, VZ_OSCB, VZ_SUB, VZ_MIX, VZ_SMP, VZ_ENV0, VZ_ENV1, VZ_ENV2, VZ_FILT, VZ_FILT,
-                                VZ_SEQ, VZ_DRUM, VZ_LFO1, VZ_LFO2, VZ_STEP, VZ_NONE, VZ_NONE, VZ_DRIVE, VZ_REVERB, VZ_DELAY, VZ_OTT, VZ_COMP, VZ_NONE,
-                                VZ_CHORUS, VZ_PHASER, VZ_CRUSH, VZ_MASTER, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_CPU, VZ_NONE};
+static const uint8_t VZ_OF[] = {VZ_SCOPE, VZ_SCOPE, VZ_SCOPE, VZ_MIX, VZ_OSCA, VZ_OSCB, VZ_SUB, VZ_SMP, VZ_ENV1, VZ_ENV0, VZ_ENV2, VZ_FILT, VZ_FILT,
+                                VZ_SEQ, VZ_DRUM, VZ_LFO1, VZ_LFO2, VZ_NONE, VZ_STEP, VZ_NONE, VZ_DRIVE, VZ_REVERB, VZ_DELAY, VZ_COMP, VZ_NONE,
+                                VZ_CHORUS, VZ_CRUSH, VZ_MASTER, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_CPU, VZ_NONE};   /* (1.0.54's order) */
 typedef char vz_fits[sizeof VZ_OF == sizeof VIEWS / sizeof VIEWS[0] ? 1 : -1];
 static const char *const PAGE_SHORT[NPAGE] = {"PLAY", "BASS", "ENV", "SEQ", "LFO", "FX", "PRE", "SYS"};   /* (1.0.53: the filter on SEL, SEQ BASS and DRUMS on SEQ) */
 /* LANGUAGE (SYSTEM): only the view titles (v->cat, top of every screen) are translated; parameter names and values
  * stay in English, as on most hardware synths, and to keep every screen's layout untouched */
-static const char *const L_CAT[27][3] = {
+static const char *const L_CAT[30][3] = {
     {"CURRENT PATCH", "PATCH ACTUEL", "PARCHE ACTUAL"},
     {"LIVE MIX", "MIX EN DIRECT", "MEZCLA EN VIVO"},
+    {"QUICK", "RAPIDE", "RAPIDO"},
+    {"DISPLAY", "AFFICHAGE", "PANTALLA"},
+    {"ADVANCED", "AVANCE", "AVANZADO"},
     {"OSCILLATOR A", "OSCILLATEUR A", "OSCILADOR A"},
     {"OSCILLATOR B", "OSCILLATEUR B", "OSCILADOR B"},
     {"SUB + NOISE", "SUB + BRUIT", "SUB + RUIDO"},
@@ -49,7 +52,7 @@ static const char *cat_tr(const char *cat)      /* v->cat in the user's language
 {
     uint32_t i;
     if (!set.lang) return cat;
-    for (i = 0; i < 27u; i++) if (str_eq(cat, L_CAT[i][0])) return L_CAT[i][set.lang];
+    for (i = 0; i < sizeof L_CAT / sizeof L_CAT[0]; i++) if (str_eq(cat, L_CAT[i][0])) return L_CAT[i][set.lang];
     return cat;
 }
 static const uint16_t KNOB_RGB[4] = {RGB(255, 92, 92), RGB(255, 204, 64), RGB(92, 226, 116), RGB(84, 164, 255)};
@@ -770,6 +773,8 @@ static const char *view_title(uint32_t vi, char *t, char *sub)
         return "SELECT PATCH";
     case LY_SAVE: str_cat(sub, "PRESS SAVE AGAIN TO WRITE"); return pname;
     case LY_SYS:
+        if (vi == PAGE_V0[PG_SYS] + 1u) { str_cat(sub, "THEME \xB7 PALETTE \xB7 FONT \xB7 LOUPE \xB7 BRIGHTNESS"); return "DISPLAY"; }
+        if (vi == PAGE_V0[PG_SYS] + 2u) { str_cat(sub, "CPU \xB7 LAST STOP \xB7 KNOBS \xB7 NEW SONG"); return "ADVANCED"; }
         if (vi != PAGE_V0[PG_SYS]) { str_cat(sub, "LEARN \xB7 CHANNEL \xB7 CLOCK \xB7 START / STOP \xB7 PROGRAM"); return "MIDI"; }
         str_cat(sub, "DNB / DUB / DUBSTEP / TECHNO EDITION"); return "DEVICE SETUP";
     case LY_LFO: {
@@ -824,7 +829,7 @@ static const char *view_title(uint32_t vi, char *t, char *sub)
         str_cat(p, perf.ar_on ? L_ARMODE[perf.ar_mode % 5u] : "OFF");
         return t;
     }
-    if (page == PG_BASS && vi <= 3u && vi >= 2u) { uint32_t e = (uint32_t)patch[vi == 2u ? A_ENG : B_ENG] % NENG; str_cat(sub, ENG_SUB[e]); return ENG_TITLE[e]; }
+    if (page == PG_BASS && vi - PAGE_V0[PG_BASS] - 1u < 2u) { uint32_t e = (uint32_t)patch[vi == PAGE_V0[PG_BASS] + 1u ? A_ENG : B_ENG] % NENG; str_cat(sub, ENG_SUB[e]); return ENG_TITLE[e]; }
     if (page == PG_BASS && vi == V_SMP) {       /* OSC C: the sample, how it plays */
         if (!patch[SM_SEL]) { str_cat(sub, "18 SOUNDS \xB7 9 TEXTURES \xB7 RESAMPLE"); return "NO SAMPLE"; }
         if (patch[SM_SEL] == SM_RS && !rs_desc.len) { str_cat(sub, "THE OUTPUT, 2 .. 4 s, INTO OSC C"); return "RESAMPLE"; }
@@ -840,14 +845,14 @@ static const char *view_title(uint32_t vi, char *t, char *sub)
             return sm->name;
         }
     }
-    if (page == PG_BASS && vi == 4u) { str_cat(sub, patch[S_LOCK] ? "LOW END \xB7 LOCKED ON OSC A" : "LOW END CHARACTER"); return "SUB / NOISE"; }
+    if (page == PG_BASS && vi == PAGE_V0[PG_BASS] + 3u) { str_cat(sub, patch[S_LOCK] ? "LOW END \xB7 LOCKED ON OSC A" : "LOW END CHARACTER"); return "SUB / NOISE"; }
     if (page == PG_BASS) { str_cat(sub, "TWO ENGINES, ONE BASS"); return patch[X_MODE] == 0 ? "A + B" : patch[X_MODE] == 1 ? "A x B  RING" : "B > A  X-MOD"; }
     if (page == PG_ENV) {
         if (vi == PAGE_V0[PG_ENV] + 2u) str_cat(sub, dst_name((uint32_t)patch[ME_DST]));
-        return vi == PAGE_V0[PG_ENV] ? "ADSR CONTROL" : vi == PAGE_V0[PG_ENV] + 1u ? "FILTER ADSR" : "PITCH / MOD";
+        return vi == PAGE_V0[PG_ENV] + 1u ? "ADSR CONTROL" : vi == PAGE_V0[PG_ENV] ? "FILTER ADSR" : "PITCH / MOD";   /* (1.0.54: the filter's first) */
     }
     if (page == PG_FILT) { str_cat(sub, FT_SUB[patch[F_TYPE]]); return FT_TITLE[patch[F_TYPE]]; }
-    if (page == PG_LFO && vi == PAGE_V0[PG_LFO] + 4u) {   /* LFO 3: its shape, where it goes, how much */
+    if (page == PG_LFO && vi == PAGE_V0[PG_LFO] + 2u) {   /* LFO 3: its shape, where it goes, how much */
         char *q = str_cat(sub, L_SHAPE[clampi(set.l3[L3_SHP], 0, 8)]);
         q = str_cat(q, " \xB7 "); q = str_cat(q, dst_name((uint32_t)set.l3[L3_DST])); *q++ = ' ';
         lk_text(L1_DEP, set.l3[L3_DEP], q);
@@ -859,13 +864,14 @@ static const char *view_title(uint32_t vi, char *t, char *sub)
         p = sub;
         if (f >= NFXV) f = 0;
         if (f == 0u) p = str_cat(p, L_DRT[patch[DR_TYPE] & 3]);
-        if (f == 3u) p = str_cat(p, "OTT \xB7 3 BANDS");
-        if (f == 4u && patch[CP_PUMP]) { p = str_cat(p, "PUMP "); p = str_cat(p, L_PRATE[patch[CP_PRATE] & 3]); }
+        if (f == 3u) p = str_cat(p, "COMP + OTT");
+        if (f == 3u && patch[CP_PUMP]) { p = str_cat(p, "PUMP "); p = str_cat(p, L_PRATE[patch[CP_PRATE] & 3]); }
         if (f == 2u) { p = str_cat(p, L_DLT[patch[DL_TYPE] & 3]); p = str_cat(p, " "); p = str_cat(p, L_DIV[patch[DL_TIME] & 15]); }
         if (f == 1u) p = str_cat(p, L_RVT[patch[RV_TYPE] & 3]);
-        if (f == 9u) { p = str_cat(p, "MONO BASS "); p = str_cat(p, L_MONO[(uint32_t)patch[MB_MONO] % 7u]); }
+        if (f == 5u) p = str_cat(p, "CHORUS + PHASER");
+        if (f == 7u) { p = str_cat(p, "MONO BASS "); p = str_cat(p, L_MONO[(uint32_t)patch[MB_MONO] % 7u]); }
         if (p != sub) p = str_cat(p, " \xB7 ");
-        str_cat(p, FX_ON[f] ? (patch[FX_ON[f]] ? "ON" : "OFF") : f == 3u ? (patch[OT_AMT] ? "ON" : "OFF") : "ALWAYS ON");
+        str_cat(p, f == 3u ? (patch[CP_ON] || patch[OT_AMT] ? "ON" : "OFF") : f == 5u ? (patch[CH_ON] || patch[PH_ON] ? "ON" : "OFF") : FX_ON[f] ? (patch[FX_ON[f]] ? "ON" : "OFF") : f == 4u ? "EQ" : "ALWAYS ON");
         return FX_TITLE[f];
     }
 }
@@ -1278,7 +1284,7 @@ static void th_studio(const view_t *v, uint32_t vi)
         }
     } else if (v->lay == LY_PRESET) presets_g(vi - PAGE_V0[PG_PRE], 3, 70, 234, 28, 31, 5, T_S);
     else if (v->lay == LY_SAVE) save_g(6, 98, 228, 70);
-    else if (v->lay == LY_SYS || !v->n || vi == PAGE_V0[PG_LFO] + 3u) rows_g(v, 3, 70, 230, 22, 26, 5, T_S);
+    else if (v->lay == LY_SYS || !v->n || vi == PAGE_V0[PG_LFO] + 4u) rows_g(v, 3, 70, 230, 22, 26, 5, T_S);
     else {                                      /* the items in cells of four, a page of eight round the row */
         uint32_t per = v->n <= 4u || vi == V_DRUM || vi == V_SEQ || vi == V_SMP ? 4u : v->n <= 8u ? 8u : v->n <= 12u ? 12u : 8u, first = (c / per) * per;   /* (SEQ BASS, DRUMS, OSC C: four, the pattern or the sample big) */
         int32_t ch = per == 12u ? 44 : 56, cs = per == 12u ? 47 : 60;   /* (up to twelve: three short rows, nothing else on the page) */
@@ -1407,14 +1413,14 @@ static void rb_name(uint32_t vi, char *b)       /* a view's short name, for the 
     static const char *const FR[] = {"CURRENT PATCH", "LIVE MIX", "OSCILLATOR A", "OSCILLATOR B", "OSCILLATOR C \xB7 SAMPLE", "SUB + NOISE",
                                      "COMBINE A + B", "AMP ENVELOPE", "FILTER ENVELOPE", "MOD ENVELOPE", "FILTER / COLOUR", "FILTER MOD",
                                      "SEQ BASS", "LFO 1 \xB7 WOBBLE", "LFO 2 \xB7 MOTION", "STEP FX", "MOD MATRIX", "PRESET BANK A",
-                                     "PRESET BANK B", "SAVE PATCH", "ARPEGGIATOR", "GLOBAL SETUP"};
+                                     "PRESET BANK B", "SAVE PATCH", "ARPEGGIATOR", "GLOBAL SETUP", "QUICK", "DISPLAY", "ADVANCED"};
     static const char *const TO[] = {"PLAY", "MIX", "OSC A", "OSC B", "SAMPLE", "SUB", "A + B", "AMP", "F.ENV", "M.ENV", "FILTER", "F.MOD",
-                                     "SEQ", "LFO 1", "LFO 2", "STEP", "MATRIX", "BANK A", "BANK B", "SAVE", "ARP", "SYSTEM"};
+                                     "SEQ", "LFO 1", "LFO 2", "STEP", "MATRIX", "BANK A", "BANK B", "SAVE", "ARP", "SYSTEM", "QUICK", "DISPLAY", "ADVANCED"};
     const char *c = VIEWS[vi].cat;
     uint32_t i;
     char t[32], sub[64];
     if (str_eq(c, "FX RACK")) {                /* (the effects by their short names) */
-        static const char *const FXL[] = {"SATURATION", "MULTIBAND", "COMPRESSOR", "BITCRUSH", "REVERB"}, *const FXS[] = {"SAT", "OTT", "COMP", "CRUSH", "VERB"};
+        static const char *const FXL[] = {"SATURATION", "DYNAMICS", "MOD FX", "BITCRUSH", "REVERB"}, *const FXS[] = {"SAT", "DYN", "MOD FX", "CRUSH", "VERB"};
         const char *ti = view_title(vi, t, sub);
         for (i = 0; i < 5u; i++) if (str_eq(ti, FXL[i])) { str_cat(b, FXS[i]); return; }
         str_cat(b, ti);

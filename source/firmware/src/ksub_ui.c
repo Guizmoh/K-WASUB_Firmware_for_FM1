@@ -44,56 +44,56 @@ typedef struct {
 } view_t;
 #define OSCV(L, X) {LY_LIST, "OSCILLATOR " L, 11, {X##_ENG, X##_P1, X##_P2, X##_P3, X##_P4, X##_LVL, X##_OCT, X##_SEMI, X##_FINE, V_MODE, V_GLIDE}, "EDIT"}   /* (the voice mode and the glide at the bottom: one voice plays both oscillators) */
 #define FXV(...) {LY_LIST, "FX RACK", 4, {__VA_ARGS__}, "FX"}
-static const view_t VIEWS[] = {
+static const view_t VIEWS[] = {               /* (1.0.54: the most used first on each button; SYSTEM in 4, FX in 8) */
     {LY_PLAY, "CURRENT PATCH", 4, {F_CUT, I_L1RATE, L1_DEP, F_RES}, "HOME"},
     {LY_PLAY, "LIVE MIX", 4, {S_LVL, DR_AMT, DL_MIX, MS_VOL}, "HOME"},
+    {LY_PLAY, "QUICK", 4, {F_CUT, F_RES, F_ENV, DR_AMT}, "HOME"},   /* (the four turned most: cutoff, resonance, envelope amount, drive) */
+    {LY_LIST, "COMBINE A + B", 13, {I_ABMIX, X_MODE, X_AMT, B_ENG, A_ENG, A_LVL, B_LVL, A_OCT, B_OCT, B_SEMI, B_FINE, X_DRIFT, X_RESET}, "EDIT"},   /* (HOME held opens it too: the two oscillators together) */
     OSCV("A", A), OSCV("B", B),
     {LY_LIST, "SUB + NOISE", 7, {S_LVL, S_OCT, S_WAVE, N_LVL, S_LOCK, N_COL, S_ROUTE}, "EDIT"},
-    {LY_LIST, "COMBINE A + B", 13, {I_ABMIX, X_MODE, X_AMT, B_ENG, A_ENG, A_LVL, B_LVL, A_OCT, B_OCT, B_SEMI, B_FINE, X_DRIFT, X_RESET}, "EDIT"},   /* (HOME held opens it: the two oscillators together) */
     {LY_LIST, "OSCILLATOR C \xB7 SAMPLE", 11, {SM_SEL, SM_LVL, SM_START, SM_END, G_RS_GO, G_RS_LEN, SM_SPEED, SM_DIR, SM_MODE, SM_TUNE, SM_KEY}, "EDIT"},
-    {LY_BOX, "AMP ENVELOPE", 4, {AE_A, AE_D, AE_S, AE_R}, "ENV"},
     {LY_BOX, "FILTER ENVELOPE", 4, {FE_A, FE_D, FE_S, FE_R}, "ENV"},
+    {LY_BOX, "AMP ENVELOPE", 4, {AE_A, AE_D, AE_S, AE_R}, "ENV"},
     {LY_BOX, "MOD ENVELOPE", 4, {ME_A, ME_D, ME_AMT, ME_DST}, "ENV"},
-    {LY_BOX, "FILTER / COLOUR", 4, {F_CUT, F_RES, F_DRV, F_TYPE}, "FX"},
+    {LY_BOX, "FILTER / COLOUR", 4, {F_CUT, F_RES, F_DRV, F_TYPE}, "FX"},   /* (these two open from SEL: 1.0.53) */
     {LY_LIST, "FILTER MOD", 6, {F_ENV, F_KEY, F_VEL, F_TYPE, F_CUT, F_RES}, "FX"},
-    {LY_LIST, "SEQ BASS", 14, {G_SQ_ON, G_SQ_STEP, G_SQ_NOTE, G_SQ_GATE, G_SQ_TYPE, G_SQ_PROB, G_SQ_COND, G_SQ_LKP, G_SQ_LKV, G_SQ_PAT, G_SQ_PRESET, G_SQ_LEN, G_SQ_RATE, G_SQ_SWING}, "SEQ"},
-    {LY_LIST, "DRUMS", 19, {G_DK_LVL, G_DK_TUNE, G_DK_DEC, G_DK_TONE, G_DK_TRK, G_DK_STEP, G_DK_HIT, G_DK_PROB, G_DK_COND, G_DK_PAT, G_DK_PRE,
-                            G_DK_LEN, G_DK_KIT, G_DK_VOL, G_DK_KSAT, G_DK_SNAP, G_DK_ECHO, G_DK_MODE, G_DK_SWING}, "SEQ"},   /* (black keys: the track, white: its steps, OCT: the page) */
+    {LY_LIST, "SEQ BASS", 14, {G_SQ_ON, G_SQ_STEP, G_SQ_NOTE, G_SQ_GATE, G_SQ_PAT, G_SQ_PRESET, G_SQ_LEN, G_SQ_TYPE, G_SQ_PROB, G_SQ_COND, G_SQ_LKP, G_SQ_LKV, G_SQ_RATE, G_SQ_SWING}, "SEQ"},
+    {LY_LIST, "DRUMS", 19, {G_DK_LVL, G_DK_TUNE, G_DK_DEC, G_DK_TONE, G_DK_PAT, G_DK_PRE, G_DK_KIT, G_DK_LEN, G_DK_TRK, G_DK_STEP, G_DK_HIT, G_DK_PROB, G_DK_COND,
+                            G_DK_VOL, G_DK_KSAT, G_DK_SNAP, G_DK_ECHO, G_DK_MODE, G_DK_SWING}, "SEQ"},   /* (black keys: the track, white: its steps, OCT: the page; K1-K4 the sound, then the pattern) */
     {LY_LFO, "LFO 1 \xB7 WOBBLE", 9, {I_L1RATE, L1_DEP, L1_SHP, L1_DST, G_GRID, L1_SYNC, L1_TRIG, L1_PH, L1_SMO}, "LFO"},
     {LY_LFO, "LFO 2 \xB7 MOTION", 9, {I_L2RATE, L2_DEP, L2_SHP, L2_DST, G_GRID, L2_SYNC, L2_TRIG, L2_PH, L2_SMO}, "LFO"},
+    {LY_LIST, "LFO 3 \xB7 GLOBAL", 5, {G_L3_RATE, G_L3_DEP, G_L3_SHP, G_L3_DST, G_L3_SYNC}, "LFO"},   /* (1.0.17: the third LFO, whatever the patch) */
     {LY_STEP, "STEP FX", 7, {ST_PAT, ST_RATE, ST_GATE, ST_DEP, ST_ON, ST_DST, ST_SMO}, "LFO"},
     {LY_LIST, "MOD MATRIX", 12, {M1_AMT, M2_AMT, M3_AMT, M4_AMT, M1_SRC, M1_DST, M2_SRC, M2_DST, M3_SRC, M3_DST, M4_SRC, M4_DST}, "LFO"},
-    {LY_LIST, "LFO 3 \xB7 GLOBAL", 5, {G_L3_RATE, G_L3_DEP, G_L3_SHP, G_L3_DST, G_L3_SYNC}, "LFO"},   /* (1.0.17: the third LFO, whatever the patch) */
     FXV(DR_ON, DR_AMT, DR_MIX, DR_TYPE),       /* (SATURATION, REVERB, DELAY first, each with its ON first (1.0.37); MASTER last) */
     {LY_LIST, "FX RACK", 5, {RV_ON, RV_SIZE, RV_MIX, RV_TYPE, RV_DAMP}, "FX"},
     {LY_LIST, "FX RACK", 6, {DL_ON, DL_TIME, DL_FB, DL_MIX, DL_TYPE, DL_TONE}, "FX"},
-    {LY_LIST, "FX RACK", 3, {OT_AMT, OT_LOW, OT_HIGH}, "FX"},
-    {LY_LIST, "FX RACK", 6, {CP_ON, CP_AMT, CP_PUMP, CP_ATK, CP_REL, CP_PRATE}, "FX"},
+    {LY_LIST, "FX RACK", 9, {CP_ON, CP_AMT, OT_AMT, CP_PUMP, CP_ATK, CP_REL, CP_PRATE, OT_LOW, OT_HIGH}, "FX"},   /* DYNAMICS: the compressor and the OTT (1.0.54) */
     {LY_EQ, "EQ", 0, {0}, "FX"},                /* (the EQ: opens as the window it is, win 3) */
-    FXV(CH_ON, CH_RATE, CH_DEP, CH_MIX),
-    {LY_LIST, "FX RACK", 5, {PH_ON, PH_RATE, PH_DEP, PH_FB, PH_MIX}, "FX"},
+    {LY_LIST, "FX RACK", 9, {CH_ON, CH_MIX, PH_ON, PH_MIX, CH_RATE, CH_DEP, PH_RATE, PH_DEP, PH_FB}, "FX"},   /* MOD FX: the chorus and the phaser (1.0.54) */
     FXV(CR_ON, CR_BITS, CR_RATE, CR_MIX),
     {LY_LIST, "FX RACK", 4, {MS_VOL, MS_GLUE, MS_SUB, MB_MONO}, "FX"},
     {LY_PRESET, "PRESET BANK A", 0, {0}, "PRESET"},
     {LY_PRESET, "PRESET BANK B", 0, {0}, "PRESET"},
     {LY_SAVE, "SAVE PATCH", 0, {0}, "PRESET"},
     {LY_LIST, "ARPEGGIATOR", 5, {G_AR_ON, G_AR_MODE, G_AR_RATE, G_AR_OCT, G_AR_GATE}, "ARP"},
-    {LY_SYS, "GLOBAL SETUP", 24, {G_BPM, V_MODE, G_UI, G_THEME, G_PAL, V_GLIDE, G_QLFO, G_BRI, G_ASAVE, G_LANG, G_DEEP, G_NORM, G_ACCEL, G_GRID, V_BEND, V_VEL,
-                                  G_FONT, G_ZOOM, G_C3COL, G_BROWSE, G_ASK, G_NEWSONG, G_CPU, G_RST}, "SYSTEM"},
+    {LY_SYS, "GLOBAL SETUP", 14, {G_BPM, V_MODE, V_GLIDE, G_DEEP, G_UI, G_THEME, G_QLFO, G_ASAVE, G_LANG, G_NORM, V_BEND, V_VEL, G_GRID, G_BROWSE}, "SYSTEM"},
+    {LY_SYS, "DISPLAY", 7, {G_THEME, G_PAL, G_FONT, G_ZOOM, G_BRI, G_CON, G_C3COL}, "SYSTEM"},
+    {LY_SYS, "ADVANCED", 5, {G_CPU, G_RST, G_ACCEL, G_ASK, G_NEWSONG}, "SYSTEM"},
     {LY_SYS, "MIDI", 10, {G_MLEARN, G_MMAP, G_MIDICH, G_CLOCK, G_MSTART, G_MPROG, G_MCLK, G_SYNC, G_MIDIMON, G_MIDIRT}, "SYSTEM"},
 };
 /* what K1..K4 turn: the first four rows (the preset lists and SAVE have their own) */
 static uint32_t vknob(const view_t *v, uint32_t i) { return v->lay == LY_PRESET || v->lay == LY_SAVE || i >= v->n ? I_NONE : v->it[i]; }
-#define NFXV 10u                                /* the FX page's views, in order: their ON (0: none), their title */
-static const uint8_t FX_ON[NFXV] = {DR_ON, RV_ON, DL_ON, 0, CP_ON, 0, CH_ON, PH_ON, CR_ON, 0};
-static const uint8_t PAGE_V0[NPAGE + 1] = {0, 2, 7, 10, 14, 19, 29, 33, 35};   /* each page's first view */
+#define NFXV 8u                                /* the FX page's views, in order: their ON (0: none), their title */
+static const uint8_t FX_ON[NFXV] = {DR_ON, RV_ON, DL_ON, CP_ON, 0, CH_ON, CR_ON, 0};
+static const uint8_t PAGE_V0[NPAGE + 1] = {0, 3, 8, 11, 15, 20, 28, 32, 36};   /* each page's first view */
 #define V_EQ 24u
 #define ARP_VIEW 3u                             /* the ARP button's page: PRESET BANK A, B, SAVE, then ARPEGGIATOR (its view 3); the button opens it first */
-#define V_SMP 6u
-#define V_SEQ 12u                               /* SEQ BASS (the SEQ button's third view), DRUMS (its fourth), ARP (the ARP button's last) */
-#define V_DRUM 13u
-#define V_ARP 32u
-static const char *const FX_TITLE[NFXV] = {"SATURATION", "REVERB", "DELAY", "MULTIBAND", "COMPRESSOR", "EQ", "CHORUS", "PHASER", "BITCRUSH", "MASTER"};
+#define V_SMP 7u
+#define V_SEQ 13u                               /* SEQ BASS (the SEQ button's third view), DRUMS (its fourth), ARP (the ARP button's last) */
+#define V_DRUM 14u
+#define V_ARP 31u
+static const char *const FX_TITLE[NFXV] = {"SATURATION", "REVERB", "DELAY", "DYNAMICS", "EQ", "MOD FX", "BITCRUSH", "MASTER"};
 static const char *const FT_TITLE[NFT] = {"DARK EDGE", "SOFT EDGE", "BAND RAZOR", "THIN AIR", "HOLLOW", "TALK BOX", "METAL COMB"};
 static const char *const FT_SUB[NFT] = {"LOW PASS \xB7 24 dB", "LOW PASS \xB7 12 dB", "BAND PASS \xB7 12 dB", "HIGH PASS \xB7 24 dB",
                                         "NOTCH \xB7 12 dB", "FORMANT \xB7 A E I O U", "COMB \xB7 TUNED BY CUTOFF"};
@@ -2244,7 +2244,7 @@ static void ui_leds(void)
     uint32_t i, beat = ((ks_beats >> 24) & 1u) == 0u && ((ks_beats >> 21) & 7u) < 2u;
     for (i = 0; i < 41u; i++) led_want[i] = 0;
     if (new_arm && fm1_ms - new_ms > 3000u) { new_arm = 0; g_force = 1; }
-    for (i = 0; i < NPAGE; i++) led(PAGE_BTN[i], i == page && !(i == PG_FILT && filt_zone()) ? 2u : 1u);
+    for (i = 0; i < NPAGE; i++) led(PAGE_BTN[i], i == page && !win && !(i == PG_FILT && filt_zone()) ? 2u : 1u);   /* (a SEL window or the filter: SEL lit, not the page under it; 1.0.54) */
     led(BTN_SEL, win || filt_zone() ? 2u : 1u);
     led(BTN_PLAY, sq_play ? (beat ? 2u : 1u) : hold ? 1u : 0u);
     led(BTN_REC, sq_rec ? 2u : beat ? 1u : 0u);
@@ -2347,7 +2347,7 @@ static void edit_item(uint32_t id, int32_t d)
         uint32_t f;
         patch[k] = 1;
         for (f = 0; f < NFXV && FX_ON[f] != k; f++) {}
-        str_cat(str_cat(t, f < NFXV ? FX_TITLE[f] : "STEP FX"), " ON");
+        str_cat(str_cat(t, k == PH_ON ? "PHASER" : k == CH_ON ? "CHORUS" : k == CP_ON ? "COMPRESSOR" : f < NFXV ? FX_TITLE[f] : "STEP FX"), " ON");
         toast(t);
     }
     if ((item_patch(id) && PD[id].fmt == FM_DEST) || id == G_L3_DST) { item_set(id, dst_step(v, d)); dpop_id = (uint8_t)id; dpop_ms = fm1_ms | 1u; return; }
