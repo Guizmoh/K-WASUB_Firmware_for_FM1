@@ -2685,6 +2685,17 @@ static void on_button(uint32_t b)
         else toast("KEPT");
         return;
     }
+    if (b == BTN_SEL && save_view()) {          /* SAVE: SEL loads the slot chosen (K1), and stays on SAVE with it (1.0.56) */
+        char t[24];
+        if (!up_valid(save_slot)) { toast("EMPTY SLOT"); return; }
+        load_preset(1, save_slot);
+        pre_cur[1] = save_slot;
+        str_cat(str_cat(t, "LOAD "), pname);
+        save_open();
+        toast(t);
+        g_force = 1;
+        return;
+    }
     if (b == BTN_SEQ && (win == 8u || win == 9u)) { win = 0; view_next(); g_force = 1; return; }   /* (PIANO ROLL: on to DRUMS) */
     if (b == BTN_SEQ && !win && page == PG_FILT && vidx() == V_SEQ && !C3_ON) { win = 8; g_force = 1; return; }   /* (SEQ BASS: the PIANO ROLL next) */
     if ((win == 8u || win == 9u) && (b == BTN_SEL || b == BTN_SAVE)) {   /* (the roll: SAVE names the pattern, SEL back to SEQ BASS; the name: SAVE keeps it, SEL leaves it) */

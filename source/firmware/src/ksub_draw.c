@@ -771,7 +771,7 @@ static const char *view_title(uint32_t vi, char *t, char *sub)
         p = str_cat(p, " \xB7 TAG ");
         str_cat(p, L_TAG[pre_tag]);
         return "SELECT PATCH";
-    case LY_SAVE: str_cat(sub, "PRESS SAVE AGAIN TO WRITE"); return pname;
+    case LY_SAVE: str_cat(sub, "SAVE: WRITE \xB7 SEL: LOAD THIS SLOT"); return pname;
     case LY_SYS:
         if (vi == PAGE_V0[PG_SYS] + 1u) { str_cat(sub, "THEME \xB7 PALETTE \xB7 FONT \xB7 LOUPE \xB7 BRIGHTNESS"); return "DISPLAY"; }
         if (vi == PAGE_V0[PG_SYS] + 2u) { str_cat(sub, "CPU \xB7 LAST STOP \xB7 KNOBS \xB7 NEW SONG"); return "ADVANCED"; }
@@ -986,7 +986,7 @@ static const char *foot_fixed(uint32_t vi)
 {
     switch (VIEWS[vi].lay) {
     case LY_PRESET: return "K1 SCROLL \xB7 K2 FAVS \xB7 K3 LOAD \xB7 K4 TAG";
-    case LY_SAVE: return "KEYS TYPE \xB7 K1 SLOT \xB7 K2 PLACE";
+    case LY_SAVE: return "KEYS TYPE \xB7 K1 SLOT \xB7 K2 PLACE \xB7 SEL LOAD";
     default: return 0;
     }
 }
@@ -1066,7 +1066,7 @@ static void save_g(int32_t x, int32_t y0, int32_t w, int32_t ty)   /* the name b
         char v1[24], v2[8], v3[8], *q;
         int32_t kx = x + w * 45 / 100, r;
         static const char *const KN[5] = {"K1", "K2", "K3", "ALGO", "K4"};
-        const char *lab[5] = {"SLOT", "PLACE", "LETTER", "STYLE", "NEW"}, *val[5];
+        const char *lab[5] = {up_valid(save_slot) ? "SLOT \xB7 SEL LOAD" : "SLOT", "PLACE", "LETTER", "STYLE", "NEW"}, *val[5];   /* (1.0.56: SEL loads a slot that holds a sound) */
         q = str_cat(v1, "B");
         q = fmt_u(q, save_slot + 1u, 2);
         q = str_cat(q, " \xB7 ");
@@ -1557,7 +1557,7 @@ static uint32_t hint_vi = 0xFFFFu, hint_ms;
 static void hint_overlay(const view_t *v, uint32_t vi)   /* (the themes with no footer) what the knobs do, then the buttons: see-through, at the bottom */
 {
     const char *ff = foot_fixed(vi), *l2 = v->lay == LY_PRESET ? "SAVE: KEEP THIS SOUND \xB7 SAVE HELD: FAVORITE" :
-                     v->lay == LY_SAVE ? "SAVE AGAIN: WRITE \xB7 ANOTHER PAGE: CANCEL" : "SELECT: ROW \xB7 ALGO: VALUE \xB7 SAVE: SAVE";
+                     v->lay == LY_SAVE ? "SAVE: WRITE \xB7 SEL: LOAD \xB7 PAGE: CANCEL" : "SELECT: ROW \xB7 ALGO: VALUE \xB7 SAVE: SAVE";
     char fb[64];
     int32_t y, x;
     if (vi != hint_vi) { hint_vi = vi; hint_ms = fm1_ms; }
