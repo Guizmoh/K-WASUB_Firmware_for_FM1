@@ -2593,6 +2593,7 @@ static void save_open(void)
     save_pos = 0;
     page = PG_PRE;
     vcur[PG_PRE] = 2;
+    cursor[PAGE_V0[PG_PRE] + 2u] = 0;           /* (the SLOT row first) */
 }
 static void init_sound(void)                    /* the INIT factory sound, an empty name, the first empty slot (undo: SAVE held + OCT-) */
 {
@@ -2892,16 +2893,19 @@ static void on_enc(uint32_t e, int32_t d)
         else if (e == ENC_KNOB3 || e == ENC_ALGORITHM) ask_load(bank, pre_cur[bank]);
         return;
     }
-    if (v->lay == LY_SAVE) {
-        if (e == ENC_KNOB1 || e == ENC_SELECT) save_slot = (uint8_t)clampi(save_slot + d, 0, NUSER - 1);
-        else if (e == ENC_KNOB2) save_pos = (uint8_t)clampi(save_pos + d, 0, 12);
-        else if (e == ENC_KNOB3) {
+    if (v->lay == LY_SAVE) {                    /* (1.0.57: SELECT picks the row, ALGO changes it; K1..K4 as before, ALGO alone was STYLE) */
+        uint32_t r = e == ENC_KNOB1 ? 0u : e == ENC_KNOB2 ? 1u : e == ENC_KNOB3 ? 2u : e == ENC_KNOB4 ? 4u : cursor[vi] % 5u;
+        if (e == ENC_SELECT) { cursor[vi] = (uint8_t)clampi((int32_t)cursor[vi] + d, 0, 4); return; }
+        if (e != ENC_ALGORITHM) cursor[vi] = (uint8_t)r;
+        if (r == 0u) save_slot = (uint8_t)clampi(save_slot + d, 0, NUSER - 1);
+        else if (r == 1u) save_pos = (uint8_t)clampi(save_pos + d, 0, 12);
+        else if (r == 2u) {
             static const char CH[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/.#";
             int32_t i, n = (int32_t)sizeof CH - 1;
             for (i = 0; i < n && CH[i] != pname[save_pos]; i++) {}
             pname[save_pos] = CH[((i + d) % n + n) % n];
-        } else if (e == ENC_ALGORITHM) patch[P_STYLE] = (int8_t)clampi(patch[P_STYLE] + d, 0, NSTYLE - 1);
-        else if (e == ENC_KNOB4) new_step(d > 0 ? 2u : 1u);   /* (left: NEW PRESET, right: NEW SONG) */
+        } else if (r == 3u) patch[P_STYLE] = (int8_t)clampi(patch[P_STYLE] + d, 0, NSTYLE - 1);
+        else new_step(d > 0 ? 2u : 1u);         /* (left: NEW PRESET, right: NEW SONG) */
         return;
     }
     if (e == ENC_SELECT) {

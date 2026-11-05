@@ -1065,7 +1065,7 @@ static void save_g(int32_t x, int32_t y0, int32_t w, int32_t ty)   /* the name b
     {                                           /* one row per knob: its name in the middle column, the value on the right */
         char v1[24], v2[8], v3[8], *q;
         int32_t kx = x + w * 45 / 100, r;
-        static const char *const KN[5] = {"K1", "K2", "K3", "ALGO", "K4"};
+        static const char *const KN[5] = {"K1", "K2", "K3", "", "K4"};   /* (STYLE: SELECT + ALGO) */
         const char *lab[5] = {up_valid(save_slot) ? "SLOT \xB7 SEL LOAD" : "SLOT", "PLACE", "LETTER", "STYLE", "NEW"}, *val[5];   /* (1.0.56: SEL loads a slot that holds a sound) */
         q = str_cat(v1, "B");
         q = fmt_u(q, save_slot + 1u, 2);
@@ -1078,7 +1078,7 @@ static void save_g(int32_t x, int32_t y0, int32_t w, int32_t ty)   /* the name b
         val[4] = new_arm == 1u ? "< PRESET: AGAIN" : new_arm == 2u ? "SONG: AGAIN >" : "<PRESET SONG>";
         for (i = 0; i < 5; i++) {
             r = y0 + i * 20;
-            row_g(x - 2, r, w, 18, lab[i], val[i], i == 0, i == 4 && new_arm ? K_LIME : K_CYAN, T_S);
+            row_g(x - 2, r, w, 18, lab[i], val[i], (uint32_t)i == cursor[vidx()] % 5u, i == 4 && new_arm ? K_LIME : K_CYAN, T_S);   /* (the row SELECT chose) */
             if (g_vis(r, 18)) g_text(T_XS, kx, r + 5, KN[i], K_LIME);
         }
     }
