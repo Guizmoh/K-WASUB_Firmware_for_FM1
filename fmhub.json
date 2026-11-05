@@ -4,5 +4,6 @@
     "synth"
   ],
   "play": "https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/emulator/index.html",
-  "editor": "https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/data.html"
+  "editor": "https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/data.html",
+  "image": "docs/img/card.webp"
 }
