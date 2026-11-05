@@ -70,7 +70,7 @@ static struct {
     uint8_t chain[SQ_NCH];
     sqhi_t p[SQ_NPAT - SQ_NLO];
     char name[SQ_NPAT][10];                     /* each pattern's name (0: none, the library's for P01..P08) */
-} sqy POOL;
+} sqy;                                          /* (in .bss: the pool is full, 1.0.53) */
 static volatile uint8_t sq_k;                   /* the pattern playing: perf.cur, or the CHAIN's (the main loop then shows it) */
 static uint8_t sq_chi;                          /* the CHAIN: the place playing */
 /* a step's note length: cond's high nibble (the condition is the low one); 0 is half a step, as before 0.9.53 */
