@@ -60,8 +60,8 @@ static const view_t VIEWS[] = {               /* (1.0.54: the most used first on
     {LY_BOX, "MOD ENVELOPE", 4, {ME_A, ME_D, ME_AMT, ME_DST}, "ENV"},
     {LY_BOX, "FILTER / COLOUR", 4, {F_CUT, F_RES, F_DRV, F_TYPE}, "FX"},   /* (these two open from SEL: 1.0.53) */
     {LY_LIST, "FILTER MOD", 6, {F_ENV, F_KEY, F_VEL, F_TYPE, F_CUT, F_RES}, "FX"},
-    {LY_LIST, "SEQ BASS", 18, {G_SQ_ON, G_SQ_STEP, G_SQ_NOTE, G_SQ_GATE, G_SQ_PAT, G_SQ_COPY, G_SQ_PRESET, G_SQ_LEN, G_SQ_CHAIN, G_SQ_CHPOS, G_SQ_CHPAT,
-                               G_SQ_TYPE, G_SQ_PROB, G_SQ_COND, G_SQ_LKP, G_SQ_LKV, G_SQ_RATE, G_SQ_SWING}, "SEQ"},   /* (K1-K4 the step; then the pattern, its copy, the chain) */
+    {LY_LIST, "SEQ BASS", 18, {G_SQ_PRESET, G_SQ_LEN, G_SQ_STEP, G_SQ_NOTE, G_SQ_GATE, G_SQ_TYPE, G_SQ_PAT, G_SQ_COPY, G_SQ_CHAIN, G_SQ_CHPOS, G_SQ_CHPAT,
+                               G_SQ_PROB, G_SQ_COND, G_SQ_LKP, G_SQ_LKV, G_SQ_RATE, G_SQ_SWING, G_SQ_ON}, "SEQ"},   /* (1.0.58: PRESET and LENGTH first, SEQUENCE last) */   /* (K1-K4 the step; then the pattern, its copy, the chain) */
     {LY_LIST, "DRUMS", 19, {G_DK_LVL, G_DK_TUNE, G_DK_DEC, G_DK_TONE, G_DK_PAT, G_DK_PRE, G_DK_KIT, G_DK_LEN, G_DK_TRK, G_DK_STEP, G_DK_HIT, G_DK_PROB, G_DK_COND,
                             G_DK_VOL, G_DK_KSAT, G_DK_SNAP, G_DK_ECHO, G_DK_MODE, G_DK_SWING}, "SEQ"},   /* (black keys: the track, white: its steps, OCT: the page; K1-K4 the sound, then the pattern) */
     {LY_LFO, "LFO 1 \xB7 WOBBLE", 9, {I_L1RATE, L1_DEP, L1_SHP, L1_DST, G_GRID, L1_SYNC, L1_TRIG, L1_PH, L1_SMO}, "LFO"},

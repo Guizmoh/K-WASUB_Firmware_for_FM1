@@ -1124,11 +1124,11 @@ static void th_glow(const view_t *v, uint32_t vi)
         glow_vis(vz, 6, 60, 228, 58);
         for (i = 0; i < 4u; i++) draw_vbox(i & 1u ? 123 : 6, 122 + (int32_t)(i >> 1) * 50, 111, 46, v->it[i], i == c, 0);
     } else if (vz && vi == V_SMP) {             /* (the sample: a lower picture, three rows under it, the one chosen lit) */
-        glow_vis(vz, 6, 60, 228, 74);
-        rows_g(v, 6, 138, 228, 23, 26, 3, T_S);
-    } else if (vz && big_vis(vi)) {
-        glow_vis(vz, 6, 60, 228, 100);
-        rows_g(v, 6, 164, 228, 23, 26, 2, T_S);
+        glow_vis(vz, 6, 60, 228, 58);
+        rows_g(v, 6, 122, 228, 23, 24, 4, T_S);
+    } else if (vz && big_vis(vi)) {             /* (1.0.58: a lower picture, the first four rows under it) */
+        glow_vis(vz, 6, 60, 228, 58);
+        rows_g(v, 6, 122, 228, 23, 24, 4, T_S);
     } else if (vz) {
         glow_vis(vz, 6, 60, 228, 50);
         rows_g(v, 6, 114, 228, 23, 26, 4, T_S);
@@ -1175,7 +1175,7 @@ static void th_tech(const view_t *v, uint32_t vi)
         goto foot;
     }
     int grid = vz && v->n <= 4u && !big_vis(vi);   /* (four settings and a picture: a smaller picture, the four as a 2 x 2 of big tiles) */
-    ph = vz && v->n > 4u && !big_vis(vi) ? 62 : grid ? 78 : 126;   /* the picture: small when the page has rows to show under the tiles */
+    ph = vz && v->n > 4u ? 62 : grid ? 78 : 126;   /* (1.0.58: SEQ BASS, DRUMS, OSC C too: their four rows show) */   /* the picture: small when the page has rows to show under the tiles */
     tech_win(4, 18, 232, ph, 0, K_LIME, 0);
     if (vz && big_vis(vi)) {                    /* (a pattern, a sample: the title above it, not on it) */
         g_text(T_S, 10, 22, ti, K_WHITE);
@@ -1222,7 +1222,7 @@ static void th_tech(const view_t *v, uint32_t vi)
         g_text(g_fit(T_M, b, 48), x + 5, y + 19, b, on ? K_LIME : K_WHITE);
         g_vbar(x + 5, y + 44, 46, 4, item_frac(id), on ? K_LIME : K_CYAN);
     }
-    if (vz && v->n > 4u && !big_vis(vi)) rows_g(v, 4, ph + 80, 232, 24, 26, 3, T_S);   /* (the small picture leaves room for the rows) */
+    if (vz && v->n > 4u) rows_g(v, 4, ph + 80, 232, 24, 26, 3, T_S);   /* (the small picture leaves room for the rows) */
     else if (v->n > 4u && g_vis(206, 17)) {     /* the row SELECT is on, and its value (ALGO) */
         uint32_t id = v->it[c];
         tech_win(4, 206, 232, 17, 3, K_CYAN, 0);
@@ -1439,7 +1439,7 @@ static int32_t rb_content(const view_t *v, uint32_t vi, int32_t x, int32_t y0, i
     char b[24], lab[48];
     *sel_y = 0;
     if (vz) {                                   /* the picture (a pattern, a sample: taller) */
-        int32_t ph = big_vis(vi) ? 96 : 58;
+        int32_t ph = big_vis(vi) ? 70 : 58;
         if (draw && g_vis(y + 4, ph)) {
             int32_t k;
             rb_rrect(x + 4, y + 4, w - 8, ph, 6, g_mix(K_BG, K_PANEL, 90), g_mix(K_BG, K_PANEL, 90));
@@ -1625,7 +1625,7 @@ static void th_ribbon(const view_t *v, uint32_t vi, int classic)
         int32_t ry = cy0 + 2;
         uint32_t vz = VZ_OF[vi];
         if (vz) {
-            int32_t ph = big_vis(vi) ? 100 : 58;
+            int32_t ph = big_vis(vi) ? 50 : 58;   /* (1.0.58: low enough for the four rows) */
             rb_rrect(wx + 6, ry, ww - 12, ph, 6, g_mix(K_BG, K_PANEL, 90), g_mix(K_BG, K_PANEL, 90));
             draw_visual(vz, wx + 8, ry + 2, ww - 16, ph - 4, 0);
             ry += ph + 6;
@@ -1677,8 +1677,8 @@ static void th_rack(const view_t *v, uint32_t vi)
     } else if (v->lay == LY_PRESET) presets_g(vi - PAGE_V0[PG_PRE], 35, 51, 199, 31, 34, 5, T_M);
     else if (v->lay == LY_SAVE) save_g(37, 70, 199, 17);
     else if (vz && big_vis(vi)) {
-        draw_visual(vz, 35, 51, 201, 100, 1);
-        rows_g(v, 35, 155, 197, 24, 26, 2, T_M);
+        draw_visual(vz, 35, 51, 201, 60, 1);
+        rows_g(v, 35, 115, 197, 24, 26, 4, T_M);
     } else if (vz) {
         draw_visual(vz, 35, 51, 201, 36, 1);
         rows_g(v, 35, 91, 197, 24, 26, 5, T_M);
