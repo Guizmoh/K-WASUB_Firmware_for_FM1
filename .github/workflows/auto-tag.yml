@@ -1,0 +1,33 @@
+# Each new version pushed to main (the k-wasub-X.fwsc at the top of the repository) gets its tag vX by itself, then
+# release.yml builds it from source on that tag (The Firmware Hub's shared build) and publishes the GitHub release.
+# Nothing to do by hand: push the release to main as usual.
+name: auto-tag
+on:
+  push:
+    branches: [main]
+    paths: ["k-wasub-*.fwsc", ".github/workflows/auto-tag.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write       # the tag
+  actions: write        # starting release.yml on it
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: The version at the top of the repository, tagged once
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          f=$(ls k-wasub-*.fwsc 2>/dev/null | head -1)
+          [ -n "$f" ] || { echo "no k-wasub-X.fwsc at the top"; exit 0; }
+          v=${f#k-wasub-}; v=${v%.fwsc}; t="v$v"
+          if git ls-remote --exit-code --tags origin "refs/tags/$t" >/dev/null; then echo "$t: already tagged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$t" -m "K-WASUB $v BETA"
+          git push origin "$t"
+          gh workflow run release.yml --ref "$t"
+          echo "$t tagged, release.yml started"

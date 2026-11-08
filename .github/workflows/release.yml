@@ -1,9 +1,10 @@
-# A release for each version tag (git tag v1.1.02 && git push origin v1.1.02): The Firmware Hub's shared workflow builds
+# A release for each version tag (made by hand, or by auto-tag.yml when a new k-wasub-X.fwsc reaches main) (git tag v1.1.02 && git push origin v1.1.02): The Firmware Hub's shared workflow builds
 # K-WASUB from this commit, signs the package ("Built from source on GitHub") and attaches it to the release.
 name: release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:          # (run on a tag by auto-tag.yml: a tag made by the workflow token starts nothing by itself)
 jobs:
   build:
     uses: zvenson/fm1-build/.github/workflows/build.yml@v1
