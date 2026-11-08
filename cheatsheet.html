@@ -6,165 +6,207 @@
 <title>K-WASUB Cheat Sheet</title>
 <meta name="description" content="K-WASUB for the M-VAVE FM-1: every button, every hold, every shortcut and every menu on one page.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0d1110;--panel:#151b19;--line:#26302c;--ink:#eef3ef;--mut:#9aa7a1;--lime:#b6ff3c;--cyan:#5fe3ff;--orange:#ffb03c;--pink:#ff6fae;--kbd:#1f2825}
-@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f6f7f2;--panel:#fff;--line:#d9ddd3;--ink:#141a17;--mut:#56605b;--lime:#4d8a00;--cyan:#00799a;--orange:#b36a00;--pink:#b8246a;--kbd:#eef1e8}}
-:root[data-theme="light"]{--bg:#f6f7f2;--panel:#fff;--line:#d9ddd3;--ink:#141a17;--mut:#56605b;--lime:#4d8a00;--cyan:#00799a;--orange:#b36a00;--pink:#b8246a;--kbd:#eef1e8}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Space Grotesk",system-ui,sans-serif}
-.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 40px}
-header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 20px;border-bottom:2px solid var(--lime);padding-bottom:10px;margin-bottom:18px}
-h1{margin:0;font-size:30px;letter-spacing:.02em}h1 b{color:var(--lime)}
-header p{margin:0;color:var(--mut)}
-.tools{display:flex;gap:8px}.tools button{font:inherit;font-size:13px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
-section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;break-inside:avoid}
-h2{margin:0 0 8px;font-size:15px;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
-h2 i{width:10px;height:10px;border-radius:3px;display:inline-block;background:var(--c,var(--lime))}
-table{width:100%;border-collapse:collapse}
-td{padding:4px 0;vertical-align:top;border-top:1px solid var(--line)}tr:first-child td{border-top:0}
-td:first-child{width:42%;padding-right:10px;white-space:nowrap}
-kbd{font:700 11.5px "JetBrains Mono",monospace;background:var(--kbd);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 5px;color:var(--ink)}
-.h{color:var(--orange);font:700 11px "JetBrains Mono",monospace;margin-left:3px}
-.menu{font:500 12.5px "JetBrains Mono",monospace;color:var(--mut)}.menu b{color:var(--ink);font-weight:700}
-.arr{color:var(--lime)}
-.note{color:var(--mut);font-size:12.5px;margin:6px 0 0}
-.wide{grid-column:1/-1}
-.pages{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px 14px}
-.pg{border-left:3px solid var(--c,var(--lime));padding:2px 0 2px 10px}
-.pg h3{margin:0;font-size:13.5px}.pg h3 kbd{margin-right:4px}
-footer{margin-top:16px;color:var(--mut);font-size:12.5px;display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:space-between}
-footer a{color:var(--cyan)}
-@media print{
-  @page{size:A4 landscape;margin:8mm}
-  :root{--bg:#fff;--panel:#fff;--line:#cfd4cb;--ink:#111;--mut:#444;--lime:#3e7400;--cyan:#006d8a;--orange:#9a5a00;--pink:#a01f5d;--kbd:#f1f3ee}
-  body{font-size:9px;line-height:1.3}.wrap{max-width:none;padding:0}.tools{display:none}
-  .grid{grid-template-columns:repeat(4,1fr);gap:6px}section{padding:6px 8px}h1{font-size:18px}h2{font-size:10.5px;margin-bottom:4px}header{margin-bottom:8px}
-  .pages{grid-template-columns:repeat(5,1fr);gap:4px 8px}td{padding:1px 0}kbd{font-size:8px;padding:0 3px}.menu{font-size:8.5px}.note{font-size:8.5px;margin-top:3px}footer{margin-top:6px;font-size:8.5px}html,body{height:auto}.grid{align-items:start}
+:root{
+  --bg:#07090a;--bg2:#0c1110;--card:#101615;--card2:#141c1a;--line:#1f2a27;--ink:#eaf2ec;--mut:#8d9b95;
+  --lime:#a6ff00;--lime-d:#2a3d0a;--cyan:#4fd8ff;--orange:#ffae2e;--pink:#ff5fa8;--violet:#a78bff;
+  --key:#1b2321;--key-b:#2c3834;--shadow:0 10px 30px rgba(0,0,0,.35);
 }
-@media (max-width:420px){td:first-child{white-space:normal;width:46%}}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#eef1ea;--bg2:#e6eadf;--card:#fff;--card2:#f7f9f3;--line:#dde2d6;--ink:#131916;--mut:#59645e;
+  --lime:#4a8600;--lime-d:#e3f2c9;--cyan:#00789a;--orange:#b26800;--pink:#b5246a;--violet:#5a3fc0;
+  --key:#f0f3eb;--key-b:#cfd6c8;--shadow:0 8px 24px rgba(30,40,20,.08)}}
+:root[data-theme="light"]{
+  --bg:#eef1ea;--bg2:#e6eadf;--card:#fff;--card2:#f7f9f3;--line:#dde2d6;--ink:#131916;--mut:#59645e;
+  --lime:#4a8600;--lime-d:#e3f2c9;--cyan:#00789a;--orange:#b26800;--pink:#b5246a;--violet:#5a3fc0;
+  --key:#f0f3eb;--key-b:#cfd6c8;--shadow:0 8px 24px rgba(30,40,20,.08)}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;color:var(--ink);font:14px/1.5 "Space Grotesk",system-ui,sans-serif;
+  background:radial-gradient(1200px 500px at 15% -10%,color-mix(in srgb,var(--lime) 10%,transparent),transparent 60%),var(--bg)}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 16px 48px}
+
+/* header */
+.hero{display:flex;align-items:center;gap:20px;background:linear-gradient(135deg,var(--card2),var(--card));border:1px solid var(--line);
+  border-radius:18px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:18px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:auto -60px -80px auto;width:260px;height:260px;border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--lime) 18%,transparent),transparent 70%)}
+.hero img{width:92px;height:92px;border-radius:14px;border:1px solid var(--line);flex:none;object-fit:cover}
+.hero h1{margin:0;font-size:34px;line-height:1.05;letter-spacing:.01em}
+.hero h1 b{color:var(--lime)}
+.hero h1 span{display:block;font-size:13px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--mut);margin-top:6px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;color:var(--mut);font-size:12.5px}
+.tools{margin-left:auto;display:flex;gap:8px;align-self:flex-start;z-index:1}
+.tools button{font:inherit;font-size:13px;background:var(--key);color:var(--ink);border:1px solid var(--key-b);border-radius:10px;padding:7px 13px;cursor:pointer}
+.tools button:hover{border-color:var(--lime)}
+
+/* keys */
+kbd{display:inline-block;font:700 11px/1 "JetBrains Mono",monospace;letter-spacing:.03em;color:var(--ink);background:var(--key);
+  border:1px solid var(--key-b);border-bottom-width:3px;border-radius:6px;padding:4px 6px 3px;white-space:nowrap;vertical-align:1px}
+kbd.k{color:var(--lime)}
+.hold{display:inline-block;font:700 9.5px/1 "JetBrains Mono",monospace;letter-spacing:.08em;color:#1a1000;background:var(--orange);
+  border-radius:4px;padding:3px 4px 2px;margin-left:4px;vertical-align:2px}
+.plus{color:var(--mut);margin:0 2px}
+
+/* grid of cards: 4, 2 or 1 column, always full rows */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media (max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.grid{grid-template-columns:1fr}.hero{flex-wrap:wrap}.hero img{width:72px;height:72px}.hero h1{font-size:27px}.tools{margin-left:0}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 15px 12px;box-shadow:var(--shadow);
+  border-top:3px solid var(--c);break-inside:avoid}
+.card h2{margin:0 0 10px;font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--c);display:flex;align-items:center;gap:8px}
+.card h2 small{color:var(--mut);letter-spacing:.04em;text-transform:none;font-size:12px;font-weight:500}
+.row{display:grid;grid-template-columns:minmax(0,46%) 1fr;gap:10px;padding:6px 0;border-top:1px dashed var(--line);align-items:baseline}
+.row:first-of-type{border-top:0}
+.row .d{color:var(--ink)}.row .d em{font-style:normal;color:var(--mut)}
+.c-lime{--c:var(--lime)}.c-orange{--c:var(--orange)}.c-cyan{--c:var(--cyan)}.c-pink{--c:var(--pink)}.c-violet{--c:var(--violet)}
+
+/* menus */
+.menus{grid-column:1/-1;border-top-color:var(--lime)}
+.mgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+@media (max-width:1100px){.mgrid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.mgrid{grid-template-columns:1fr}}
+.m{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 11px}
+.m h3{margin:0 0 7px;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut);font-weight:500}
+.m ol{margin:0;padding:0;list-style:none;counter-reset:v}
+.m li{counter-increment:v;font:500 12px/1.35 "JetBrains Mono",monospace;padding:3px 0 3px 22px;position:relative;color:var(--ink)}
+.m li::before{content:counter(v);position:absolute;left:0;top:3px;width:16px;height:16px;border-radius:5px;background:var(--lime-d);
+  color:var(--lime);font-size:10px;line-height:16px;text-align:center}
+.m li:first-child{color:var(--lime);font-weight:700}
+.note{margin:10px 2px 0;color:var(--mut);font-size:12.5px}
+
+footer{margin-top:18px;color:var(--mut);font-size:12.5px;display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between}
+footer a{color:var(--cyan);text-decoration:none}footer a:hover{text-decoration:underline}
+
+@media print{
+  @page{size:A4 landscape;margin:7mm}
+  :root,:root[data-theme]{--bg:#fff;--bg2:#fff;--card:#fff;--card2:#f6f8f2;--line:#d3d9cc;--ink:#111;--mut:#4a544e;--lime:#3c7000;--lime-d:#e2f0cc;
+    --cyan:#006a87;--orange:#a65f00;--pink:#a01f5d;--violet:#4b33a8;--key:#f1f3ee;--key-b:#c9d0c2;--shadow:none}
+  body{background:#fff;font-size:8.6px;line-height:1.3}.wrap{max-width:none;padding:0}.tools,.legend{display:none}
+  .hero{padding:6px 10px;margin-bottom:6px;border-radius:10px}.hero img{width:40px;height:40px;border-radius:8px}.hero h1{font-size:17px}.hero h1 span{font-size:8px;margin-top:2px}
+  .grid{gap:6px}.card{padding:6px 8px 5px;border-radius:9px}.card h2{font-size:9px;margin-bottom:4px}.card h2 small{font-size:7.5px}.row{padding:2px 0;gap:6px}
+  kbd{font-size:7.5px;padding:2px 3px 1px;border-bottom-width:2px}.hold{font-size:6.5px;padding:2px 3px 1px}
+  .mgrid{grid-template-columns:repeat(5,1fr);gap:5px}.m{padding:5px 7px;border-radius:7px}.m h3{font-size:8.5px;margin-bottom:3px}
+  .m li{font-size:7.8px;padding:1px 0 1px 15px}.m li::before{width:11px;height:11px;line-height:11px;font-size:7px;top:1px}
+  .note{font-size:8px;margin-top:4px}footer{margin-top:5px;font-size:8px}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header>
-  <div><h1>K-<b>WASUB</b> · cheat sheet</h1><p>Modern bass synth for the M-VAVE FM-1 · firmware 1.1 BETA · <span class="h">HOLD</span> = keep the button pressed</p></div>
+
+<header class="hero">
+  <img src="docs/img/card.webp" alt="K-WASUB">
+  <div>
+    <h1>K-<b>WASUB</b> cheat sheet<span>modern bass synth · M-VAVE FM-1 · firmware 1.1 beta</span></h1>
+    <div class="legend"><span><kbd>BUTTON</kbd> press</span><span><kbd>BUTTON</kbd><span class="hold">HOLD</span> keep it pressed</span><span><kbd class="k">K1</kbd> a knob</span></div>
+  </div>
   <div class="tools"><button onclick="print()">Print / PDF</button><button id="th">Light / dark</button></div>
 </header>
 
 <div class="grid">
-<section>
-  <h2><i></i>The basics</h2>
-  <table>
-    <tr><td><kbd>SELECT</kbd> knob</td><td>choose a row</td></tr>
-    <tr><td><kbd>ALGO</kbd> knob</td><td>change the row chosen</td></tr>
-    <tr><td><kbd>K1</kbd>–<kbd>K4</kbd></td><td>the page's first four settings (written at the bottom of the screen)</td></tr>
-    <tr><td><kbd>PRESETS</kbd> knob</td><td>on HOME and the sound lists: the sounds · elsewhere: the page's views</td></tr>
-    <tr><td>a page button</td><td>opens its first view · again: the next view</td></tr>
-    <tr><td><kbd>OCT−</kbd> / <kbd>OCT+</kbd></td><td>octave down / up</td></tr>
-  </table>
+
+<section class="card c-lime">
+  <h2>The basics</h2>
+  <div class="row"><div><kbd class="k">SELECT</kbd></div><div class="d">choose a row</div></div>
+  <div class="row"><div><kbd class="k">ALGO</kbd></div><div class="d">change the row chosen</div></div>
+  <div class="row"><div><kbd class="k">K1</kbd>–<kbd class="k">K4</kbd></div><div class="d">the view's first four settings <em>(written at the bottom)</em></div></div>
+  <div class="row"><div><kbd class="k">PRESETS</kbd></div><div class="d">sounds on HOME and the lists · <em>elsewhere: the views</em></div></div>
+  <div class="row"><div>page button</div><div class="d">first view · <em>again: next view</em></div></div>
+  <div class="row"><div><kbd>OCT−</kbd> <kbd>OCT+</kbd></div><div class="d">octave down / up</div></div>
 </section>
 
-<section style="--c:var(--orange)">
-  <h2><i></i>Holds</h2>
-  <table>
-    <tr><td><kbd>PLAY</kbd><span class="h">HOLD</span></td><td>HOLD: the keys stay on</td></tr>
-    <tr><td><kbd>SEL</kbd><span class="h">HOLD</span></td><td>COMPARE with the saved sound</td></tr>
-    <tr><td><kbd>FX</kbd><span class="h">HOLD</span></td><td>FX PADS: the keys play effects</td></tr>
-    <tr><td><kbd>HOME</kbd><span class="h">HOLD</span></td><td>COMBINE A + B (the two oscillators)</td></tr>
-    <tr><td><kbd>GLO</kbd><span class="h">HOLD</span></td><td>CLASSIC ⇄ SHIFT mode</td></tr>
-    <tr><td><kbd>REC</kbd><span class="h">HOLD</span> stopped</td><td>PANIC: all notes off</td></tr>
-    <tr><td><kbd>REC</kbd><span class="h">HOLD</span> playing</td><td>+ a knob: record AUTOMATION · alone: erase it</td></tr>
-    <tr><td><kbd>SAVE</kbd><span class="h">HOLD</span></td><td>on SAVE: WRITE · in a list: favourite · elsewhere: + OCT− UNDO, OCT+ REDO</td></tr>
-    <tr><td><kbd>OCT−</kbd>/<kbd>OCT+</kbd><span class="h">HOLD</span></td><td>UNDO / REDO (with a knob turned: SHIFT columns)</td></tr>
-    <tr><td><kbd>EDIT</kbd> <kbd>SEQ</kbd><span class="h">HOLD</span></td><td>RANDOM: shakes the view shown</td></tr>
-  </table>
+<section class="card c-orange">
+  <h2>Holds</h2>
+  <div class="row"><div><kbd>PLAY</kbd><span class="hold">HOLD</span></div><div class="d">HOLD: keys stay on</div></div>
+  <div class="row"><div><kbd>SEL</kbd><span class="hold">HOLD</span></div><div class="d">COMPARE with the saved sound</div></div>
+  <div class="row"><div><kbd>FX</kbd><span class="hold">HOLD</span></div><div class="d">FX PADS: keys play effects</div></div>
+  <div class="row"><div><kbd>HOME</kbd><span class="hold">HOLD</span></div><div class="d">COMBINE A + B</div></div>
+  <div class="row"><div><kbd>GLO</kbd><span class="hold">HOLD</span></div><div class="d">CLASSIC ⇄ SHIFT mode</div></div>
+  <div class="row"><div><kbd>EDIT</kbd> <kbd>SEQ</kbd><span class="hold">HOLD</span></div><div class="d">RANDOM: shake the view</div></div>
 </section>
 
-<section style="--c:var(--cyan)">
-  <h2><i></i>Shortcuts</h2>
-  <table>
-    <tr><td><kbd>OCT−</kbd> + <kbd>OCT+</kbd></td><td>PANIC, any time (notes, pads, echoes off)</td></tr>
-    <tr><td><kbd>LFO</kbd><span class="h">HOLD</span> + knob</td><td>QUICK ASSIGN: LFO 2 on that setting (+OCT− LFO 1, +OCT+ LFO 3)</td></tr>
-    <tr><td><kbd>ENV</kbd><span class="h">HOLD</span> + knob</td><td>the MOD envelope on that setting</td></tr>
-    <tr><td><kbd>LFO</kbd><span class="h">HOLD</span> + white 1–8</td><td>WOBBLE TAP: 1/2 1/4 1/8 1/16 1/32 1/4T 1/8T 1/16T, on the beat</td></tr>
-    <tr><td>PERFORM: <kbd>OCT+</kbd><span class="h">HOLD</span></td><td>the keys are FX PADS</td></tr>
-    <tr><td><kbd>REC</kbd> (other views)</td><td>TAP tempo</td></tr>
-    <tr><td>MIDI</td><td>CC 1 wheel · CC 74 cutoff · CC 71 resonance · CC 123 notes off · any CC with MIDI LEARN</td></tr>
-  </table>
+<section class="card c-cyan">
+  <h2>Shortcuts</h2>
+  <div class="row"><div><kbd>OCT−</kbd><span class="plus">+</span><kbd>OCT+</kbd></div><div class="d">PANIC, any time</div></div>
+  <div class="row"><div><kbd>OCT−</kbd>/<kbd>OCT+</kbd><span class="hold">HOLD</span></div><div class="d">UNDO / REDO</div></div>
+  <div class="row"><div><kbd>REC</kbd><span class="hold">HOLD</span></div><div class="d">stopped: PANIC · <em>playing + knob: AUTOMATION, alone: erase</em></div></div>
+  <div class="row"><div><kbd>REC</kbd></div><div class="d">TAP tempo <em>(off the SEQ views)</em></div></div>
+  <div class="row"><div>PERFORM <kbd>OCT+</kbd><span class="hold">HOLD</span></div><div class="d">keys are FX PADS</div></div>
+  <div class="row"><div><kbd>SAVE</kbd><span class="hold">HOLD</span><span class="plus">+</span><kbd>OCT</kbd></div><div class="d">UNDO / REDO window</div></div>
 </section>
 
-<section style="--c:var(--pink)">
-  <h2><i></i>SEQ BASS</h2>
-  <table>
-    <tr><td><kbd>PLAY</kbd></td><td>start / stop the bass and drums</td></tr>
-    <tr><td>white keys</td><td>the 16 steps of the page · tap: on / off</td></tr>
-    <tr><td>white key<span class="h">HOLD</span> +</td><td><kbd>K1</kbd> note · <kbd>K2</kbd> length · <kbd>K3</kbd> condition · <kbd>K4</kbd> velocity</td></tr>
-    <tr><td><kbd>OCT−</kbd>/<kbd>OCT+</kbd></td><td>page of 16 steps (32 / 64 steps)</td></tr>
-    <tr><td><kbd>REC</kbd></td><td>stopped: keys write notes step by step · playing: record live</td></tr>
-    <tr><td><kbd>SEQ</kbd> again</td><td>PIANO ROLL: keys write the notes, <kbd>SAVE</kbd> names the pattern</td></tr>
-    <tr><td>rows</td><td>PRESET · LENGTH (64 … 8, 7 … 1) · COPY / PASTE · CHAIN · SEQUENCE: keys play or transpose</td></tr>
-  </table>
+<section class="card c-violet">
+  <h2>Modulation</h2>
+  <div class="row"><div><kbd>LFO</kbd><span class="hold">HOLD</span><span class="plus">+</span><kbd class="k">knob</kbd></div><div class="d">LFO 2 on that setting <em>(+OCT− LFO 1 · +OCT+ LFO 3)</em></div></div>
+  <div class="row"><div><kbd>ENV</kbd><span class="hold">HOLD</span><span class="plus">+</span><kbd class="k">knob</kbd></div><div class="d">MOD envelope on it</div></div>
+  <div class="row"><div><kbd>LFO</kbd><span class="hold">HOLD</span><span class="plus">+</span>white 1–8</div><div class="d">WOBBLE TAP <em>1/2 1/4 1/8 1/16 1/32 1/4T 1/8T 1/16T</em></div></div>
+  <div class="row"><div>MIDI CC</div><div class="d">1 wheel · 74 cutoff · 71 reso · 123 notes off · <em>any CC: MIDI LEARN</em></div></div>
 </section>
 
-<section style="--c:var(--orange)">
-  <h2><i></i>DRUMS</h2>
-  <table>
-    <tr><td>black keys 1–8</td><td>choose the instrument and play it</td></tr>
-    <tr><td>black 9 / 10</td><td>mute the track / clear it</td></tr>
-    <tr><td>white keys</td><td>its steps on the page · held + <kbd>K1</kbd>–<kbd>K4</kbd>: locks</td></tr>
-    <tr><td><kbd>OCT−</kbd><span class="h">HOLD</span> + black</td><td>mute / unmute that instrument</td></tr>
-    <tr><td><kbd>OCT−</kbd>/<kbd>OCT+</kbd></td><td>the page of 16 steps</td></tr>
-    <tr><td>kits</td><td>808 · 909 · dub techno · acoustic · KICK DRIVE · SNARE SNAPPY</td></tr>
-  </table>
+<section class="card c-pink">
+  <h2>SEQ BASS <small>SEQ button</small></h2>
+  <div class="row"><div><kbd>PLAY</kbd></div><div class="d">start / stop bass + drums</div></div>
+  <div class="row"><div>white keys</div><div class="d">the 16 steps · tap: on / off</div></div>
+  <div class="row"><div>white<span class="hold">HOLD</span><span class="plus">+</span></div><div class="d"><kbd class="k">K1</kbd> note <kbd class="k">K2</kbd> length <kbd class="k">K3</kbd> condition <kbd class="k">K4</kbd> velocity</div></div>
+  <div class="row"><div><kbd>OCT−</kbd> <kbd>OCT+</kbd></div><div class="d">page of 16 steps</div></div>
+  <div class="row"><div><kbd>REC</kbd></div><div class="d">write notes · <em>playing: record live</em></div></div>
+  <div class="row"><div><kbd>SEQ</kbd> again</div><div class="d">PIANO ROLL · <kbd>SAVE</kbd> names the pattern</div></div>
 </section>
 
-<section style="--c:var(--cyan)">
-  <h2><i></i>FX PADS (<kbd>FX</kbd><span class="h">HOLD</span>)</h2>
-  <table>
-    <tr><td>white 1–8</td><td>wobble speed</td></tr>
-    <tr><td>white 9–16</td><td>wobble depth, shape</td></tr>
-    <tr><td>black 1–4</td><td>stutter (held)</td></tr>
-    <tr><td>black 5–11</td><td>tape stop · DJ low · DJ high · pump · saturate · FREEZE · crush</td></tr>
-    <tr><td><kbd>K1</kbd>–<kbd>K4</kbd></td><td>cutoff · resonance · filter type · morph A/B</td></tr>
-    <tr><td><kbd>ALGO</kbd></td><td>QUANTIZE: a pad waits for the bar, 1/2 … 1/64</td></tr>
-  </table>
+<section class="card c-orange">
+  <h2>DRUMS <small>SEQ, third view</small></h2>
+  <div class="row"><div>black 1–8</div><div class="d">choose the instrument, play it</div></div>
+  <div class="row"><div>black 9 · 10</div><div class="d">mute the track · clear it</div></div>
+  <div class="row"><div>white keys</div><div class="d">its steps · <em>held + K1–K4: locks</em></div></div>
+  <div class="row"><div><kbd>OCT−</kbd><span class="hold">HOLD</span><span class="plus">+</span>black</div><div class="d">mute that instrument</div></div>
+  <div class="row"><div><kbd>OCT−</kbd> <kbd>OCT+</kbd></div><div class="d">page of 16 steps</div></div>
+  <div class="row"><div>kits</div><div class="d">808 · 909 · dub techno · acoustic</div></div>
 </section>
 
-<section style="--c:var(--lime)">
-  <h2><i></i>Sounds &amp; saving</h2>
-  <table>
-    <tr><td><kbd>SAVE</kbd> ×1</td><td>SAVE page · the keys type the name</td></tr>
-    <tr><td><kbd>SAVE</kbd> ×2 / ×3</td><td>SELECT PATCH A (factory) / B (yours)</td></tr>
-    <tr><td><kbd>SAVE</kbd><span class="h">HOLD</span> on SAVE</td><td>WRITE the sound</td></tr>
-    <tr><td><kbd>SEL</kbd> on SAVE</td><td>LOAD the slot chosen with <kbd>K1</kbd></td></tr>
-    <tr><td>lists: <kbd>K4</kbd></td><td>CAT: ALL · SUB · REESE · GROWL · WOBBLE · PLUCK · 808 · DRONE</td></tr>
-    <tr><td>SAVE: <kbd>K4</kbd> twice</td><td>left: NEW PRESET · right: NEW SONG</td></tr>
-  </table>
+<section class="card c-cyan">
+  <h2>FX PADS <small>FX held</small></h2>
+  <div class="row"><div>white 1–8</div><div class="d">wobble speed</div></div>
+  <div class="row"><div>white 9–16</div><div class="d">wobble depth, shape</div></div>
+  <div class="row"><div>black 1–4</div><div class="d">stutter <em>(held)</em></div></div>
+  <div class="row"><div>black 5–11</div><div class="d">tape stop · DJ low · DJ high · pump · saturate · FREEZE · crush</div></div>
+  <div class="row"><div><kbd class="k">K1</kbd>–<kbd class="k">K4</kbd></div><div class="d">cutoff · reso · filter type · morph A/B</div></div>
+  <div class="row"><div><kbd class="k">ALGO</kbd></div><div class="d">QUANTIZE: bar … 1/64</div></div>
 </section>
 
-<section class="wide" style="--c:var(--lime)">
-  <h2><i></i>The menus · press the button again for the next view</h2>
-  <div class="pages">
-    <div class="pg"><h3><kbd>HOME</kbd> play</h3><div class="menu"><b>CURRENT PATCH</b> <span class="arr">›</span> LIVE MIX <span class="arr">›</span> QUICK</div></div>
-    <div class="pg" style="--c:var(--cyan)"><h3><kbd>EDIT</kbd> the bass</h3><div class="menu"><b>COMBINE A + B</b> <span class="arr">›</span> OSC A <span class="arr">›</span> OSC B <span class="arr">›</span> SUB + NOISE <span class="arr">›</span> OSC C · SAMPLE</div></div>
-    <div class="pg" style="--c:var(--orange)"><h3><kbd>ENV</kbd> envelopes</h3><div class="menu"><b>FILTER</b> <span class="arr">›</span> AMP <span class="arr">›</span> MOD (PITCH / MOD)</div></div>
-    <div class="pg" style="--c:var(--pink)"><h3><kbd>SEL</kbd> filter &amp; live</h3><div class="menu"><b>FILTER / COLOUR</b> <span class="arr">›</span> FILTER MOD <span class="arr">›</span> PERFORM <span class="arr">›</span> MORPH X/Y <span class="arr">›</span> FX LIVE <span class="arr">›</span> MACROS <span class="arr">›</span> MORPH A/B</div></div>
-    <div class="pg"><h3><kbd>SEQ</kbd> sequencers</h3><div class="menu"><b>SEQ BASS</b> <span class="arr">›</span> PIANO ROLL <span class="arr">›</span> DRUMS</div></div>
-    <div class="pg" style="--c:var(--cyan)"><h3><kbd>LFO</kbd> movement</h3><div class="menu"><b>LFO 1 · WOBBLE</b> <span class="arr">›</span> LFO 2 <span class="arr">›</span> LFO 3 · GLOBAL <span class="arr">›</span> STEP FX <span class="arr">›</span> MOD MATRIX</div></div>
-    <div class="pg" style="--c:var(--orange)"><h3><kbd>FX</kbd> effects</h3><div class="menu"><b>SATURATION</b> <span class="arr">›</span> REVERB <span class="arr">›</span> DELAY <span class="arr">›</span> DYNAMICS <span class="arr">›</span> EQ <span class="arr">›</span> MOD FX <span class="arr">›</span> CRUSH <span class="arr">›</span> MASTER</div></div>
-    <div class="pg" style="--c:var(--pink)"><h3><kbd>SAVE</kbd> sounds</h3><div class="menu"><b>SAVE</b> <span class="arr">›</span> SELECT PATCH A <span class="arr">›</span> SELECT PATCH B</div></div>
-    <div class="pg"><h3><kbd>ARP</kbd> arpeggiator</h3><div class="menu"><b>ARPEGGIATOR</b>: on, mode, rate, octaves, gate</div></div>
-    <div class="pg" style="--c:var(--cyan)"><h3><kbd>GLO</kbd> system</h3><div class="menu"><b>GLOBAL SETUP</b> <span class="arr">›</span> DISPLAY <span class="arr">›</span> ADVANCED <span class="arr">›</span> MIDI</div></div>
+<section class="card c-lime">
+  <h2>Sounds &amp; saving</h2>
+  <div class="row"><div><kbd>SAVE</kbd> ×1</div><div class="d">SAVE · <em>keys type the name</em></div></div>
+  <div class="row"><div><kbd>SAVE</kbd> ×2 · ×3</div><div class="d">SELECT PATCH A <em>(factory)</em> · B <em>(yours)</em></div></div>
+  <div class="row"><div><kbd>SAVE</kbd><span class="hold">HOLD</span></div><div class="d">on SAVE: WRITE · <em>in a list: favourite</em></div></div>
+  <div class="row"><div><kbd>SEL</kbd> on SAVE</div><div class="d">LOAD the slot chosen</div></div>
+  <div class="row"><div><kbd class="k">K4</kbd> in a list</div><div class="d">CAT: SUB · REESE · GROWL · WOBBLE · PLUCK · 808 · DRONE</div></div>
+  <div class="row"><div><kbd class="k">K4</kbd> ×2 on SAVE</div><div class="d">left NEW PRESET · right NEW SONG</div></div>
+</section>
+
+<section class="card menus">
+  <h2>The menus <small>press the button again for the next view</small></h2>
+  <div class="mgrid">
+    <div class="m"><h3><kbd>HOME</kbd> play</h3><ol><li>CURRENT PATCH</li><li>LIVE MIX</li><li>QUICK</li></ol></div>
+    <div class="m"><h3><kbd>EDIT</kbd> the bass</h3><ol><li>COMBINE A + B</li><li>OSC A</li><li>OSC B</li><li>SUB + NOISE</li><li>OSC C · SAMPLE</li></ol></div>
+    <div class="m"><h3><kbd>ENV</kbd> envelopes</h3><ol><li>FILTER ENV</li><li>AMP ENV</li><li>MOD ENV</li></ol></div>
+    <div class="m"><h3><kbd>SEL</kbd> filter &amp; live</h3><ol><li>FILTER / COLOUR</li><li>FILTER MOD</li><li>PERFORM</li><li>MORPH X/Y</li><li>FX LIVE</li><li>MACROS</li><li>MORPH A/B</li></ol></div>
+    <div class="m"><h3><kbd>SEQ</kbd> sequencers</h3><ol><li>SEQ BASS</li><li>PIANO ROLL</li><li>DRUMS</li></ol></div>
+    <div class="m"><h3><kbd>LFO</kbd> movement</h3><ol><li>LFO 1 · WOBBLE</li><li>LFO 2</li><li>LFO 3 · GLOBAL</li><li>STEP FX</li><li>MOD MATRIX</li></ol></div>
+    <div class="m"><h3><kbd>FX</kbd> effects</h3><ol><li>SATURATION</li><li>REVERB</li><li>DELAY</li><li>DYNAMICS</li><li>EQ</li><li>MOD FX</li><li>CRUSH</li><li>MASTER</li></ol></div>
+    <div class="m"><h3><kbd>SAVE</kbd> sounds</h3><ol><li>SAVE</li><li>SELECT PATCH A</li><li>SELECT PATCH B</li></ol></div>
+    <div class="m"><h3><kbd>ARP</kbd> arpeggio</h3><ol><li>ARPEGGIATOR</li></ol></div>
+    <div class="m"><h3><kbd>GLO</kbd> system</h3><ol><li>GLOBAL SETUP</li><li>DISPLAY</li><li>ADVANCED</li><li>MIDI</li></ol></div>
   </div>
-  <p class="note">FX views: each effect's first row is its ON / OFF. DYNAMICS = compressor + OTT · MOD FX = chorus + phaser · MASTER: volume, glue, sub boost, mono bass, DEEP BASS / SUB HARMONICS (GLO).</p>
+  <p class="note">Each effect's first row is its ON / OFF · DYNAMICS = compressor + OTT · MOD FX = chorus + phaser · DEEP BASS and SUB HARMONICS: GLO › GLOBAL SETUP.</p>
 </section>
+
 </div>
 
 <footer>
   <span>K-WASUB · free and open source (GPL-3.0) · born from KAWA · not affiliated with M-VAVE</span>
-  <span><a href="index.html">Home &amp; emulator</a> · <a href="manual.html">Full manual</a> · <a href="installer.html">Install</a></span>
+  <span><a href="index.html">Home &amp; emulator</a> · <a href="manual.html">Full manual</a> · <a href="installer.html">Install</a> · <a href="cheatsheet.pdf">PDF</a></span>
 </footer>
 </div>
 <script>
