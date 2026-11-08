@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K-WASUB Cheat Sheet</title>
+<meta name="description" content="K-WASUB for the M-VAVE FM-1: every button, every hold, every shortcut and every menu on one page.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1110;--panel:#151b19;--line:#26302c;--ink:#eef3ef;--mut:#9aa7a1;--lime:#b6ff3c;--cyan:#5fe3ff;--orange:#ffb03c;--pink:#ff6fae;--kbd:#1f2825}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f6f7f2;--panel:#fff;--line:#d9ddd3;--ink:#141a17;--mut:#56605b;--lime:#4d8a00;--cyan:#00799a;--orange:#b36a00;--pink:#b8246a;--kbd:#eef1e8}}
+:root[data-theme="light"]{--bg:#f6f7f2;--panel:#fff;--line:#d9ddd3;--ink:#141a17;--mut:#56605b;--lime:#4d8a00;--cyan:#00799a;--orange:#b36a00;--pink:#b8246a;--kbd:#eef1e8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Space Grotesk",system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 40px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 20px;border-bottom:2px solid var(--lime);padding-bottom:10px;margin-bottom:18px}
+h1{margin:0;font-size:30px;letter-spacing:.02em}h1 b{color:var(--lime)}
+header p{margin:0;color:var(--mut)}
+.tools{display:flex;gap:8px}.tools button{font:inherit;font-size:13px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;break-inside:avoid}
+h2{margin:0 0 8px;font-size:15px;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+h2 i{width:10px;height:10px;border-radius:3px;display:inline-block;background:var(--c,var(--lime))}
+table{width:100%;border-collapse:collapse}
+td{padding:4px 0;vertical-align:top;border-top:1px solid var(--line)}tr:first-child td{border-top:0}
+td:first-child{width:42%;padding-right:10px;white-space:nowrap}
+kbd{font:700 11.5px "JetBrains Mono",monospace;background:var(--kbd);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 5px;color:var(--ink)}
+.h{color:var(--orange);font:700 11px "JetBrains Mono",monospace;margin-left:3px}
+.menu{font:500 12.5px "JetBrains Mono",monospace;color:var(--mut)}.menu b{color:var(--ink);font-weight:700}
+.arr{color:var(--lime)}
+.note{color:var(--mut);font-size:12.5px;margin:6px 0 0}
+.wide{grid-column:1/-1}
+.pages{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px 14px}
+.pg{border-left:3px solid var(--c,var(--lime));padding:2px 0 2px 10px}
+.pg h3{margin:0;font-size:13.5px}.pg h3 kbd{margin-right:4px}
+footer{margin-top:16px;color:var(--mut);font-size:12.5px;display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:space-between}
+footer a{color:var(--cyan)}
+@media print{
+  @page{size:A4 landscape;margin:8mm}
+  :root{--bg:#fff;--panel:#fff;--line:#cfd4cb;--ink:#111;--mut:#444;--lime:#3e7400;--cyan:#006d8a;--orange:#9a5a00;--pink:#a01f5d;--kbd:#f1f3ee}
+  body{font-size:9px;line-height:1.3}.wrap{max-width:none;padding:0}.tools{display:none}
+  .grid{grid-template-columns:repeat(4,1fr);gap:6px}section{padding:6px 8px}h1{font-size:18px}h2{font-size:10.5px;margin-bottom:4px}header{margin-bottom:8px}
+  .pages{grid-template-columns:repeat(5,1fr);gap:4px 8px}td{padding:1px 0}kbd{font-size:8px;padding:0 3px}.menu{font-size:8.5px}.note{font-size:8.5px;margin-top:3px}footer{margin-top:6px;font-size:8.5px}html,body{height:auto}.grid{align-items:start}
+}
+@media (max-width:420px){td:first-child{white-space:normal;width:46%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>K-<b>WASUB</b> · cheat sheet</h1><p>Modern bass synth for the M-VAVE FM-1 · firmware 1.1 BETA · <span class="h">HOLD</span> = keep the button pressed</p></div>
+  <div class="tools"><button onclick="print()">Print / PDF</button><button id="th">Light / dark</button></div>
+</header>
+
+<div class="grid">
+<section>
+  <h2><i></i>The basics</h2>
+  <table>
+    <tr><td><kbd>SELECT</kbd> knob</td><td>choose a row</td></tr>
+    <tr><td><kbd>ALGO</kbd> knob</td><td>change the row chosen</td></tr>
+    <tr><td><kbd>K1</kbd>–<kbd>K4</kbd></td><td>the page's first four settings (written at the bottom of the screen)</td></tr>
+    <tr><td><kbd>PRESETS</kbd> knob</td><td>on HOME and the sound lists: the sounds · elsewhere: the page's views</td></tr>
+    <tr><td>a page button</td><td>opens its first view · again: the next view</td></tr>
+    <tr><td><kbd>OCT−</kbd> / <kbd>OCT+</kbd></td><td>octave down / up</td></tr>
+  </table>
+</section>
+
+<section style="--c:var(--orange)">
+  <h2><i></i>Holds</h2>
+  <table>
+    <tr><td><kbd>PLAY</kbd><span class="h">HOLD</span></td><td>HOLD: the keys stay on</td></tr>
+    <tr><td><kbd>SEL</kbd><span class="h">HOLD</span></td><td>COMPARE with the saved sound</td></tr>
+    <tr><td><kbd>FX</kbd><span class="h">HOLD</span></td><td>FX PADS: the keys play effects</td></tr>
+    <tr><td><kbd>HOME</kbd><span class="h">HOLD</span></td><td>COMBINE A + B (the two oscillators)</td></tr>
+    <tr><td><kbd>GLO</kbd><span class="h">HOLD</span></td><td>CLASSIC ⇄ SHIFT mode</td></tr>
+    <tr><td><kbd>REC</kbd><span class="h">HOLD</span> stopped</td><td>PANIC: all notes off</td></tr>
+    <tr><td><kbd>REC</kbd><span class="h">HOLD</span> playing</td><td>+ a knob: record AUTOMATION · alone: erase it</td></tr>
+    <tr><td><kbd>SAVE</kbd><span class="h">HOLD</span></td><td>on SAVE: WRITE · in a list: favourite · elsewhere: + OCT− UNDO, OCT+ REDO</td></tr>
+    <tr><td><kbd>OCT−</kbd>/<kbd>OCT+</kbd><span class="h">HOLD</span></td><td>UNDO / REDO (with a knob turned: SHIFT columns)</td></tr>
+    <tr><td><kbd>EDIT</kbd> <kbd>SEQ</kbd><span class="h">HOLD</span></td><td>RANDOM: shakes the view shown</td></tr>
+  </table>
+</section>
+
+<section style="--c:var(--cyan)">
+  <h2><i></i>Shortcuts</h2>
+  <table>
+    <tr><td><kbd>OCT−</kbd> + <kbd>OCT+</kbd></td><td>PANIC, any time (notes, pads, echoes off)</td></tr>
+    <tr><td><kbd>LFO</kbd><span class="h">HOLD</span> + knob</td><td>QUICK ASSIGN: LFO 2 on that setting (+OCT− LFO 1, +OCT+ LFO 3)</td></tr>
+    <tr><td><kbd>ENV</kbd><span class="h">HOLD</span> + knob</td><td>the MOD envelope on that setting</td></tr>
+    <tr><td><kbd>LFO</kbd><span class="h">HOLD</span> + white 1–8</td><td>WOBBLE TAP: 1/2 1/4 1/8 1/16 1/32 1/4T 1/8T 1/16T, on the beat</td></tr>
+    <tr><td>PERFORM: <kbd>OCT+</kbd><span class="h">HOLD</span></td><td>the keys are FX PADS</td></tr>
+    <tr><td><kbd>REC</kbd> (other views)</td><td>TAP tempo</td></tr>
+    <tr><td>MIDI</td><td>CC 1 wheel · CC 74 cutoff · CC 71 resonance · CC 123 notes off · any CC with MIDI LEARN</td></tr>
+  </table>
+</section>
+
+<section style="--c:var(--pink)">
+  <h2><i></i>SEQ BASS</h2>
+  <table>
+    <tr><td><kbd>PLAY</kbd></td><td>start / stop the bass and drums</td></tr>
+    <tr><td>white keys</td><td>the 16 steps of the page · tap: on / off</td></tr>
+    <tr><td>white key<span class="h">HOLD</span> +</td><td><kbd>K1</kbd> note · <kbd>K2</kbd> length · <kbd>K3</kbd> condition · <kbd>K4</kbd> velocity</td></tr>
+    <tr><td><kbd>OCT−</kbd>/<kbd>OCT+</kbd></td><td>page of 16 steps (32 / 64 steps)</td></tr>
+    <tr><td><kbd>REC</kbd></td><td>stopped: keys write notes step by step · playing: record live</td></tr>
+    <tr><td><kbd>SEQ</kbd> again</td><td>PIANO ROLL: keys write the notes, <kbd>SAVE</kbd> names the pattern</td></tr>
+    <tr><td>rows</td><td>PRESET · LENGTH (64 … 8, 7 … 1) · COPY / PASTE · CHAIN · SEQUENCE: keys play or transpose</td></tr>
+  </table>
+</section>
+
+<section style="--c:var(--orange)">
+  <h2><i></i>DRUMS</h2>
+  <table>
+    <tr><td>black keys 1–8</td><td>choose the instrument and play it</td></tr>
+    <tr><td>black 9 / 10</td><td>mute the track / clear it</td></tr>
+    <tr><td>white keys</td><td>its steps on the page · held + <kbd>K1</kbd>–<kbd>K4</kbd>: locks</td></tr>
+    <tr><td><kbd>OCT−</kbd><span class="h">HOLD</span> + black</td><td>mute / unmute that instrument</td></tr>
+    <tr><td><kbd>OCT−</kbd>/<kbd>OCT+</kbd></td><td>the page of 16 steps</td></tr>
+    <tr><td>kits</td><td>808 · 909 · dub techno · acoustic · KICK DRIVE · SNARE SNAPPY</td></tr>
+  </table>
+</section>
+
+<section style="--c:var(--cyan)">
+  <h2><i></i>FX PADS (<kbd>FX</kbd><span class="h">HOLD</span>)</h2>
+  <table>
+    <tr><td>white 1–8</td><td>wobble speed</td></tr>
+    <tr><td>white 9–16</td><td>wobble depth, shape</td></tr>
+    <tr><td>black 1–4</td><td>stutter (held)</td></tr>
+    <tr><td>black 5–11</td><td>tape stop · DJ low · DJ high · pump · saturate · FREEZE · crush</td></tr>
+    <tr><td><kbd>K1</kbd>–<kbd>K4</kbd></td><td>cutoff · resonance · filter type · morph A/B</td></tr>
+    <tr><td><kbd>ALGO</kbd></td><td>QUANTIZE: a pad waits for the bar, 1/2 … 1/64</td></tr>
+  </table>
+</section>
+
+<section style="--c:var(--lime)">
+  <h2><i></i>Sounds &amp; saving</h2>
+  <table>
+    <tr><td><kbd>SAVE</kbd> ×1</td><td>SAVE page · the keys type the name</td></tr>
+    <tr><td><kbd>SAVE</kbd> ×2 / ×3</td><td>SELECT PATCH A (factory) / B (yours)</td></tr>
+    <tr><td><kbd>SAVE</kbd><span class="h">HOLD</span> on SAVE</td><td>WRITE the sound</td></tr>
+    <tr><td><kbd>SEL</kbd> on SAVE</td><td>LOAD the slot chosen with <kbd>K1</kbd></td></tr>
+    <tr><td>lists: <kbd>K4</kbd></td><td>CAT: ALL · SUB · REESE · GROWL · WOBBLE · PLUCK · 808 · DRONE</td></tr>
+    <tr><td>SAVE: <kbd>K4</kbd> twice</td><td>left: NEW PRESET · right: NEW SONG</td></tr>
+  </table>
+</section>
+
+<section class="wide" style="--c:var(--lime)">
+  <h2><i></i>The menus · press the button again for the next view</h2>
+  <div class="pages">
+    <div class="pg"><h3><kbd>HOME</kbd> play</h3><div class="menu"><b>CURRENT PATCH</b> <span class="arr">›</span> LIVE MIX <span class="arr">›</span> QUICK</div></div>
+    <div class="pg" style="--c:var(--cyan)"><h3><kbd>EDIT</kbd> the bass</h3><div class="menu"><b>COMBINE A + B</b> <span class="arr">›</span> OSC A <span class="arr">›</span> OSC B <span class="arr">›</span> SUB + NOISE <span class="arr">›</span> OSC C · SAMPLE</div></div>
+    <div class="pg" style="--c:var(--orange)"><h3><kbd>ENV</kbd> envelopes</h3><div class="menu"><b>FILTER</b> <span class="arr">›</span> AMP <span class="arr">›</span> MOD (PITCH / MOD)</div></div>
+    <div class="pg" style="--c:var(--pink)"><h3><kbd>SEL</kbd> filter &amp; live</h3><div class="menu"><b>FILTER / COLOUR</b> <span class="arr">›</span> FILTER MOD <span class="arr">›</span> PERFORM <span class="arr">›</span> MORPH X/Y <span class="arr">›</span> FX LIVE <span class="arr">›</span> MACROS <span class="arr">›</span> MORPH A/B</div></div>
+    <div class="pg"><h3><kbd>SEQ</kbd> sequencers</h3><div class="menu"><b>SEQ BASS</b> <span class="arr">›</span> PIANO ROLL <span class="arr">›</span> DRUMS</div></div>
+    <div class="pg" style="--c:var(--cyan)"><h3><kbd>LFO</kbd> movement</h3><div class="menu"><b>LFO 1 · WOBBLE</b> <span class="arr">›</span> LFO 2 <span class="arr">›</span> LFO 3 · GLOBAL <span class="arr">›</span> STEP FX <span class="arr">›</span> MOD MATRIX</div></div>
+    <div class="pg" style="--c:var(--orange)"><h3><kbd>FX</kbd> effects</h3><div class="menu"><b>SATURATION</b> <span class="arr">›</span> REVERB <span class="arr">›</span> DELAY <span class="arr">›</span> DYNAMICS <span class="arr">›</span> EQ <span class="arr">›</span> MOD FX <span class="arr">›</span> CRUSH <span class="arr">›</span> MASTER</div></div>
+    <div class="pg" style="--c:var(--pink)"><h3><kbd>SAVE</kbd> sounds</h3><div class="menu"><b>SAVE</b> <span class="arr">›</span> SELECT PATCH A <span class="arr">›</span> SELECT PATCH B</div></div>
+    <div class="pg"><h3><kbd>ARP</kbd> arpeggiator</h3><div class="menu"><b>ARPEGGIATOR</b>: on, mode, rate, octaves, gate</div></div>
+    <div class="pg" style="--c:var(--cyan)"><h3><kbd>GLO</kbd> system</h3><div class="menu"><b>GLOBAL SETUP</b> <span class="arr">›</span> DISPLAY <span class="arr">›</span> ADVANCED <span class="arr">›</span> MIDI</div></div>
+  </div>
+  <p class="note">FX views: each effect's first row is its ON / OFF. DYNAMICS = compressor + OTT · MOD FX = chorus + phaser · MASTER: volume, glue, sub boost, mono bass, DEEP BASS / SUB HARMONICS (GLO).</p>
+</section>
+</div>
+
+<footer>
+  <span>K-WASUB · free and open source (GPL-3.0) · born from KAWA · not affiliated with M-VAVE</span>
+  <span><a href="index.html">Home &amp; emulator</a> · <a href="manual.html">Full manual</a> · <a href="installer.html">Install</a></span>
+</footer>
+</div>
+<script>
+(function(){var b=document.getElementById('th'),r=document.documentElement,k='kw-cheat-theme';
+try{var s=localStorage.getItem(k);if(s)r.setAttribute('data-theme',s);}catch(e){}
+b.onclick=function(){var d=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');var n=d==='light'?'dark':'light';r.setAttribute('data-theme',n);try{localStorage.setItem(k,n);}catch(e){}};})();
+</script>
+</body>
+</html>

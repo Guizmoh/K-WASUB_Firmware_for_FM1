@@ -12,6 +12,7 @@
 | 🎛 **Probarlo** (navegador) | [`emulator/index.html`](../emulator/index.html) |
 | ⬇️ **Instalar** en el FM-1 | [`installer.html`](../installer.html) (Chrome o Edge, USB) · o `INSTALL-Windows.bat` / `INSTALL-Mac.command` / `INSTALL-Linux.sh` |
 | 📖 **Manual** (en inglés o francés por ahora) | [`manual.html`](../manual.html) |
+| 🧾 **Chuleta** (una página, imprimible, en inglés) | [`cheatsheet.html`](../cheatsheet.html) · [PDF](../cheatsheet.pdf) |
 | 🏠 **Página de inicio** | [`index.html`](../index.html) (con GitHub Pages activo: <https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/>) |
 | 🗺 **Especificaciones** | [`SPECIFICATIONS.md`](../SPECIFICATIONS.md): hecho, por hacer, ideas |
 | 📜 Notas técnicas | [`docs/TECHNICAL-NOTES.md`](../docs/TECHNICAL-NOTES.md) |
