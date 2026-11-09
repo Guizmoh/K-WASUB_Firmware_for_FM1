@@ -1,0 +1,115 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-only -- K-WASUB: the Spanish home page (emulator, installer, cheat sheet). -->
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>K-WASUB · sintetizador de graves para el FM-1</title>
+<meta name="description" content="K-WASUB: firmware gratuito que convierte el M-VAVE FM-1 en un sintetizador de graves moderno para DnB, dub, dubstep y techno.">
+<meta property="og:image" content="../docs/img/promo-fr.png"><meta property="og:title" content="K-WASUB - FM1 modern Bass firmware">
+<meta name="theme-color" content="#0b0f10"><meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0f10'/%3E%3Cpath d='M5 22c4 0 4-12 8-12s4 12 8 12 4-12 6-12' fill='none' stroke='%23c8f03c' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#0b0f10;--panel:#131a1c;--panel2:#1a2326;--rule:#2a3639;--ink:#f1f6f6;--mut:#9db0b2;--lime:#c8f03c;--cyan:#50d8d0;--vio:#aa8cfa;--or:#f08c3c;color-scheme:dark;
+--sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:1rem/1.6 var(--sans);background-image:radial-gradient(900px 420px at 50% -120px,#1c2a12,transparent 70%);background-repeat:no-repeat}
+a{color:var(--cyan)}a:hover{color:var(--lime)}
+main{max-width:1000px;margin:0 auto;padding:18px 16px 70px}
+nav.bar{display:flex;gap:6px 18px;flex-wrap:wrap;align-items:center;padding:6px 0 14px}nav.bar a{color:var(--mut);text-decoration:none;font-size:.92rem}nav.bar a:hover{color:var(--lime)}
+.logo{font:800 1.3rem var(--sans);letter-spacing:-.02em;color:var(--lime)!important}.logo b{color:var(--ink)}nav.bar .sp{flex:1}nav.bar .lang{color:var(--mut);font-size:.9rem}nav.bar .lang b{color:var(--lime)}
+.hero img{width:100%;display:block;border-radius:18px;border:1px solid var(--rule);box-shadow:0 22px 60px #000a}
+.betab{margin:0 0 .7rem;text-align:center;color:var(--mut);font-size:.9rem}.beta{display:inline-block;background:var(--lime);color:#10150a;font-weight:800;border-radius:8px;padding:2px 10px;letter-spacing:.04em}
+.src{margin:.5rem 0 0;font-size:.85rem;text-align:center}.src a{color:var(--mut);text-decoration:none;word-break:break-all}.src a:hover{color:var(--lime);text-decoration:underline}
+h1{font-size:clamp(1.6rem,4.6vw,2.4rem);line-height:1.15;margin:1.2rem 0 .4rem;letter-spacing:-.02em}h1 em{font-style:normal;color:var(--lime)}
+h2{font-size:1.5rem;margin:0 0 .5rem;letter-spacing:-.01em}.sec{margin-top:52px}
+.lead{color:var(--mut);font-size:1.12rem;max-width:46rem;margin:.2rem 0}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0 6px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:12px 20px;font:700 1rem var(--sans);text-decoration:none;border:2px solid var(--lime);color:var(--lime);background:transparent;cursor:pointer}
+.btn.p{background:var(--lime);color:#10150a}.btn:hover{filter:brightness(1.12);color:inherit}.btn.p:hover{color:#10150a}
+.btn.d{border-color:var(--or);color:var(--or)}.btn.d.p{background:var(--or);color:#1b0e02}
+.btn[aria-disabled=true]{opacity:.55;pointer-events:none}
+.cards{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));margin-top:14px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:16px;padding:16px 18px}
+.card h3{margin:0 0 .3rem;font-size:1.05rem;color:var(--lime)}.card p{margin:.3rem 0;color:#cfdadb;font-size:.96rem}
+.n{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--lime);color:#10150a;font-weight:800;margin-right:8px}
+.shots{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));margin-top:14px}
+.shots figure{margin:0}.shots img{width:100%;aspect-ratio:1;border-radius:10px;border:1px solid var(--rule);display:block;background:#000}
+.shots figcaption{font-size:.8rem;color:var(--mut);text-align:center;margin-top:4px}
+.emu{margin-top:14px;background:var(--panel);border:1px solid var(--rule);border-radius:18px;overflow:hidden}
+.tabs{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--rule);flex-wrap:wrap;align-items:center}
+.tabs button{font:600 .9rem var(--sans);background:var(--panel2);color:var(--ink);border:1px solid var(--rule);border-radius:9px;padding:6px 12px;cursor:pointer}
+.tabs button[aria-pressed=true]{background:var(--lime);color:#10150a;border-color:var(--lime)}.tabs span{color:var(--mut);font-size:.85rem;margin-left:auto}
+.frame{position:relative;height:min(86vh,820px);background:#06090a}.frame iframe{width:100%;height:100%;border:0;display:none}
+.frame .go{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px}
+table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:12px;overflow:hidden;font-size:.95rem;margin-top:12px}th,td{padding:9px 12px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}th{background:var(--panel2);color:var(--lime);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}tr:last-child td{border:0}
+code{font-family:var(--mono);font-size:.9em;background:var(--panel2);border:1px solid var(--rule);border-radius:6px;padding:0 .35em;white-space:nowrap}
+.donate{border-color:#7a4a18;background:linear-gradient(180deg,#241a0e,#151a1c);text-align:center;padding:26px 20px}
+.donate p{max-width:38rem;margin:.4rem auto}
+details{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:10px 16px;margin:8px 0}summary{cursor:pointer;font-weight:700}
+footer{margin-top:50px;border-top:1px solid var(--rule);padding-top:18px;color:var(--mut);font-size:.9rem}
+
+.fab{position:fixed;right:14px;bottom:14px;z-index:20;display:inline-flex;align-items:center;gap:8px;background:#f08c3c;color:#1b0e02;font:800 .95rem system-ui,sans-serif;text-decoration:none;border-radius:999px;padding:11px 18px;box-shadow:0 8px 26px #000a,0 0 0 2px #1b0e02}
+.fab:hover{filter:brightness(1.1);color:#1b0e02}
+.dbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:center;background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:12px 16px;margin:14px 0;color:var(--mut);font-size:.98rem;text-align:center}
+.dbar a{background:var(--lime);color:#10150a;font-weight:800;text-decoration:none;border-radius:10px;padding:8px 16px}
+.news{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:6px}.news li{display:grid;grid-template-columns:62px 1fr;gap:4px 12px;align-items:start;padding:8px 12px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;font-size:.92rem;line-height:1.45}.news .v{font:700 .85rem var(--mono);color:var(--lime);padding-top:1px}.news ul{margin:0;padding-left:16px}.news ul li{display:list-item;padding:0;border:0;background:none;font-size:inherit}.news.old li{padding:5px 12px;font-size:.86rem;color:var(--mut)}.news.old .v{color:var(--mut)}details.olds{margin-top:8px}details.olds summary{cursor:pointer;color:var(--cyan);font-size:.92rem;padding:6px 2px}@media(max-width:520px){.news li{grid-template-columns:1fr}}
+</style></head><body>
+<main>
+<nav class="bar"><span class="logo">K-WA<b>SUB</b></span><span class="sp"></span><a href="#probar">Probar</a><a href="#instalar">Instalar</a><a href="../manual.html">Manual (EN)</a><a href="cheatsheet.html">Chuleta</a><a href="../data.html">Datos</a><a href="#apoyo">Apoyar</a><a href="https://github.com/Guizmoh/K-WASUB_Firmware_for_FM1">GitHub</a><span class="lang"><a href="../index.html" hreflang="en">EN</a> · <a href="../fr/index.html" hreflang="fr">FR</a> · <b>ES</b></span></nav>
+
+<div class="dbar"><span>K-WASUB es gratuito. Si te ayuda con tus sonidos, un café lo mantiene vivo.</span><a href="https://ko-fi.com/omnipotard" target="_blank" rel="noopener">Donar en Ko-fi</a></div><section class="hero"><p class="betab"><span class="beta">BETA 1.1.02</span> · en desarrollo: cuéntame qué ves en tu FM-1</p><img src="../docs/img/promo.png" alt="K-WASUB, sintetizador de graves moderno para el FM-1">
+<p class="src"><a href="https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/">https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/</a></p>
+<h1>Convierte tu FM-1 en un <em>sintetizador de graves</em> moderno</h1>
+<p class="lead">K-WASUB es un firmware gratuito para el M-VAVE FM-1. Está hecho para crear y tocar <b>graves de DnB, dub, dubstep y techno</b>: reeses que gruñen, subs profundos, 808 y, sobre todo, un <b>wobble que moldeas en directo</b> con los potenciómetros y las teclas.</p>
+<div class="cta"><a class="btn p" href="#probar">▶ Probar en el navegador</a><a class="btn" href="#instalar">⬇ Instalar en el FM-1</a><a class="btn" href="cheatsheet.html">🧾 Chuleta</a><a class="btn" href="../manual.html">📖 Manual (inglés)</a></div></section>
+
+<section class="sec"><h2>¿Para qué sirve?</h2>
+<div class="cards">
+<div class="card"><h3>Un bajo vivo</h3><p>Las 27 teclas tocan el bajo, <b>K1–K4</b> ajustan los 4 parámetros importantes de cada página. Mantén LFO y gira un potenciómetro: el LFO 2 se asigna a ese ajuste (con OCT−: LFO 1, con OCT+: <b>LFO 3</b>, el global).</p></div>
+<div class="card"><h3>Efectos en las teclas</h3><p><b>FX PADS</b> (mantén FX): teclas blancas = velocidad y forma del wobble, teclas negras = stutter, tape stop, filtro DJ, pump, saturación, <b>FREEZE</b>, crush.</p></div>
+<div class="card"><h3>Un sonido de bajo de verdad</h3><p>2 osciladores con 9 motores (ANALOG, 808, CS, wavetable, FM de 4 operadores, GROWL, ADDITIVE, phase dist, hard sync), sub bloqueado en A, samples y <b>resample</b>, 7 filtros, OTT multibanda, mono bass, compresor con pump, EQ de 4 bandas.</p></div>
+<div class="card"><h3>Secuenciadores</h3><p><b>SEQ BASS</b> (32 patrones de hasta 64 pasos, piano roll, cadena, copiar / pegar) y <b>DRUMS</b> (808, 909, dub techno, acústico), con probabilidad, condiciones y <b>parameter locks</b> en cada paso.</p></div>
+<div class="card"><h3>Morph y directo</h3><p><b>MORPH X/Y</b>: cuatro sonidos en las esquinas de un cuadrado. <b>MORPH A/B</b>: un fundido a tempo. <b>PERFORM</b>: 4 macros, morph y pads en una pantalla.</p></div>
+<div class="card"><h3>Seguro y abierto</h3><p>Gratuito, de código abierto (GPL-3.0), se reinstala o se quita por USB, con modo de rescate. Probado en el FM-1 (hardware), en el emulador y con pruebas automáticas.</p></div></div></section>
+
+<section class="sec" id="probar"><h2>Probar en el navegador</h2>
+<p class="lead">El mismo firmware, compilado para tu navegador: no hace falta un FM-1. Haz clic en la pantalla y toca con el teclado del ordenador, el ratón en los botones y la rueda en los potenciómetros.</p>
+<div class="emu"><div class="tabs"><span><a id="open" href="../emulator/index.html?lang=es">abrir en pantalla completa ↗</a></span></div>
+<div class="frame"><iframe id="fr" title="Emulador K-WASUB" loading="lazy" allow="autoplay"></iframe>
+<div class="go" id="go"><div><p style="font-size:1.1rem;margin:0 0 12px">Abre el emulador aquí, sin instalar nada</p><button class="btn p" id="start">▶ Iniciar el emulador</button></div></div></div></div></section>
+
+<section class="sec" id="instalar"><h2>Instalar en el FM-1</h2>
+<div class="cards">
+<div class="card"><h3><span class="n">1</span>Conecta</h3><p>El FM-1 por USB al ordenador, con un cable <b>de datos</b> (no solo de carga). Cierra los demás programas MIDI.</p></div>
+<div class="card"><h3><span class="n">2</span>Abre el instalador</h3><p>En <b>Chrome</b> o <b>Edge</b>: <a href="../installer.html"><b>installer.html</b></a>. Haz clic en «Install K-WASUB» y confirma. No desconectes nada hasta el final.</p></div>
+<div class="card"><h3><span class="n">3</span>Toca</h3><p>Tras reiniciar aparece la pantalla de inicio. Pulsa un botón. La chuleta resume todos los botones.</p></div></div>
+<div class="cta"><a class="btn p" href="../installer.html">⬇ Abrir el instalador</a><a class="btn" href="../install/">Todos los archivos (.fwsc)</a></div>
+<p style="color:var(--mut);font-size:.92rem">Sin Chrome ni Edge: <code>INSTALL-Windows.bat</code>, <code>INSTALL-Mac.command</code> o <code>INSTALL-Linux.sh</code> (Python 3). Puedes volver a KAWA o al firmware original cuando quieras; mantener <code>OCT−</code> al encender abre el rescate USB.</p></section>
+
+<section class="sec"><h2>Un vistazo</h2><div class="shots">
+<figure><img src="../docs/img/p-home.png" alt=""><figcaption>HOME</figcaption></figure><figure><img src="../docs/img/d-seq.png" alt=""><figcaption>SEQ BASS</figcaption></figure>
+<figure><img src="../docs/img/x-piano-roll.png" alt=""><figcaption>PIANO ROLL</figcaption></figure><figure><img src="../docs/img/d-drums.png" alt=""><figcaption>DRUMS</figcaption></figure>
+<figure><img src="../docs/img/x-sel-filter.png" alt=""><figcaption>SEL · FILTER</figcaption></figure><figure><img src="../docs/img/w-pads.png" alt=""><figcaption>FX PADS</figcaption></figure>
+<figure><img src="../docs/img/g-lfo.png" alt=""><figcaption>Wobble</figcaption></figure><figure><img src="../docs/img/t-tech-cyber.png" alt=""><figcaption>TECH</figcaption></figure></div>
+<p style="margin-top:12px">Novedades: <a href="../index.html#news">en la página inglesa</a> · <a href="https://github.com/Guizmoh/K-WASUB_Firmware_for_FM1/releases">versiones en GitHub</a></p></section>
+
+<section class="sec" id="apoyo"><div class="card donate"><h2>Apoyar K-WASUB</h2>
+<p>K-WASUB es gratuito y lo seguirá siendo. Si te sirve, puedes ayudar a pagar el tiempo y el material de prueba (FM-1, cables…). ¡Gracias!</p>
+<p><a id="donate" class="btn d p" href="#apoyo" aria-disabled="true">☕ Donar</a></p><p id="dnote" style="color:var(--mut);font-size:.88rem"></p></div></section>
+
+<section class="sec"><h2>Preguntas frecuentes</h2>
+<details><summary>¿Pierdo el firmware original?</summary><p>No. Puedes reinstalar el firmware original (M-UPGRADE) cuando quieras.</p></details>
+<details><summary>¿El firmware está en español?</summary><p>En <code>GLO › GLOBAL SETUP › LANGUAGE</code> eliges English, Français o Español: los títulos de las páginas se traducen; los nombres de los ajustes quedan en inglés, como en la mayoría de los sintetizadores.</p></details>
+<details><summary>¿Está terminado?</summary><p>No: K-WASUB es una <b>BETA</b>. Está probado en el FM-1 (hardware), en el emulador y con pruebas automáticas en cada versión; algo puede fallar todavía. Cuéntame lo que encuentres (pestaña Issues de GitHub).</p></details></section>
+
+<footer>K-WASUB · GPL-3.0 · nacido de <a href="https://github.com/Guizmoh/Kawa-Tracker-Fm1">KAWA</a> (Omnipotard / Leo Kuroshita, Hügelton Instruments). No afiliado a M-VAVE. <a href="https://github.com/Guizmoh/K-WASUB_Firmware_for_FM1">Código fuente</a> · <a href="../LICENSE">Licencia</a></footer>
+</main>
+<script>
+/* the donation link */
+var DONATE_URL = "https://ko-fi.com/omnipotard";
+(function(){
+  var d=document.getElementById("donate");
+  if(DONATE_URL){d.href=DONATE_URL;d.target="_blank";d.rel="noopener";d.removeAttribute("aria-disabled");document.getElementById("dnote").hidden=true;}
+  var fr=document.getElementById("fr"),go=document.getElementById("go"),op=document.getElementById("open"),ver="index.html";
+  function load(){fr.src="../emulator/"+ver+"?lang=es";fr.style.display="block";go.style.display="none";}
+  document.getElementById("start").onclick=load;
+})();
+</script><a class="fab" href="https://ko-fi.com/omnipotard" target="_blank" rel="noopener">☕ Apoyar K-WASUB</a></body></html>

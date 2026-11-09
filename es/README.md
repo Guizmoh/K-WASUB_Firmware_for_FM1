@@ -5,14 +5,15 @@
 
 **English** : [README](../README.md) · **Français** : [README](../fr/README.md) · **Español** : esta página
 
-**Sintetizador de graves moderno para el M-VAVE FM-1**: DnB, dub, dubstep, techno. Wobble en vivo, reese, sub, 808, un EQ, un morph entre cuatro sonidos, efectos en las teclas. Gratuito y de código abierto (GPL-3.0). *Versión 1.1.01 **BETA**: probada en el FM-1 (hardware), en el emulador y con pruebas automáticas; dime qué ves (pestaña Issues).*
+**Sintetizador de graves moderno para el M-VAVE FM-1**: DnB, dub, dubstep, techno. Wobble en vivo, reese, sub, 808, un EQ, un morph entre cuatro sonidos, efectos en las teclas. Gratuito y de código abierto (GPL-3.0). *Versión 1.1.02 **BETA**: probada en el FM-1 (hardware), en el emulador y con pruebas automáticas; dime qué ves (pestaña Issues).*
 
 | | |
 |---|---|
 | 🎛 **Probarlo** (navegador) | [`emulator/index.html`](../emulator/index.html) |
 | ⬇️ **Instalar** en el FM-1 | [`installer.html`](../installer.html) (Chrome o Edge, USB) · o `INSTALL-Windows.bat` / `INSTALL-Mac.command` / `INSTALL-Linux.sh` |
 | 📖 **Manual** (en inglés o francés por ahora) | [`manual.html`](../manual.html) |
-| 🧾 **Chuleta** (una página, imprimible, en inglés) | [`cheatsheet.html`](../cheatsheet.html) · [PDF](../cheatsheet.pdf) |
+| 🧾 **Chuleta** (una página, imprimible) | [`cheatsheet.html`](cheatsheet.html) · [PDF](cheatsheet.pdf) |
+| 🏠 **Página en español** | [`es/index.html`](index.html) |
 | 🏠 **Página de inicio** | [`index.html`](../index.html) (con GitHub Pages activo: <https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/>) |
 | 🗺 **Especificaciones** | [`SPECIFICATIONS.md`](../SPECIFICATIONS.md): hecho, por hacer, ideas |
 | 📜 Notas técnicas | [`docs/TECHNICAL-NOTES.md`](../docs/TECHNICAL-NOTES.md) |
@@ -46,8 +47,8 @@ Puedes volver a KAWA (`install/kawa-0.5.fwsc`) o al firmware de fábrica (M-UPGR
 
 ```sh
 cd source
-./build.sh --release 1.1.01          # -> build/k-wasub-1.1.01.fwsc
-APP_VER=1.1.01 bash web/make_emulator.sh      # emulador
+./build.sh --release 1.1.02          # -> build/k-wasub-1.1.02.fwsc
+APP_VER=1.1.02 bash web/make_emulator.sh      # emulador
 bash web/make_installer.sh                    # installer.html con el último paquete
 bash tests/run_stress.sh                      # pruebas de carga (UBSan)
 python3 tests/manual_shots.py                 # capturas del manual (docs/img)

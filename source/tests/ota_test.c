@@ -187,9 +187,9 @@ int main(int argc, char **argv)
     logical_len = n - 20;
     free(raw);
     printf("  package identity %s\n", pkg_id);
-    bad += check("package identity is K-WA SUB's (FM-1_97N)",
-                 strlen(pkg_id) == 8 && !strncmp(pkg_id, "FM-1_97", 7) &&
-                 pkg_id[7] >= '0' && pkg_id[7] <= '9');
+    bad += check("package identity is K-WASUB's (FM-1_97N, or FM-1_1990 from 1.0.21)",
+                 (strlen(pkg_id) == 8 && !strncmp(pkg_id, "FM-1_97", 7) && pkg_id[7] >= '0' && pkg_id[7] <= '9') ||
+                 !strcmp(pkg_id, "FM-1_1990"));
 
     /* handshake outside a session */
     reset_dev();

@@ -806,14 +806,14 @@ static const char *view_title(uint32_t vi, char *t, char *sub)
         if (sq_rec) p = str_cat(p, " \xB7 REC");
         p = str_cat(p, " \xB7 ");
         p = str_cat(p, L_SRATE[sq_pat()->rate % 6u]);
-        str_cat(p, sq_play ? (sq_rec ? " \xB7 KEYS RECORD" : " \xB7 KEYS TRANSPOSE") : sq_rec ? " \xB7 KEYS WRITE" : " \xB7 REC = WRITE");
+        str_cat(p, sq_play ? (sq_rec ? " \xB7 KEYS RECORD" : dk.mode & 8u ? " \xB7 KEYS TRANSPOSE" : " \xB7 KEYS PLAY") : sq_rec ? " \xB7 KEYS WRITE" : " \xB7 REC = WRITE");   /* (1.1.02: as SEQUENCE says; it said TRANSPOSE always) */
         item_text(G_SQ_PAT, t);
         return t;
     }
     if (vi == V_DRUM) {                         /* the pattern, the kit, the instrument, the page; what the keys do */
         p = str_cat(t, "DRUMS P");
         p = fmt_u(p, dk.cur + 1u, 0);
-        if (dk_psel) { p = str_cat(p, " "); str_cat(p, DKP[(dk_psel - 1u) / 3u % NDKP].name); }
+        if (dk_psel) { p = str_cat(p, " "); str_cat(p, DKP[(dk_psel - 1u) % NDKP].name); }   /* (1.1.02: the preset loaded; it read 1/3 of it, from when each had three lengths) */
         p = str_cat(str_cat(sub, dk_kname(dk.kit)), " \xB7 ");
         p = str_cat(p, dk_tname(dk_trk));
         if (dk_len() > 16u) { p = str_cat(p, " \xB7 PAGE "); p = fmt_u(p, dk_cur / 16u + 1u, 0); p = str_cat(p, "/"); p = fmt_u(p, (dk_len() + 15u) / 16u, 0); }
@@ -1468,7 +1468,13 @@ static int32_t rb_content(const view_t *v, uint32_t vi, int32_t x, int32_t y0, i
             rb_arc(cx, cy, 14, item_frac(id), *RC[i]);
             item_text(id, b);
             if (g_text_w(T_XS, b) <= 24) g_text_c(T_XS, cx, cy - 4, b, K_WHITE);   /* (the value in the dial, or under it when longer) */
-            else g_text_c(g_fit(T_XS, b, w / 4 - 2), cx, cy + 26, b, K_WHITE);
+            else {                              /* (1.1.02: kept inside its quarter: two long values side by side ran into each other) */
+                int32_t ox0 = g_cx0, ox1 = g_cx1, l = cx - w / 8 + 1, r = cx + w / 8 - 1;
+                if (l > g_cx0) g_cx0 = l;
+                if (r < g_cx1) g_cx1 = r;
+                g_text_c(g_fit(T_XS, b, w / 4 - 2), cx, cy + 26, b, K_WHITE);
+                g_cx0 = ox0; g_cx1 = ox1;
+            }
             g_text_c(g_fit(T_XS, item_sname(id), w / 4 - 2), cx, cy + 16, item_sname(id), sel ? *RC[i] : K_GREY);
             if (sel) g_rect(cx - 8, cy + 36, 17, 2, *RC[i]);
         }
