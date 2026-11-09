@@ -12,7 +12,7 @@
 | 🎛 **Essayer** (navigateur) | [`emulator/index.html`](../emulator/index.html?lang=fr)  |
 | ⬇️ **Installer** sur le FM-1 | [`installer.html`](../installer.html) (Chrome ou Edge, USB) · ou `INSTALL-Windows.bat` / `INSTALL-Mac.command` / `INSTALL-Linux.sh` |
 | 📖 **Manuel** illustré | [`manual.html`](manual.html) |
-| 🧾 **Aide-mémoire** (une page, imprimable, en anglais) | [`cheatsheet.html`](../cheatsheet.html) · [PDF](../cheatsheet.pdf) |
+| 🧾 **Aide-mémoire** (une page, imprimable) | [`cheatsheet.html`](cheatsheet.html) · [PDF](cheatsheet.pdf) |
 | 🏠 **Accueil** | [`index.html`](index.html) (si GitHub Pages est activé : <https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/>) |
 | 🗺 **Cahier des charges** | [`CAHIER-DES-CHARGES.md`](CAHIER-DES-CHARGES.md) : fait, à faire, idées |
 | 📜 Notes techniques | [`NOTES-TECHNIQUES.md`](NOTES-TECHNIQUES.md) |
