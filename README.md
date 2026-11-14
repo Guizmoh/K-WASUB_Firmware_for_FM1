@@ -63,3 +63,5 @@ JieLi toolchain and AC79 SDK: see `source/BUILDING.md` and `source/tools/get_too
 ## Credits and license
 
 GPL-3.0. K-WASUB is born from [KAWA](https://github.com/Guizmoh/Kawa-Tracker-Fm1) (Omnipotard / Leo Kuroshita, Hügelton Instruments), whose FM-1 platform it reuses (boot, USB, audio, screen). See [`LICENSING.md`](LICENSING.md). Not affiliated with M-VAVE.
+
+You can also try K-WASUB in the browser, no flashing needed, in the free community [FM-1 Emulator](https://fm1-emulator.atst.tools/).
