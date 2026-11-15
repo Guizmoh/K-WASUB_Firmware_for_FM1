@@ -2483,10 +2483,18 @@ static void draw_ask(void)
 static void draw_logo_pic(void)             /* the start-screen picture (216 x 216, 16 greys), the current band */
 {
     uint16_t lut[16];
-    int32_t y, x, y1 = g_y0 + (int32_t)BAND_H;
-    for (x = 0; x < 16; x++) lut[x] = g_mix(0x0000u, 0xFFFFu, (uint32_t)x * 17u);
+    int32_t y, x, y1 = g_y0 + (int32_t)BAND_H, rev = 999;
+    uint32_t a = fm1_ms - splash_t0, an = a < 1400u, tint = 0, br = 256;
+    if (an) {                                   /* (1.1.03) the start: a lime line sweeps down and reveals the logo, green fading to white */
+        rev = (int32_t)(a * 250u / 900u) - 6;
+        tint = a < 900u ? 256u : (1400u - a) * 256u / 500u;
+        br = a < 900u ? 120u + a * 136u / 900u : 256u;
+    }
+    for (x = 0; x < 16; x++) lut[x] = g_mix(0x0000u, g_mix(0xFFFFu, RGB(166, 255, 40), tint), (uint32_t)x * 17u * br >> 8);
     g_rect(0, g_y0, 240, (int32_t)BAND_H, 0x0000u);                   /* (black, whatever the palette) */
     for (y = g_y0; y < y1 && y < (int32_t)KS_LOGO_N; y++) {
+        if (y > rev) break;
+        if (an && y > rev - 3) { g_rect(0, y, 240, 1, RGB(166, 255, 40)); continue; }   /* (the scan line) */
         const uint8_t *row = KS_LOGO + KS_LOGO_ROW[y];   /* (the black packed: 0x00 then how many black bytes) */
         uint16_t *d = &g_buf[(uint32_t)(y - g_y0) * 240u + 12u];
         for (x = 0; x < (int32_t)KS_LOGO_N / 2;) {
@@ -2675,7 +2683,7 @@ static void draw_all(void)
         p = str_cat(b, pname);
         p = str_cat(p, " \xB7 ");
         eng_str(p, patch);
-        if (g_vis(218, 22)) {
+        if (g_vis(218, 22) && fm1_ms - splash_t0 >= 1000u) {   /* (the words once the logo is there) */
             g_text_c(T_XS, 120, 220, b, RGB(255, 255, 255));
             if (rst_bad) { str_cat(str_cat(b, "LAST STOP: "), rst_why); g_text_c(T_XS, 120, 231, b, RGB(255, 150, 60)); }
             else g_text_c(T_XS, 120, 231, dual_on ? "TWO CORES \xB7 PRESS ANY BUTTON OR KEY" : dual_why == DW_SILENT ? "CORE 1 SILENT \xB7 ONE CORE" : dual_why == DW_SAFE ? "ONE CORE (SAFE) \xB7 PRESS A KEY" : "PRESS ANY BUTTON OR KEY", RGB(150, 150, 150));

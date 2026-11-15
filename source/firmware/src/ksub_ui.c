@@ -870,7 +870,8 @@ static uint8_t cmp_on;
 static uint8_t vpop_id;
 static uint32_t vpop_ms;
 static char vpop_before[24], vpop_pre[12];
-static uint32_t splash_until;
+static uint8_t pre_old, pre_idx_new;           /* (1.1.03's new preset order: a save to convert; the start sound already found by name) */
+static uint32_t splash_until, splash_t0;          /* (splash_t0: when the start screen came: its animation, 1.1.03) */
 static struct { uint8_t b, used, fired; uint32_t at, next; } hb = {0xFF, 0, 0, 0, 0};   /* the button held */
 /* SHIFT mode (SYSTEM > UI MODE, asked at each start): a page's first screen is 12 settings in three columns of four,
  * one row a knob: the knobs alone move the left column (the base), OCT- held the middle one, OCT+ held the right one
@@ -3219,6 +3220,7 @@ static void ui_input(void)
         int any = pr || ne;
         for (b = 0; b < 7u; b++) if (fm1_enc_take(b)) any = 1;
         if (any) { splash_until = 0; idle_ms = fm1_ms; dim_set(0); g_force = 1; }
+        else if (fm1_ms - splash_t0 < 1500u) g_force = 1;   /* (the logo's animation: drawn every frame) */
         ask_ms = fm1_ms;
         prev_keys = now;                        /* (a key held now does not play when the screen goes) */
         return;
@@ -3514,6 +3516,7 @@ static void app_init(void)
         l3_push();
     }
     first_run = !ok || set.askv < 2u;           /* (the very first start, or a save from before 0.9.17: the question once) */
+    pre_old = ok && set.askv < 13u;             /* (a save from before 1.1.03: the factory sounds' old order) */
     if (!ok) {
         set.grid = set.browse = 0; set.font = 6; set.theme = 0; set.pal = 0;   /* (CLASSIC GLOW, FLUO GREEN, TEKTUR) */
         memset(set.fav, 0, sizeof set.fav); memset(set.fav2, 0, sizeof set.fav2); memset(set.fav3, 0, sizeof set.fav3);
@@ -3585,7 +3588,7 @@ static void app_init(void)
     }
     if (set.askv == 10u) {                      /* (1.0.49: the sound at start is HOOVER DNB, once, where it was the first preset) */
         uint32_t k;
-        if (!set.bank && !set.idx) for (k = 0; k < NFACTORY; k++) if (str_eq(FACTORY[k].name, "HOOVER DNB")) { set.idx = (uint8_t)k; break; }
+        if (!set.bank && !set.idx) for (k = 0; k < NFACTORY; k++) if (str_eq(FACTORY[k].name, "HOOVER DNB")) { set.idx = (uint8_t)k; pre_idx_new = 1; break; }
         set.askv = 11; set_dirty = 1; set_ms = fm1_ms;
     }
     if (set.askv == 11u) {                      /* (1.0.50: a 97th factory preset: the user slots' favourites and MORPH codes move 1 on, once) */
@@ -3599,6 +3602,21 @@ static void app_init(void)
         if (perf.ab_pre >= MX_VAR + 96u && perf.ab_pre + 1u < MX_NCODE) perf.ab_pre = (uint8_t)(perf.ab_pre + 1u);
         perf_touch();
         set.askv = 12; set_dirty = 1; set_ms = fm1_ms;
+    }
+    if (set.askv == 12u) {                      /* (1.1.03: the factory sounds in a new order: the favourites, MORPH sounds, the sound chosen and the autosave follow, once) */
+        static const uint8_t MV[97] = {16,24,40,48,49,5,10,1,11,80,31,84,89,93,50,32,34,33,12,35,17,0,41,18,2,19,20,28,81,6,39,70,69,15,59,61,92,90,42,26,91,29,96,30,60,43,94,21,8,55,88,9,72,75,7,51,86,25,44,45,53,52,46,95,23,54,65,66,67,68,4,58,13,36,82,62,38,85,73,22,3,77,76,78,71,27,57,47,56,63,87,64,79,74,83,37,14};   /* the new place of each old one */
+        uint8_t was[13] = {0};
+        uint32_t i;
+        if (pre_old) {
+            for (i = 0; i < 97u; i++) if (*fav_b(i) >> (i & 7u) & 1u) { was[i >> 3] |= (uint8_t)(1u << (i & 7u)); *fav_b(i) &= (uint8_t)~(1u << (i & 7u)); }
+            for (i = 0; i < 97u; i++) if (was[i >> 3] >> (i & 7u) & 1u) *fav_b(MV[i]) |= (uint8_t)(1u << (MV[i] & 7u));
+            for (i = 0; i < 4u; i++) if (perf.mx_pre[i] >= MX_VAR && perf.mx_pre[i] < MX_VAR + 97u) perf.mx_pre[i] = (uint8_t)(MX_VAR + MV[perf.mx_pre[i] - MX_VAR]);
+            if (perf.ab_pre >= MX_VAR && perf.ab_pre < MX_VAR + 97u) perf.ab_pre = (uint8_t)(MX_VAR + MV[perf.ab_pre - MX_VAR]);
+            if (!set.bank && !pre_idx_new && set.idx < 97u) set.idx = MV[set.idx];
+            if (work.magic == WK_MAGIC && work.sum == wk_sum() && !work.bank && work.idx < 97u) { work.idx = MV[work.idx]; work.sum = wk_sum(); }
+            perf_touch();
+        }
+        set.askv = 13; set_dirty = 1; set_ms = fm1_ms;
     }
     load_preset(set.bank, set.idx);
     if (set.asave && work.magic == WK_MAGIC && work.sum == wk_sum() && work.bank == set.bank && work.idx == set.idx) {   /* AUTOSAVE: the sound as it was left */
@@ -3633,6 +3651,7 @@ static void app_init(void)
 #endif
     booted = 1;
     splash_until = 1;                           /* the start screen: the picture, the last patch, the cores; until a touch */
+    splash_t0 = fm1_ms | 1u;
     if (set.ask || first_run) { ask_on = 1; ask_sel = set.ui; ask_ms = fm1_ms; }   /* ... and the question (the first start only, or ASK on): CLASSIC or SHIFT */
     g_force = 1;
 }
