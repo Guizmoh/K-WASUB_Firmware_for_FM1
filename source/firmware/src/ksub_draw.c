@@ -9,18 +9,21 @@
 enum { TH_GLOW, TH_STUDIO, TH_PURE, TH_RACK, TH_TECH, TH_RIBBON, TH_RIBBONC, TH_CLASSIC, NTHEMES };   /* (CLASSIC: GLOW flat, 1.0.19) */
 enum { VZ_NONE, VZ_SCOPE, VZ_OSCA, VZ_OSCB, VZ_SUB, VZ_MIX, VZ_ENV0, VZ_ENV1, VZ_ENV2, VZ_FILT, VZ_LFO1, VZ_LFO2, VZ_STEP,
        VZ_SEQ, VZ_SMP, VZ_DRIVE, VZ_CRUSH, VZ_CHORUS, VZ_DELAY, VZ_REVERB, VZ_MASTER, VZ_COMP, VZ_PHASER, VZ_OTT, VZ_CPU, VZ_DRUM };
-static const uint8_t VZ_OF[] = {VZ_SCOPE, VZ_SCOPE, VZ_SCOPE, VZ_MIX, VZ_OSCA, VZ_OSCB, VZ_SUB, VZ_SMP, VZ_ENV1, VZ_ENV0, VZ_ENV2, VZ_FILT, VZ_FILT,
-                                VZ_SEQ, VZ_DRUM, VZ_LFO1, VZ_LFO2, VZ_NONE, VZ_STEP, VZ_NONE, VZ_DRIVE, VZ_REVERB, VZ_DELAY, VZ_COMP, VZ_NONE,
-                                VZ_CHORUS, VZ_CRUSH, VZ_MASTER, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_CPU, VZ_NONE};   /* (1.0.54's order) */
+static const uint8_t VZ_OF[] = {VZ_SCOPE, VZ_SCOPE, VZ_MIX, VZ_OSCA, VZ_OSCB, VZ_SUB, VZ_SMP, VZ_ENV0, VZ_ENV2, VZ_FILT, VZ_DRUM,
+                                VZ_SEQ, VZ_DRUM, VZ_LFO1, VZ_LFO2, VZ_NONE, VZ_STEP, VZ_NONE, VZ_DRIVE, VZ_DELAY, VZ_COMP, VZ_NONE, VZ_MASTER,
+                                VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_CPU, VZ_NONE};   /* (1.2.0b's order) */   /* (1.0.54's order) */
 typedef char vz_fits[sizeof VZ_OF == sizeof VIEWS / sizeof VIEWS[0] ? 1 : -1];
 #define K_FOOT g_mix(K_GREY, K_WHITE, 180)       /* (1.0.60: the knobs' line at the bottom, lighter) */
 static const char *const PAGE_SHORT[NPAGE] = {"PLAY", "BASS", "ENV", "SEQ", "LFO", "FX", "PRE", "SYS"};   /* (1.0.53: the filter on SEL, SEQ BASS and DRUMS on SEQ) */
 /* LANGUAGE (SYSTEM): only the view titles (v->cat, top of every screen) are translated; parameter names and values
  * stay in English, as on most hardware synths, and to keep every screen's layout untouched */
-static const char *const L_CAT[30][3] = {
+static const char *const L_CAT[33][3] = {
     {"CURRENT PATCH", "PATCH ACTUEL", "PARCHE ACTUAL"},
     {"LIVE MIX", "MIX EN DIRECT", "MEZCLA EN VIVO"},
     {"QUICK", "RAPIDE", "RAPIDO"},
+    {"BASS", "BASSE", "BAJO"},
+    {"FILTER", "FILTRE", "FILTRO"},
+    {"GROOVE", "GROOVE", "GROOVE"},
     {"DISPLAY", "AFFICHAGE", "PANTALLA"},
     {"ADVANCED", "AVANCE", "AVANZADO"},
     {"OSCILLATOR A", "OSCILLATEUR A", "OSCILADOR A"},
@@ -290,7 +293,7 @@ static void dk_orb(int32_t cx, int32_t cy, int32_t r2, uint16_t col, uint32_t a)
 {
     int32_t dx, dy, e = (r2 + 3) / 2;
     uint16_t dark = g_mix(0x0000u, col, 60), lite = g_mix(col, 0xFFFFu, 28);
-    if (!g_vis(cy - e, 2 * e + 1)) return;
+    if (r2 < 1 || !g_vis(cy - e, 2 * e + 1)) return;
     for (dy = -e; dy <= e; dy++)
         for (dx = -e; dx <= e; dx++) {
             int32_t d2 = 4 * (dx * dx + dy * dy), in = (r2 - 1) * (r2 - 1), out = (r2 + 1) * (r2 + 1), nx, ny, nz, dot;
@@ -774,8 +777,7 @@ static const char *view_title(uint32_t vi, char *t, char *sub)
         return "SELECT PATCH";
     case LY_SAVE: str_cat(sub, "HOLD SAVE: WRITE \xB7 SEL: LOAD THIS SLOT"); return pname;
     case LY_SYS:
-        if (vi == PAGE_V0[PG_SYS] + 1u) { str_cat(sub, "THEME \xB7 PALETTE \xB7 FONT \xB7 LOUPE \xB7 BRIGHTNESS"); return "DISPLAY"; }
-        if (vi == PAGE_V0[PG_SYS] + 2u) { str_cat(sub, "CPU \xB7 LAST STOP \xB7 KNOBS \xB7 NEW SONG"); return "ADVANCED"; }
+        if (vi == PAGE_V0[PG_SYS] + 1u) { str_cat(sub, "CPU \xB7 LAST STOP \xB7 KNOBS \xB7 NEW SONG"); return "ADVANCED"; }
         if (vi != PAGE_V0[PG_SYS]) { str_cat(sub, "LEARN \xB7 CHANNEL \xB7 CLOCK \xB7 START / STOP \xB7 PROGRAM"); return "MIDI"; }
         str_cat(sub, "DNB / DUB / DUBSTEP / TECHNO EDITION"); return "DEVICE SETUP";
     case LY_LFO: {
@@ -849,8 +851,17 @@ static const char *view_title(uint32_t vi, char *t, char *sub)
     if (page == PG_BASS && vi == PAGE_V0[PG_BASS] + 3u) { str_cat(sub, patch[S_LOCK] ? "LOW END \xB7 LOCKED ON OSC A" : "LOW END CHARACTER"); return "SUB / NOISE"; }
     if (page == PG_BASS) { str_cat(sub, "TWO ENGINES, ONE BASS"); return patch[X_MODE] == 0 ? "A + B" : patch[X_MODE] == 1 ? "A x B  RING" : "B > A  X-MOD"; }
     if (page == PG_ENV) {
-        if (vi == PAGE_V0[PG_ENV] + 2u) str_cat(sub, dst_name((uint32_t)patch[ME_DST]));
-        return vi == PAGE_V0[PG_ENV] + 1u ? "ADSR CONTROL" : vi == PAGE_V0[PG_ENV] ? "FILTER ADSR" : "PITCH / MOD";   /* (1.0.54: the filter's first) */
+        if (vi == PAGE_V0[PG_ENV] + 1u) str_cat(sub, dst_name((uint32_t)patch[ME_DST]));
+        return vi == PAGE_V0[PG_ENV] ? "ADSR CONTROL" : "PITCH / MOD";   /* (1.2.0b: the filter's envelope is on SEL's FILTER) */
+    }
+    if (vi == V_GROOVE) {                       /* GROOVE: the style, the scale, what PLAY does */
+        static const char *const NN[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+        p = str_cat(sub, DKP[(gr[0] - 1u) % NDKP].name);
+        p = str_cat(p, " \xB7 ");
+        if (set.scale) { p = str_cat(p, NN[set.root % 12u]); p = str_cat(p, set.scale == 2u ? " MAJOR" : set.scale == 5u ? " PENTA" : set.scale == 7u ? " BLUES" : " MINOR"); }
+        else p = str_cat(p, "ALL NOTES");
+        str_cat(p, sq_play ? " \xB7 PLAYING" : " \xB7 PLAY = START");
+        return "GROOVE";
     }
     if (page == PG_FILT) { str_cat(sub, FT_SUB[patch[F_TYPE]]); return FT_TITLE[patch[F_TYPE]]; }
     if (page == PG_LFO && vi == PAGE_V0[PG_LFO] + 2u) {   /* LFO 3: its shape, where it goes, how much */
@@ -864,15 +875,13 @@ static const char *view_title(uint32_t vi, char *t, char *sub)
         uint32_t f = vi - PAGE_V0[PG_FX];
         p = sub;
         if (f >= NFXV) f = 0;
-        if (f == 0u) p = str_cat(p, L_DRT[patch[DR_TYPE] & 3]);
-        if (f == 3u) p = str_cat(p, "COMP + OTT");
-        if (f == 3u && patch[CP_PUMP]) { p = str_cat(p, "PUMP "); p = str_cat(p, L_PRATE[patch[CP_PRATE] & 3]); }
-        if (f == 2u) { p = str_cat(p, L_DLT[patch[DL_TYPE] & 3]); p = str_cat(p, " "); p = str_cat(p, L_DIV[patch[DL_TIME] & 15]); }
-        if (f == 1u) p = str_cat(p, L_RVT[patch[RV_TYPE] & 3]);
-        if (f == 5u) p = str_cat(p, "CHORUS + PHASER");
-        if (f == 7u) { p = str_cat(p, "MONO BASS "); p = str_cat(p, L_MONO[(uint32_t)patch[MB_MONO] % 7u]); }
+        if (f == 0u) { p = str_cat(p, "SAT "); p = str_cat(p, L_DRT[patch[DR_TYPE] & 3]); p = str_cat(p, " + CRUSH"); }   /* (1.2.0b: DIRT, SPACE, DYNAMICS, EQ, MASTER) */
+        if (f == 1u) { p = str_cat(p, "VERB + DELAY "); p = str_cat(p, L_DIV[patch[DL_TIME] & 15]); }
+        if (f == 2u) { p = str_cat(p, "COMP + OTT"); if (patch[CP_PUMP]) { p = str_cat(p, " \xB7 PUMP "); p = str_cat(p, L_PRATE[patch[CP_PRATE] & 3]); } }
+        if (f == 4u) { p = str_cat(p, "MONO BASS "); p = str_cat(p, L_MONO[(uint32_t)patch[MB_MONO] % 7u]); }
         if (p != sub) p = str_cat(p, " \xB7 ");
-        str_cat(p, f == 3u ? (patch[CP_ON] || patch[OT_AMT] ? "ON" : "OFF") : f == 5u ? (patch[CH_ON] || patch[PH_ON] ? "ON" : "OFF") : FX_ON[f] ? (patch[FX_ON[f]] ? "ON" : "OFF") : f == 4u ? "EQ" : "ALWAYS ON");
+        str_cat(p, f == 0u ? (patch[DR_ON] || patch[CR_ON] ? "ON" : "OFF") : f == 1u ? (patch[RV_ON] || patch[DL_ON] || patch[CH_ON] || patch[PH_ON] ? "ON" : "OFF")
+                 : f == 2u ? (patch[CP_ON] || patch[OT_AMT] ? "ON" : "OFF") : f == 3u ? "EQ" : "ALWAYS ON");
         return FX_TITLE[f];
     }
 }
@@ -995,7 +1004,7 @@ static void view_dots(int32_t xr, int32_t y)    /* the page's views: one dot eac
 {
     uint32_t nv = (uint32_t)(PAGE_V0[page + 1u] - PAGE_V0[page]), i, lo = 0;
     int32_t x;
-    if (page == PG_FILT) { lo = filt_zone() ? 0u : 2u; nv = 2u; }   /* (SEL's two filter views, or SEQ's two) */
+    if (page == PG_FILT) { lo = filt_zone() ? 0u : FILT_N; nv = filt_zone() ? FILT_N : SEQ_N; }   /* (SEL's filter view(s), or SEQ's) */
     x = xr - (int32_t)nv * 5;
     for (i = 0; nv > 1u && i < nv; i++) g_rect(x + (int32_t)i * 5, y + 1, 3, 3, lo + i == vcur[page] ? K_LIME : K_LINE);
 }
@@ -1325,8 +1334,9 @@ static void th_pure(const view_t *v, uint32_t vi)
         for (y = 0; y < 17; y++) if (g_vis(y, 1)) g_rect(0, y, w + (16 - y) / 2 + 4, 1, K_LIME);
         g_text(T_S, 7, 4, cc, K_INK);
         p = fmt_u(s, (uint32_t)page + 1u, 2);
-        if (page == PG_FILT) nv = 2u;           /* (SEL's filter views, SEQ's views: two each) */
-        if (nv > 1u) { p = str_cat(p, " \xB7 "); p = fmt_u(p, vcur[page] % 2u + 1u, 0); p = str_cat(p, "/"); fmt_u(p, nv, 0); }
+        { uint32_t vv = vcur[page];
+        if (page == PG_FILT) { nv = filt_zone() ? FILT_N : SEQ_N; vv = filt_zone() ? vv : vv - FILT_N; }   /* (SEL's filter view(s), SEQ's views) */
+        if (nv > 1u) { p = str_cat(p, " \xB7 "); p = fmt_u(p, vv + 1u, 0); p = str_cat(p, "/"); fmt_u(p, nv, 0); } }
         g_text_r(T_XS, batt_draw(234, 4, v->lay == LY_SYS) - 6, 5, s, K_GREY);
     }
     if (v->lay == LY_PRESET || v->lay == LY_SAVE || v->lay == LY_SYS || !vz) {   /* lists: rows under the title */
@@ -1423,14 +1433,14 @@ static void rb_name(uint32_t vi, char *b)       /* a view's short name, for the 
     static const char *const FR[] = {"CURRENT PATCH", "LIVE MIX", "OSCILLATOR A", "OSCILLATOR B", "OSCILLATOR C \xB7 SAMPLE", "SUB + NOISE",
                                      "COMBINE A + B", "AMP ENVELOPE", "FILTER ENVELOPE", "MOD ENVELOPE", "FILTER / COLOUR", "FILTER MOD",
                                      "SEQ BASS", "LFO 1 \xB7 WOBBLE", "LFO 2 \xB7 MOTION", "STEP FX", "MOD MATRIX", "PRESET BANK A",
-                                     "PRESET BANK B", "SAVE PATCH", "ARPEGGIATOR", "GLOBAL SETUP", "QUICK", "DISPLAY", "ADVANCED"};
+                                     "PRESET BANK B", "SAVE PATCH", "ARPEGGIATOR", "GLOBAL SETUP", "QUICK", "DISPLAY", "ADVANCED", "BASS", "FILTER", "GROOVE"};
     static const char *const TO[] = {"PLAY", "MIX", "OSC A", "OSC B", "SAMPLE", "SUB", "A + B", "AMP", "F.ENV", "M.ENV", "FILTER", "F.MOD",
-                                     "SEQ", "LFO 1", "LFO 2", "STEP", "MATRIX", "BANK A", "BANK B", "SAVE", "ARP", "SYSTEM", "QUICK", "DISPLAY", "ADVANCED"};
+                                     "SEQ", "LFO 1", "LFO 2", "STEP", "MATRIX", "BANK A", "BANK B", "SAVE", "ARP", "SYSTEM", "QUICK", "DISPLAY", "ADVANCED", "BASS", "FILTER", "GROOVE"};
     const char *c = VIEWS[vi].cat;
     uint32_t i;
     char t[32], sub[64];
     if (str_eq(c, "FX RACK")) {                /* (the effects by their short names) */
-        static const char *const FXL[] = {"SATURATION", "DYNAMICS", "MOD FX", "BITCRUSH", "REVERB"}, *const FXS[] = {"SAT", "DYN", "MOD FX", "CRUSH", "VERB"};
+        static const char *const FXL[] = {"DIRT", "DYNAMICS", "SPACE", "MASTER", "EQ"}, *const FXS[] = {"DIRT", "DYN", "SPACE", "MASTER", "EQ"};
         const char *ti = view_title(vi, t, sub);
         for (i = 0; i < 5u; i++) if (str_eq(ti, FXL[i])) { str_cat(b, FXS[i]); return; }
         str_cat(b, ti);
@@ -1998,7 +2008,7 @@ static void draw_pads(void)
         if (!g_vis(y, 27)) continue;
         g_box(x, y, 56, 27, hot ? K_ORANGE : K_PANEL, hot ? K_WHITE : K_LINE);
         g_text_c(T_XS, x + 28, y + 3, PB_SHORT[j], hot ? K_INK : K_WHITE);
-        g_text_c(T_XS, x + 28, y + 15, i < 4 ? "STUTTER" : i < 8 ? "LIVE" : "BURST", hot ? K_INK : K_GREY);
+        g_text_c(T_XS, x + 28, y + 15, i == PB_REV || i == PB_DIVE ? "LIVE" : i < 4 ? "STUTTER" : i < 8 ? "LIVE" : "BURST", hot ? K_INK : K_GREY);
     }
 }
 /* PERFORM (SEL): the four macros, the morph, the wobble, the pads; nothing to scroll */
@@ -2235,13 +2245,17 @@ static void draw_win(void)
         int on = mc_val[k] != 0;
         if (!g_vis(y, 36)) continue;
         g_box(4, y, 232, 36, on ? K_LIMED : K_PANEL, (mc_pos >> 3) == k ? K_WHITE : on ? K_LIME : K_LINE);
-        p = str_cat(t, "M");
-        *p++ = (char)('1' + k); *p = 0;
+        {                                       /* (its name: GROWL WOBBLE DIRT SPACE while they are the first ones, else M1..M4) */
+            const char *nm = mc_name(k);
+            if (nm[0] == 'M' && nm[1] >= '1' && nm[1] <= '4' && !nm[2]) { p = str_cat(t, "M"); *p++ = (char)('1' + k); *p = 0; }
+            else if (!memcmp(perf.mc_dst + k * 4u, MC_D + k * 4u, 4) && !memcmp(perf.mc_amt + k * 4u, MC_A + k * 4u, 4)) str_cat(t, nm);
+            else { p = str_cat(t, "M"); *p++ = (char)('1' + k); *p = 0; }
+        }
         g_text(T_M, 10, y + 3, t, on ? K_LIME : K_WHITE);
         item_text(G_MC1 + k, b);
         g_text_r(T_M, 230, y + 3, b, on ? K_LIME : K_WHITE);
         g_vbar(10, y + 26, 220, 5, item_frac(G_MC1 + k), on ? K_LIME : K_CYAN);
-        for (s = 0, x = 40; s < 4; s++) {       /* the targets, short: CUTOFF +34 */
+        for (s = 0, x = 18 + g_text_w(T_M, t); s < 4; s++) {   /* the targets, short: CUTOFF +34 */
             uint32_t q = k * 4u + (uint32_t)s, d = perf.mc_dst[q];
             int32_t a = perf.mc_amt[q], w;
             const char *nm;
@@ -2633,7 +2647,7 @@ static void draw_all(void)
         int32_t vy = VZ_OF[vidx()] ? 146 : 72;   /* (below the picture, the scope included) */
         if (vpop_ms && vpop_id == G_FONT) {     /* FONT: the ones around, each in itself */
             if (!dpop_ms && !pend_on && !win && g_vis(60, 112)) {
-                static const char *const FN[NFONT] = {"SANS  AA 123", "MONO  AA 123", "HYPER  AA 123", "PIXEL  AA 123", "OUTFIT  AA 123", "INSTRUMENT  AA 123", "TEKTUR  AA 123", "JETBRAINS  AA 123", "BIG SHOULDERS  123"};
+                static const char *const FN[NFONT] = {"SANS  AA 123", "OUTFIT  AA 123", "TEKTUR  AA 123"};
                 int32_t cur = (int32_t)(set.font % NFONT), i, y;
                 uint8_t bold = g_bold;
                 g_box(20, 60, 200, 112, K_PANEL, K_LIME);
@@ -2641,7 +2655,6 @@ static void draw_all(void)
                 for (i = cur - 2, y = 78; i <= cur + 2; i++, y += 18) {
                     if (i < 0 || i >= (int32_t)NFONT) continue;
                     if (i == cur) g_box(26, y - 2, 188, 18, K_LIMED, K_LIME);
-                    g_bold = i == 2;
                     g_text_c(FAMS[i][1], 120, y + 1, FN[i], i == cur ? K_WHITE : K_GREY);
                 }
                 g_bold = bold;

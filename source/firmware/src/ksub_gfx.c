@@ -138,27 +138,22 @@ static void theme_set(uint32_t t, uint32_t pal)
 #define K_INK kc[KC_INK]
 #define K_MOD kc[KC_MOD]
 
-/* the fonts: nine families (SANS DejaVu Sans Bold, MONO IBM Plex Mono, HYPER Atkinson Hyperlegible Mono, PIXEL
- * Press Start 2P, then OUTFIT, INSTRUMENT, TEKTUR, JETBRAINS, BIG SHOULDERS: those five in the three small sizes,
- * the big titles in SANS), five sizes */
-#define NFONT 9u
-static const ks_font_t *const FAMS[NFONT][5] = {{&F_XS, &F_S, &F_M, &F_B, &F_L}, {&F_GXS, &F_GS, &F_GM, &F_GB, &F_GL},
-                                           {&F_HXS, &F_HS, &F_HM, &F_HB, &F_HL}, {&F_PXS, &F_PS, &F_PM, &F_PB, &F_PL},
-                                           {&F_OXS, &F_OS, &F_OM, &F_B, &F_L}, {&F_IXS, &F_IS, &F_IM, &F_B, &F_L},
-                                           {&F_TXS, &F_TS, &F_TM, &F_B, &F_L}, {&F_JXS, &F_JS, &F_JM, &F_B, &F_L},
-                                           {&F_QXS, &F_QS, &F_QM, &F_B, &F_L}};
-static uint8_t g_bold;                          /* (HYPER is light: drawn twice, a pixel apart) */
+/* the fonts: three families (1.2.0b: SANS DejaVu Sans Bold, OUTFIT, TEKTUR; the six others went, 60 KB of flash for the
+ * code), five sizes; OUTFIT and TEKTUR in the three small sizes, the big titles in SANS */
+#define NFONT 3u
+static const ks_font_t *const FAMS[NFONT][5] = {{&F_XS, &F_S, &F_M, &F_B, &F_L}, {&F_OXS, &F_OS, &F_OM, &F_B, &F_L},
+                                           {&F_TXS, &F_TS, &F_TM, &F_B, &F_L}};
+static uint8_t g_bold;                          /* (drawn twice, a pixel apart: none of the three now) */
 static const ks_font_t *tf[5] = {&F_XS, &F_S, &F_M, &F_B, &F_L};
-static const ks_font_t *const ZOOM[3][2] = {{&F_FZS, &F_FZM}, {&F_GZS, &F_GZM}, {&F_HZS, &F_HZM}};   /* LOUPE: S and M bigger */
-static void font_set(uint32_t f, uint32_t zoom)   /* (SKY: always HYPER, the most readable, drawn a little thick) */
+static void font_set(uint32_t f, uint32_t zoom)   /* (SKY: always SANS, the most readable) */
 {
     uint32_t i;
-    if (theme_pal == PAL_SKY) f = 2u;
+    if (theme_pal == PAL_SKY) f = 0u;
     f %= NFONT;
     for (i = 0; i < 5u; i++) tf[i] = FAMS[f][i];
-    if (zoom && f < 3u) { tf[1] = ZOOM[f][0]; tf[2] = ZOOM[f][1]; }
-    else if (zoom && f > 3u) { tf[1] = FAMS[f][2]; tf[2] = &F_FZM; }   /* (the five new ones: S as their M, M as SANS's bigger M) */
-    g_bold = f == 2u;
+    if (zoom && !f) { tf[1] = &F_FZS; tf[2] = &F_FZM; }
+    else if (zoom) { tf[1] = FAMS[f][2]; tf[2] = &F_FZM; }   /* (OUTFIT, TEKTUR: S as their M, M as SANS's bigger M) */
+    g_bold = 0;
 }
 #define T_XS tf[0]
 #define T_S tf[1]

@@ -149,19 +149,11 @@ def gen_tables():
 
 # ---------------------------------------------------------------- fonts
 FONTS = [("F", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", [("XS", 8, 126), ("S", 9, 126), ("M", 11, 126), ("B", 16, 126), ("L", 21, 95)]),
-         ("G", str(ROOT / "assets/fonts/IBMPlexMono-SemiBold.ttf"), [("XS", 9, 95), ("S", 10, 95), ("M", 12, 95), ("B", 16, 95), ("L", 20, 95)]),
-         ("H", str(ROOT / "assets/fonts/AtkinsonHyperlegibleMono.ttf"), [("XS", 9, 95), ("S", 10, 95), ("M", 12, 95), ("B", 16, 95), ("L", 20, 95)]),
-         ("P", str(ROOT / "assets/fonts/PressStart2P-Regular.ttf"), [("XS", 8, 126), ("S", 8, 126), ("M", 8, 126)]),   # (B and L: S drawn twice as big)
          # five more (0.9.34, SIL OFL), the small sizes only, capitals only (the big titles stay DejaVu Sans Bold)
          ("O", str(ROOT / "assets/fonts/Outfit-Bold.ttf"), [("XS", 9, 95), ("S", 10, 95), ("M", 12, 95)]),
-         ("I", str(ROOT / "assets/fonts/InstrumentSans-Bold.ttf"), [("XS", 9, 95), ("S", 10, 95), ("M", 12, 95)]),
          ("T", str(ROOT / "assets/fonts/Tektur-Medium.ttf"), [("XS", 9, 95), ("S", 10, 95), ("M", 12, 95)]),
-         ("J", str(ROOT / "assets/fonts/JetBrainsMono-Bold.ttf"), [("XS", 8, 95), ("S", 9, 95), ("M", 11, 95)]),
-         ("Q", str(ROOT / "assets/fonts/BigShoulders-Bold.ttf"), [("XS", 10, 95), ("S", 11, 95), ("M", 13, 95)]),
          # LOUPE (SYSTEM): the rows' and values' sizes, as big as the rows and boxes take (PIXEL has none: 8 or 16)
-         ("FZ", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", [("S", 11, 126), ("M", 13, 126)]),
-         ("GZ", str(ROOT / "assets/fonts/IBMPlexMono-SemiBold.ttf"), [("S", 12, 95), ("M", 14, 95)]),
-         ("HZ", str(ROOT / "assets/fonts/AtkinsonHyperlegibleMono.ttf"), [("S", 12, 95), ("M", 14, 95)])]
+         ("FZ", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", [("S", 11, 126), ("M", 13, 126)]),]
 
 
 def gen_fonts():
@@ -295,12 +287,12 @@ def gen_samples():
     tt = t(1.0, S2)
     vin = np.zeros(len(tt)); idx = rng.integers(0, len(tt), 90); vin[idx] = rng.uniform(-1, 1, 90)
     vin = np.convolve(vin, np.exp(-np.arange(12) / 2), "same") + rng.standard_normal(len(tt)) * .03
-    out.append(("VINYL", norm(loopify(vin, 150), .7), S2, 0, 0))
+    out.append(("VINYL", norm(loopify(vin[:int(.6 * S2)], 150), .7), S2, 0, 0))   # (1.2.0b: 0.6 s loops, the same texture: flash for the code)
     hs = rng.standard_normal(len(tt)); hs = hs - np.convolve(hs, np.ones(3) / 3, "same")
     out.append(("TAPE HISS", norm(loopify((hs * (1 + .2 * np.sin(2 * np.pi * 3 * tt)))[:int(.6 * S2)], 150), .5), S2, 0, 0))   # (1.0.60: 0.6 s, the same hiss; 4 KB of flash for the code)
     rn = np.zeros(len(tt)); idx = rng.integers(0, len(tt), 400); rn[idx] = rng.uniform(.2, 1, 400)
     rn = np.convolve(rn, np.sin(np.arange(30) * .9) * np.exp(-np.arange(30) / 6), "same") + rng.standard_normal(len(tt)) * .08
-    out.append(("RAIN", norm(loopify(rn, 150), .8), S2, 0, 0))
+    out.append(("RAIN", norm(loopify(rn[:int(.6 * S2)], 150), .8), S2, 0, 0))
     wn = rng.standard_normal(len(tt)); lp = np.zeros(len(tt)); c = 0.0
     for i in range(len(tt)):
         g = .02 + .05 * (1 + np.sin(2 * np.pi * 1 * tt[i])); c += g * (wn[i] - c); lp[i] = c
@@ -309,7 +301,7 @@ def gen_samples():
     for k in range(16):
         a, b = k * len(tt) // 16, (k + 1) * len(tt) // 16
         f = rng.choice([0, 220, 440, 880, 1760, 3520]); dg[a:b] = np.sign(np.sin(2 * np.pi * f * tt[a:b])) * (f > 0) * .6
-    out.append(("DATA", norm(loopify(dg, 150), .6), S2, 0, 0))
+    out.append(("DATA", norm(loopify(dg[:int(.6 * S2)], 150), .6), S2, 0, 0))
     # 0.9.55: attacks (one shots at C3, to lay on a bass's start) and more textures (0.6 s loops)
     rng = np.random.default_rng(55)
     tt = t(0.15)                               # PICK: a string plucked hard (Karplus-Strong from a bright burst)

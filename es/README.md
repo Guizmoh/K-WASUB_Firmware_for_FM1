@@ -5,7 +5,7 @@
 
 **English** : [README](../README.md) · **Français** : [README](../fr/README.md) · **Español** : esta página
 
-**Sintetizador de graves moderno para el M-VAVE FM-1**: DnB, dub, dubstep, techno. Wobble en vivo, reese, sub, 808, un EQ, un morph entre cuatro sonidos, efectos en las teclas. Gratuito y de código abierto (GPL-3.0). *Versión 1.1.03 **BETA**: probada en el FM-1 (hardware), en el emulador y con pruebas automáticas; dime qué ves (pestaña Issues).*
+**Sintetizador de graves moderno para el M-VAVE FM-1**: DnB, dub, dubstep, techno. Wobble en vivo, reese, sub, 808, un EQ, un morph entre cuatro sonidos, efectos en las teclas. Gratuito y de código abierto (GPL-3.0). *Versión 1.2.0b **BETA**: probada en el emulador y con pruebas automáticas (la 1.1.03, la anterior, se probó en el FM-1); dime qué ves (pestaña Issues).*
 
 | | |
 |---|---|
@@ -24,11 +24,11 @@
 2. **Secuenciador de batería con condiciones y parameter locks** (también en el bajo: mantener un paso, girar un potenciómetro) y **automatización** (mantener REC durante la reproducción y girar cualquier potenciómetro; REC solo para borrar): 8 pistas de colores (kits 808, 909, dub techno, acústico), probabilidad y condiciones en cada paso, teclas negras para el instrumento, teclas blancas (pads) para sus pasos, OCT−/OCT+ para las páginas; REC en directo; salida sync para Pocket Operator y Volca.
 3. **LFO learn**: mantén `LFO` y gira cualquier potenciómetro, el LFO 2 se asigna a ese ajuste en un gesto (con `OCT−`: LFO 1, con `OCT+`: LFO 3).
 4. Modo **CLASSIC** o **SHIFT** (`OCT−` / `OCT+`) para ir más rápido, a elegir en las opciones.
-5. **Ventanas SEL**: PERFORM, MORPH, FX LIVE, MACROS.
+5. **GROOVE** (1.2.0b): un ritmo y una línea de bajo en pocos giros: estilo de batería, densidad, variación, fill, escala bloqueada y tónica, densidad del bajo, octavas, slides, sobre o entre los bombos. **Ventanas SEL**: PERFORM, MORPH, FX LIVE, MACROS (listas: GROWL, WOBBLE, DIRT, SPACE).
 6. **Morph A/B**: mezcla dos sonidos en vivo.
 7. **Tres LFO** (el tercero global: se queda al cambiar de sonido) y una **página de LFO** en vivo para remodelar tus graves wobble mientras tocas.
 8. **SEQ BASS** (hasta 64 pasos, probabilidad, condiciones de disparo y duración de nota por paso, 30 presets, REC en directo), samples **OSC C** (ataques, texturas; inicio / fin recortados, más rápido o más lento, al revés, ping-pong), **DRUMS** (kits 808 / 909 / dub techno / acústico, 8 pistas de colores, presets de ritmo: techno, dub, dnb…), **ARP**, **MIDI**.
-9. El sonido: motores, filtros, efectos, master, y **FX PADS**.
+9. **Diseño de sonido** (1.2.0b): **MUTATE** (un sonido nuevo cerca del tuyo, vuelve a 0 para deshacer; bloquea los motores o el filtro), **WOBBLE RECIPES** (YOY, WUB, NEURO, TALK), **BOUNCE** a OSC C, **FX PADS** con REVERSE y PITCH DIVE. Menos páginas, más claras: BASS, FILTER, DIRT, SPACE.
 10. Visuales de osciladores animados, en vivo.
 11. Un **EQ** visual.
 12. **Temas** totalmente distintos, para adaptarse a tu forma de tocar.
@@ -47,8 +47,8 @@ Puedes volver a KAWA (`install/kawa-0.5.fwsc`) o al firmware de fábrica (M-UPGR
 
 ```sh
 cd source
-./build.sh --release 1.1.03          # -> build/k-wasub-1.1.03.fwsc
-APP_VER=1.1.03 bash web/make_emulator.sh      # emulador
+./build.sh --release 1.2.0b          # -> build/k-wasub-1.2.0b.fwsc
+APP_VER=1.2.0b bash web/make_emulator.sh      # emulador
 bash web/make_installer.sh                    # installer.html con el último paquete
 bash tests/run_stress.sh                      # pruebas de carga (UBSan)
 python3 tests/manual_shots.py                 # capturas del manual (docs/img)

@@ -14,7 +14,7 @@
 enum { PG_PLAY, PG_BASS, PG_ENV, PG_FILT, PG_LFO, PG_FX, PG_PRE, PG_SYS, NPAGE };
 static const uint8_t PAGE_BTN[NPAGE] = {BTN_HOME, BTN_EDIT, BTN_ENV, BTN_SEQ, BTN_LFO, BTN_FX, BTN_ARP, BTN_GLO};
 enum { LY_PLAY, LY_LIST, LY_BOX, LY_STEP, LY_LFO, LY_PRESET, LY_SAVE, LY_SYS, LY_EQ };
-enum { I_L1RATE = 140, I_L2RATE, I_ABMIX, G_MIDICH, G_BPM, G_CLOCK, G_OCT, G_CORES, G_CPU, G_FW, G_THEME, G_PAL, G_FONT, G_GRID, G_BROWSE, G_ACCEL, G_C3COL, G_UI, G_ASK, G_ZOOM, G_MLEARN, G_MMAP, G_MSTART, G_MPROG, G_MCLK,
+enum { I_L1RATE = 140, I_L2RATE, I_ABMIX, G_MIDICH, G_BPM, G_CLOCK, G_OCT, G_MUTATE, G_CPU, G_MU_LOCK, G_THEME, G_PAL, G_FONT, G_GRID, G_BROWSE, G_ACCEL, G_C3COL, G_UI, G_ASK, G_ZOOM, G_MLEARN, G_MMAP, G_MSTART, G_MPROG, G_MCLK,
        G_SQ_STEP, G_SQ_NOTE, G_SQ_TYPE, G_SQ_PAT, G_SQ_LEN, G_SQ_RATE, G_SQ_SWING,   /* SEQ BASS */
        G_AR_ON, G_AR_MODE, G_AR_RATE, G_AR_OCT, G_AR_GATE,                          /* ARP */
        G_LV_FLT, G_LV_PUMP, G_LV_STUT, G_LV_TAPE, G_LV_PRATE, G_LV_FRES,             /* SEL: FX LIVE */
@@ -22,7 +22,7 @@ enum { I_L1RATE = 140, I_L2RATE, I_ABMIX, G_MIDICH, G_BPM, G_CLOCK, G_OCT, G_COR
        G_EQ_F, G_EQ_G, G_EQ_T, G_EQ_Q,                                               /* FX held: the EQ (the band eq_cur) */
        G_RST, G_CON, G_NORM, G_DEEP,                                                 /* SYSTEM: why the last stop; CONTRAST; AUTO LEVEL; DEEP BASS */
        G_RS_GO, G_RS_LEN,                                                            /* OSC C: RESAMPLE (record), its length */
-       G_BRI, G_QLFO, G_ENG8, G_ASAVE, G_LANG,                                        /* SYSTEM: BRIGHTNESS; which LFO LFO held assigns; ENGINES (4 or 8); AUTOSAVE; LANGUAGE */
+       G_BRI, G_QLFO, G_WOB_RCP, G_ASAVE, G_LANG,                                        /* SYSTEM: BRIGHTNESS; which LFO LFO held assigns; ENGINES (4 or 8); AUTOSAVE; LANGUAGE */
        G_SQ_PROB, G_SQ_COND,                                                         /* SEQ BASS: the step's chance, its condition (last: MIDI LEARN keeps the ids) */
        G_SQ_GATE, G_SQ_PRESET,                                                       /* SEQ BASS: the step's note length; a pattern from the library */
        G_DK_LVL, G_DK_TUNE, G_DK_DEC, G_DK_TONE, G_DK_TRK, G_DK_STEP, G_DK_HIT, G_DK_PROB, G_DK_COND,   /* DRUMS: the track's sound; the step */
@@ -35,6 +35,7 @@ enum { I_L1RATE = 140, I_L2RATE, I_ABMIX, G_MIDICH, G_BPM, G_CLOCK, G_OCT, G_COR
        G_DK_KSAT, G_DK_SNAP, G_DK_ECHO,                                              /* DRUMS: KICK DRIVE, SNAPPY, DUB ECHO (1.0.32, in dk.pad) */
        G_MIDIMON, G_MIDIRT,                                                          /* MIDI: the last message that came in, and the last system one (1.0.46) */
        G_SQ_COPY, G_SQ_CHAIN, G_SQ_CHPOS, G_SQ_CHPAT,                                /* SEQ BASS (1.0.53): COPY / PASTE a pattern; the CHAIN, its place, the pattern there */
+       G_GR_STYLE, G_GR_DENS, G_GR_VAR, G_GR_FILL, G_GR_SCALE, G_GR_ROOT, G_GR_BDENS, G_GR_BOCT, G_GR_BSLIDE, G_GR_KICK, G_GR_LEN,   /* GROOVE (1.2.0b; MUTATE, its LOCK and the WOBBLE RECIPE took the unused CORES, FIRMWARE and ENGINES ids) */
        G_LAST_ID,
        I_NONE = 255 };
 typedef char item_ids_fit[G_LAST_ID < I_NONE ? 1 : -1];
@@ -47,57 +48,55 @@ typedef struct {
 } view_t;
 #define OSCV(L, X) {LY_LIST, "OSCILLATOR " L, 11, {X##_ENG, X##_P1, X##_P2, X##_P3, X##_P4, X##_LVL, X##_OCT, X##_SEMI, X##_FINE, V_MODE, V_GLIDE}, "EDIT"}   /* (the voice mode and the glide at the bottom: one voice plays both oscillators) */
 #define FXV(...) {LY_LIST, "FX RACK", 4, {__VA_ARGS__}, "FX"}
-static const view_t VIEWS[] = {               /* (1.0.54: the most used first on each button; SYSTEM in 4, FX in 8) */
+static const view_t VIEWS[] = {               /* (1.2.0b: fewer pages, the main settings on each button's first view) */
     {LY_PLAY, "CURRENT PATCH", 4, {F_CUT, I_L1RATE, L1_DEP, F_RES}, "HOME"},
     {LY_PLAY, "LIVE MIX", 4, {S_LVL, DR_AMT, DL_MIX, MS_VOL}, "HOME"},
-    {LY_PLAY, "QUICK", 4, {F_CUT, F_RES, F_ENV, DR_AMT}, "HOME"},   /* (the four turned most: cutoff, resonance, envelope amount, drive) */
-    {LY_LIST, "COMBINE A + B", 13, {I_ABMIX, X_MODE, X_AMT, B_ENG, A_ENG, A_LVL, B_LVL, A_OCT, B_OCT, B_SEMI, B_FINE, X_DRIFT, X_RESET}, "EDIT"},   /* (HOME held opens it too: the two oscillators together) */
+    {LY_LIST, "BASS", 16, {A_ENG, B_ENG, I_ABMIX, X_MODE, X_AMT, A_P1, B_P1, A_P4, B_P4, S_LVL, G_MUTATE, G_MU_LOCK, G_RS_GO, A_LVL, B_LVL, X_DRIFT}, "EDIT"},   /* (the two engines and how they meet; HOME held opens it too) */
     OSCV("A", A), OSCV("B", B),
     {LY_LIST, "SUB + NOISE", 7, {S_LVL, S_OCT, S_WAVE, N_LVL, S_LOCK, N_COL, S_ROUTE}, "EDIT"},
     {LY_LIST, "OSCILLATOR C \xB7 SAMPLE", 11, {SM_SEL, SM_LVL, SM_START, SM_END, G_RS_GO, G_RS_LEN, SM_SPEED, SM_DIR, SM_MODE, SM_TUNE, SM_KEY}, "EDIT"},
-    {LY_BOX, "FILTER ENVELOPE", 4, {FE_A, FE_D, FE_S, FE_R}, "ENV"},
     {LY_BOX, "AMP ENVELOPE", 4, {AE_A, AE_D, AE_S, AE_R}, "ENV"},
     {LY_BOX, "MOD ENVELOPE", 4, {ME_A, ME_D, ME_AMT, ME_DST}, "ENV"},
-    {LY_BOX, "FILTER / COLOUR", 4, {F_CUT, F_RES, F_DRV, F_TYPE}, "FX"},   /* (these two open from SEL: 1.0.53) */
-    {LY_LIST, "FILTER MOD", 6, {F_ENV, F_KEY, F_VEL, F_TYPE, F_CUT, F_RES}, "FX"},
+    {LY_LIST, "FILTER", 11, {F_CUT, F_RES, F_ENV, F_TYPE, F_DRV, F_KEY, F_VEL, FE_A, FE_D, FE_S, FE_R}, "FX"},   /* (SEL: the filter, its modulation and its envelope in one) */
+    {LY_LIST, "GROOVE", 13, {G_GR_STYLE, G_GR_DENS, G_GR_VAR, G_GR_FILL, G_GR_SCALE, G_GR_ROOT, G_GR_BDENS, G_GR_BOCT, G_GR_BSLIDE, G_GR_KICK,
+                             G_GR_LEN, G_SQ_SWING, G_BPM}, "SEQ"},   /* (1.2.0b: SEQ opens on it: the drums and the bass made in a few turns) */
     {LY_LIST, "SEQ BASS", 18, {G_SQ_PRESET, G_SQ_LEN, G_SQ_STEP, G_SQ_NOTE, G_SQ_GATE, G_SQ_TYPE, G_SQ_PAT, G_SQ_COPY, G_SQ_CHAIN, G_SQ_CHPOS, G_SQ_CHPAT,
-                               G_SQ_PROB, G_SQ_COND, G_SQ_LKP, G_SQ_LKV, G_SQ_RATE, G_SQ_SWING, G_SQ_ON}, "SEQ"},   /* (1.0.58: PRESET and LENGTH first, SEQUENCE last) */   /* (K1-K4 the step; then the pattern, its copy, the chain) */
+                               G_SQ_PROB, G_SQ_COND, G_SQ_LKP, G_SQ_LKV, G_SQ_RATE, G_SQ_SWING, G_SQ_ON}, "SEQ"},   /* (PRESET and LENGTH first, SEQUENCE last) */
     {LY_LIST, "DRUMS", 19, {G_DK_LVL, G_DK_TUNE, G_DK_DEC, G_DK_TONE, G_DK_PAT, G_DK_PRE, G_DK_KIT, G_DK_LEN, G_DK_TRK, G_DK_STEP, G_DK_HIT, G_DK_PROB, G_DK_COND,
                             G_DK_VOL, G_DK_KSAT, G_DK_SNAP, G_DK_ECHO, G_DK_MODE, G_DK_SWING}, "SEQ"},   /* (black keys: the track, white: its steps, OCT: the page; K1-K4 the sound, then the pattern) */
-    {LY_LFO, "LFO 1 \xB7 WOBBLE", 9, {I_L1RATE, L1_DEP, L1_SHP, L1_DST, G_GRID, L1_SYNC, L1_TRIG, L1_PH, L1_SMO}, "LFO"},
+    {LY_LFO, "LFO 1 \xB7 WOBBLE", 10, {I_L1RATE, L1_DEP, L1_SHP, L1_DST, G_WOB_RCP, G_GRID, L1_SYNC, L1_TRIG, L1_PH, L1_SMO}, "LFO"},
     {LY_LFO, "LFO 2 \xB7 MOTION", 9, {I_L2RATE, L2_DEP, L2_SHP, L2_DST, G_GRID, L2_SYNC, L2_TRIG, L2_PH, L2_SMO}, "LFO"},
     {LY_LIST, "LFO 3 \xB7 GLOBAL", 5, {G_L3_RATE, G_L3_DEP, G_L3_SHP, G_L3_DST, G_L3_SYNC}, "LFO"},   /* (1.0.17: the third LFO, whatever the patch) */
     {LY_STEP, "STEP FX", 7, {ST_PAT, ST_RATE, ST_GATE, ST_DEP, ST_ON, ST_DST, ST_SMO}, "LFO"},
     {LY_LIST, "MOD MATRIX", 12, {M1_AMT, M2_AMT, M3_AMT, M4_AMT, M1_SRC, M1_DST, M2_SRC, M2_DST, M3_SRC, M3_DST, M4_SRC, M4_DST}, "LFO"},
-    FXV(DR_ON, DR_AMT, DR_MIX, DR_TYPE),       /* (SATURATION, REVERB, DELAY first, each with its ON first (1.0.37); MASTER last) */
-    {LY_LIST, "FX RACK", 5, {RV_ON, RV_SIZE, RV_MIX, RV_TYPE, RV_DAMP}, "FX"},
-    {LY_LIST, "FX RACK", 6, {DL_ON, DL_TIME, DL_FB, DL_MIX, DL_TYPE, DL_TONE}, "FX"},
+    {LY_LIST, "FX RACK", 8, {DR_ON, DR_AMT, DR_TYPE, DR_MIX, CR_ON, CR_BITS, CR_RATE, CR_MIX}, "FX"},   /* DIRT: saturation + crush (1.2.0b) */
+    {LY_LIST, "FX RACK", 20, {RV_ON, RV_MIX, DL_ON, DL_MIX, RV_SIZE, RV_TYPE, RV_DAMP, DL_TIME, DL_FB, DL_TYPE, DL_TONE,
+                              CH_ON, CH_MIX, CH_RATE, CH_DEP, PH_ON, PH_MIX, PH_RATE, PH_DEP, PH_FB}, "FX"},   /* SPACE: reverb, delay, chorus, phaser (1.2.0b) */
     {LY_LIST, "FX RACK", 9, {CP_ON, CP_AMT, OT_AMT, CP_PUMP, CP_ATK, CP_REL, CP_PRATE, OT_LOW, OT_HIGH}, "FX"},   /* DYNAMICS: the compressor and the OTT (1.0.54) */
     {LY_EQ, "EQ", 0, {0}, "FX"},                /* (the EQ: opens as the window it is, win 3) */
-    {LY_LIST, "FX RACK", 9, {CH_ON, CH_MIX, PH_ON, PH_MIX, CH_RATE, CH_DEP, PH_RATE, PH_DEP, PH_FB}, "FX"},   /* MOD FX: the chorus and the phaser (1.0.54) */
-    FXV(CR_ON, CR_BITS, CR_RATE, CR_MIX),
     {LY_LIST, "FX RACK", 4, {MS_VOL, MS_GLUE, MS_SUB, MB_MONO}, "FX"},
     {LY_PRESET, "PRESET BANK A", 0, {0}, "PRESET"},
     {LY_PRESET, "PRESET BANK B", 0, {0}, "PRESET"},
     {LY_SAVE, "SAVE PATCH", 0, {0}, "PRESET"},
     {LY_LIST, "ARPEGGIATOR", 5, {G_AR_ON, G_AR_MODE, G_AR_RATE, G_AR_OCT, G_AR_GATE}, "ARP"},
-    {LY_SYS, "GLOBAL SETUP", 14, {G_BPM, V_MODE, V_GLIDE, G_DEEP, G_UI, G_THEME, G_QLFO, G_ASAVE, G_LANG, G_NORM, V_BEND, V_VEL, G_GRID, G_BROWSE}, "SYSTEM"},
-    {LY_SYS, "DISPLAY", 7, {G_THEME, G_PAL, G_FONT, G_ZOOM, G_BRI, G_CON, G_C3COL}, "SYSTEM"},
-    {LY_SYS, "ADVANCED", 5, {G_CPU, G_RST, G_ACCEL, G_ASK, G_NEWSONG}, "SYSTEM"},
+    {LY_SYS, "GLOBAL SETUP", 19, {G_BPM, V_MODE, V_GLIDE, G_DEEP, G_UI, G_THEME, G_PAL, G_FONT, G_ZOOM, G_BRI, G_QLFO, G_ASAVE, G_LANG, G_NORM, V_BEND, V_VEL,
+                                  G_GRID, G_BROWSE, G_C3COL}, "SYSTEM"},   /* (1.2.0b: the display's rows here too) */
+    {LY_SYS, "ADVANCED", 6, {G_CPU, G_RST, G_ACCEL, G_ASK, G_CON, G_NEWSONG}, "SYSTEM"},
     {LY_SYS, "MIDI", 10, {G_MLEARN, G_MMAP, G_MIDICH, G_CLOCK, G_MSTART, G_MPROG, G_MCLK, G_SYNC, G_MIDIMON, G_MIDIRT}, "SYSTEM"},
 };
 /* what K1..K4 turn: the first four rows (the preset lists and SAVE have their own) */
 static uint32_t vknob(const view_t *v, uint32_t i) { return v->lay == LY_PRESET || v->lay == LY_SAVE || i >= v->n ? I_NONE : v->it[i]; }
-#define NFXV 8u                                /* the FX page's views, in order: their ON (0: none), their title */
-static const uint8_t FX_ON[NFXV] = {DR_ON, RV_ON, DL_ON, CP_ON, 0, CH_ON, CR_ON, 0};
-static const uint8_t PAGE_V0[NPAGE + 1] = {0, 3, 8, 11, 15, 20, 28, 32, 36};   /* each page's first view */
-#define V_EQ 24u
+#define NFXV 5u                                /* the FX page's views, in order: their ON (0: none), their title */
+static const uint8_t FX_ON[NFXV] = {DR_ON, RV_ON, CP_ON, 0, 0};
+static const uint8_t PAGE_V0[NPAGE + 1] = {0, 2, 7, 9, 13, 18, 23, 27, 30};   /* each page's first view */
+#define V_EQ 21u
 #define ARP_VIEW 3u                             /* the ARP button's page: PRESET BANK A, B, SAVE, then ARPEGGIATOR (its view 3); the button opens it first */
-#define V_SMP 7u
-#define V_SEQ 13u                               /* SEQ BASS (the SEQ button's third view), DRUMS (its fourth), ARP (the ARP button's last) */
-#define V_DRUM 14u
-#define V_ARP 31u
-static const char *const FX_TITLE[NFXV] = {"SATURATION", "REVERB", "DELAY", "DYNAMICS", "EQ", "MOD FX", "BITCRUSH", "MASTER"};
+#define V_SMP 6u
+#define V_SEQ 11u
+#define V_GROOVE 10u                               /* SEQ BASS (the SEQ button's third view), DRUMS (its fourth), ARP (the ARP button's last) */
+#define V_DRUM 12u
+#define V_ARP 26u
+static const char *const FX_TITLE[NFXV] = {"DIRT", "SPACE", "DYNAMICS", "EQ", "MASTER"};
 static const char *const FT_TITLE[NFT] = {"DARK EDGE", "SOFT EDGE", "BAND RAZOR", "THIN AIR", "HOLLOW", "TALK BOX", "METAL COMB"};
 static const char *const FT_SUB[NFT] = {"LOW PASS \xB7 24 dB", "LOW PASS \xB7 12 dB", "BAND PASS \xB7 12 dB", "HIGH PASS \xB7 24 dB",
                                         "NOTCH \xB7 12 dB", "FORMANT \xB7 A E I O U", "COMB \xB7 TUNED BY CUTOFF"};
@@ -171,6 +170,7 @@ static struct {
     int8_t l3[NL3];                             /* LFO 3: shape, sync, rate, division, depth, destination (whatever the patch: 1.0.17) */
     uint8_t fav2[4];                            /* the favourites 96 .. 127 (1.0.32: 96 factory presets, 32 user) */
     uint8_t fav3[4];                            /* the favourites 128 .. 159 (1.0.50: 97 factory presets) */
+    uint8_t scale, root;                        /* GROOVE: the scale the keys and the bass keep to (0 OFF) and its root, C = 0 (1.2.0b) */
 } set = {6, 0, 0, 0xFF, 1400, 0, 0, 1, 0, 0, 0, 0, 0, {0}, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 3, 1, 0, 1, 0, 0, 0, {0, 1, 64, 9, 0, D_CUT}, {0}};
 static void l3_push(void) { uint32_t i; for (i = 0; i < NL3; i++) l3cfg[i] = set.l3[i]; }   /* (the settings to the audio) */
 static char pname[14];
@@ -432,14 +432,15 @@ static uint8_t perf_sum(void)                   /* (up to the macros: they check
     for (i = 2; i < n; i++) x = (x * 5u + b[i]) & 0xFFu;
     return (uint8_t)x;
 }
-/* the first MACROS: FILTER (cutoff, resonance), WOBBLE (depth, rate), GRIT (filter drive, noise, saturation), TONE
- * (both oscillators' first control, X-MOD) */
+/* the first MACROS (1.2.0b): GROWL (cutoff, resonance, both oscillators' shape), WOBBLE (depth, rate), DIRT (filter drive,
+ * saturation, X-MOD, noise), SPACE (reverb, delay, chorus: turned on at their mix 0 when the knob first moves) */
+static const uint8_t MC_D[16] = {D_CUT, D_RES, D_AP1, D_BP1, D_WOB, D_L1RATE, 0, 0, D_DRV, D_DRAMT, D_XMOD, D_NOISE, D_RVMIX, D_DLMIX, D_CHMIX, 0};
+static const int8_t MC_A[16] = {30, 25, 40, 40, 48, 16, 0, 0, 60, 50, 30, 12, 55, 40, 45, 0};
+static const char *const MC_NM[4] = {"GROWL", "WOBBLE", "DIRT", "SPACE"};
 static void mc_defaults(void)
 {
-    static const uint8_t D[16] = {D_CUT, D_RES, 0, 0, D_WOB, D_L1RATE, 0, 0, D_DRV, D_NOISE, D_DRAMT, 0, D_AP1, D_BP1, D_XMOD, 0};
-    static const int8_t A[16] = {44, 18, 0, 0, 48, 16, 0, 0, 60, 20, 40, 0, 40, 40, 30, 0};
-    memcpy(perf.mc_dst, D, 16);
-    memcpy(perf.mc_amt, A, 16);
+    memcpy(perf.mc_dst, MC_D, 16);
+    memcpy(perf.mc_amt, MC_A, 16);
     perf.mc_magic = MC_MAGIC;
 }
 /* ---- the SEL windows: 1 FX LIVE, 2 MACROS (SEL again: the next, then back to the page) */
@@ -748,6 +749,71 @@ static void dk_load_preset(uint32_t sel)        /* 1.. : DKP[sel - 1], at the pa
     if (dk_cur >= size) dk_cur = 0;
     dk_touch();
 }
+/* ---- GROOVE (1.2.0b): the drums and the bass line made from a few settings; the scale the keys keep to */
+static const uint16_t SCALE_MASK[8] = {0xFFFu, 0x5ADu, 0xAB5u, 0x6ADu, 0x5ABu, 0x4A9u, 0x9ADu, 0x4E9u};   /* OFF, MINOR, MAJOR, DORIAN, PHRYGIAN, MIN PENTA, HARM MINOR, BLUES (bit = semitone) */
+static uint8_t gr[8] = {1, 5, 0, 0, 6, 3, 2, 2};   /* STYLE DENS VARIATION FILL, then the bass's DENSITY OCTAVES SLIDES KICK (the scale and root: in set) */
+static uint32_t gr_seed;
+static uint32_t gr_rnd(void) { gr_seed ^= gr_seed << 13; gr_seed ^= gr_seed >> 17; gr_seed ^= gr_seed << 5; return gr_seed; }
+static int gr_chance(uint32_t pct) { return (gr_rnd() >> 8) % 100u < pct; }
+static int in_scale(int32_t n) { return (SCALE_MASK[set.scale % 8u] >> (uint32_t)((n - (int32_t)set.root + 120) % 12)) & 1; }
+static int32_t scale_snap(int32_t n) { int32_t i; for (i = 0; i < 12 && !in_scale(n - i); i++) {} return n - (i < 12 ? i : 0); }
+static void gr_drums(void)                     /* the style's rhythm, thinned or filled by DENSITY, varied by VARIATION, a FILL at the end */
+{
+    dkpat_t *q = &dk.pat[dk.cur % DK_NPAT];
+    uint32_t i, t, len, dn = gr[1], fill = gr[3];
+    dk_load_preset(gr[0]);
+    len = dk_len();
+    gr_seed = 0x9E3779B9u ^ (uint32_t)gr[2] * 2654435761u ^ (uint32_t)gr[0] * 40503u;
+    for (i = 0; i < len; i++)
+        for (t = DK_CLAP; t < NDK; t++) {      /* (the kick and the snare stay as the style has them) */
+            uint8_t bit = (uint8_t)(1u << t);
+            if ((q->on[i] & bit) && dn < 5u && gr_chance((5u - dn) * 18u)) { q->on[i] &= (uint8_t)~bit; q->acc[i] &= (uint8_t)~bit; }
+            else if (!(q->on[i] & bit) && dn > 5u && (t == DK_CH || t == DK_PERC || (t == DK_OH && i % 4u == 2u)) && gr_chance((dn - 5u) * (t == DK_CH ? 14u : 6u))) q->on[i] |= bit;
+            else if (gr[2] && (q->on[i] & bit) && t != DK_CH && gr_chance(10u)) { uint32_t j = (i + 1u) % len; if (!(q->on[j] & bit)) { q->on[i] &= (uint8_t)~bit; q->on[j] |= bit; } }
+        }
+    if (fill) {                                /* LIGHT: snares on the last 2 steps, MEDIUM: 4, BIG: 4 with toms and a cymbal on the 1 */
+        uint32_t n = fill == 1u ? 2u : 4u;
+        for (i = len - n; i < len; i++) { q->on[i] |= 1u << DK_SNARE; q->pc[DK_SNARE][i] = 0; if (fill == 3u && i % 2u) q->on[i] |= 1u << DK_TOM; }
+        q->acc[len - 1u] |= 1u << DK_SNARE;
+        if (fill == 3u) { q->on[0] |= 1u << DK_CYM; q->acc[0] |= 1u << DK_CYM; }
+    }
+    dk_psel = 0; dk_edited(); dk_touch();
+}
+static void gr_bass(void)                      /* a bass line in the scale, on or between the kicks, its octaves and slides */
+{
+    uint32_t k = perf.cur % SQ_NPAT, len = sq_len(), i, kick, pct;
+    const dkpat_t *d = &dk.pat[dk.cur % DK_NPAT];
+    uint32_t dlen = dk_len();
+    int32_t deg[12], nd = 0, j;
+    for (j = 0; j < 12; j++) if ((SCALE_MASK[set.scale % 8u] >> j) & 1u) deg[nd++] = j;
+    gr_seed = 0x85EBCA6Bu ^ (uint32_t)gr[2] * 2246822519u ^ (uint32_t)gr[4] * 977u;
+    for (i = 0; i < len; i++) {
+        uint8_t *f = sq_fp(k, i);
+        int32_t n;
+        uint32_t r = gr_rnd() >> 8;
+        kick = (d->on[i % dlen] >> DK_KICK) & 1u;
+        pct = gr[4] * 9u + (i % 4u == 0u ? 15u : i % 2u ? 0u : 6u);
+        if (gr[7] == 1u) pct = kick ? 95u : pct / 4u;            /* ON KICK */
+        else if (gr[7] == 2u) pct = kick ? 0u : pct + 10u;        /* OFF KICK: the rolling basses */
+        *sq_pp(k, i) = 100; *sq_cp(k, i) = 4u << 4;              /* (1 STEP) */
+        if (r % 100u >= pct) { *f = 0; continue; }
+        r = gr_rnd() >> 8;
+        j = r % 100u < 60u ? 0 : r % 100u < 75u ? (nd > 4 ? 4 : nd - 1) : r % 100u < 87u ? (nd > 2 ? 2 : 0) : nd - 1;   /* the root mostly, its fifth, its third, its seventh */
+        if (set.scale == 0u) j = r % 100u < 70u ? 0 : -1;        /* (no scale: the root, or its fifth) */
+        n = 12 + (int32_t)set.root + (j < 0 ? 7 : deg[j]);
+        if (gr_chance(gr[5] * 8u)) n += 12;
+        *sq_np(k, i) = (uint8_t)clampi(n, 0, 48);
+        *f = (uint8_t)(SF_ON | (i % 4u == 0u && gr_chance(40u) ? SF_ACC : 0u) | (gr_chance(gr[6] * 8u) ? SF_SLIDE : 0u));
+    }
+    sq_psel = 0; sqx_touch(); sq_edited();
+}
+static void gr_quantize(void)                  /* the bass pattern's notes kept in the scale (SCALE or ROOT turned) */
+{
+    uint32_t k = perf.cur % SQ_NPAT, i;
+    if (!set.scale) return;
+    for (i = 0; i < SQ_MAX; i++) *sq_np(k, i) = (uint8_t)clampi(scale_snap(24 + *sq_np(k, i)) - 24, 0, 48);
+    sqx_touch();
+}
 static void seq_play(int on)
 {
     ev_push(EV_SEQ, on ? 1u : 0u, set.clock ? 0u : 1u);
@@ -870,7 +936,7 @@ static uint8_t cmp_on;
 static uint8_t vpop_id;
 static uint32_t vpop_ms;
 static char vpop_before[24], vpop_pre[12];
-static uint8_t pre_old, pre_idx_new;           /* (1.1.03's new preset order: a save to convert; the start sound already found by name) */
+static uint8_t pre_old, pre_idx_new, font_old;           /* (1.1.03's new preset order: a save to convert; the start sound already found by name) */
 static uint32_t splash_until, splash_t0;          /* (splash_t0: when the start screen came: its animation, 1.1.03) */
 static struct { uint8_t b, used, fired; uint32_t at, next; } hb = {0xFF, 0, 0, 0, 0};   /* the button held */
 /* SHIFT mode (SYSTEM > UI MODE, asked at each start): a page's first screen is 12 settings in three columns of four,
@@ -900,6 +966,8 @@ static const col3_t COL3[NPAGE] = {
 };
 static uint8_t c3_show[NPAGE] = {1, 1, 1, 1, 1, 1, 0, 0}, c3_cur;
 static int filt_zone(void);
+#define FILT_N 1u                               /* (1.2.0b) the PG_FILT page: the filter's view(s), SEL's, then SEQ's */
+#define SEQ_N ((uint32_t)(PAGE_V0[PG_FILT + 1] - PAGE_V0[PG_FILT]) - FILT_N)
 static uint8_t ask_on, ask_sel;                 /* the start's question: CLASSIC or SHIFT (ask_on 2: then the look, the very first start only) */
 static uint8_t theme_ask;                       /* the very first start (no settings yet): the look is asked too */
 static const uint8_t ASK_TH[4] = {7, 6, 1, 2};  /* CLASSIC, RIBBON CLASSIC, STUDIO, PURE (1.0.53: RIBBON CLASSIC second) */
@@ -920,6 +988,7 @@ static const char *mc_name(uint32_t k)
     static char t[4][14];
     uint32_t j;
     k &= 3u;
+    if (perf.mc_magic == MC_MAGIC && !memcmp(perf.mc_dst + k * 4u, MC_D + k * 4u, 4) && !memcmp(perf.mc_amt + k * 4u, MC_A + k * 4u, 4)) return MC_NM[k];
     for (j = 0; j < 4u; j++) {
         uint32_t q = k * 4u + j;
         if (perf.mc_magic == MC_MAGIC && perf.mc_dst[q] && perf.mc_amt[q] && perf.mc_dst[q] < ND) {
@@ -975,6 +1044,68 @@ static int pre_match(uint32_t bank, uint32_t k)
 static uint32_t pre_count(uint32_t bank) { uint32_t k, n = 0, m = bank ? NUSER : NFACTORY; for (k = 0; k < m; k++) n += (uint32_t)pre_match(bank, k); return n; }
 
 /* MORPH's state (the module is after save_user): a load lets go of the morph */
+/* ---- MUTATE (the BASS view, 1.2.0b): from 0 up, a new sound drawn near this one, reached by turning; back to 0: the sound
+ * as it was; up again: another. LOCK keeps the engines, the filter or both. Ranges a bass keeps working in; a list setting
+ * (an engine, the filter's type, the wobble's length) changes past the middle. */
+static const struct { uint8_t id, grp; int8_t lo, hi; } MU[] = {
+    {A_ENG, 1, 0, 0}, {B_ENG, 1, 0, 0}, {X_MODE, 1, 0, 3}, {A_P1, 1, 0, 127}, {A_P2, 1, 0, 110}, {A_P3, 1, 0, 100}, {A_P4, 1, 0, 70},
+    {B_P1, 1, 0, 127}, {B_P2, 1, 0, 110}, {B_P3, 1, 0, 100}, {B_P4, 1, 0, 70}, {X_AMT, 1, 0, 90},
+    {F_TYPE, 2, 0, 0}, {F_CUT, 2, 24, 112}, {F_RES, 2, 0, 100}, {F_DRV, 2, 0, 100}, {F_ENV, 2, -16, 56}, {FE_D, 2, 20, 90},
+    {L1_DIV, 0, 6, 13}, {L1_SHP, 0, 0, 7}, {DR_AMT, 0, 10, 100}, {N_LVL, 0, 0, 24}};
+#define NMU (sizeof MU / sizeof MU[0])
+static int8_t mu_base[NMU], mu_tgt[NMU];
+static uint8_t mu_amt, mu_lock, wob_rcp;
+static void mu_draw(void)
+{
+    static const uint8_t FT[5] = {FT_LP24, FT_LP12, FT_BP, FT_VOWEL, FT_COMB};
+    uint32_t i;
+    for (i = 0; i < NMU; i++) {
+        uint32_t id = MU[i].id, r = ui_rnd();
+        int32_t b = mu_base[i] = patch[id], t;
+        if ((MU[i].grp & mu_lock) || (id == B_ENG && !patch[B_LVL]) || (id == DR_AMT && !patch[DR_ON])) { mu_tgt[i] = (int8_t)b; continue; }
+        if (id == A_ENG || id == B_ENG) t = ENG_ORDER[r % NENGO];
+        else if (id == F_TYPE) t = FT[r % 5u];
+        else {                                  /* (halfway between here and anywhere in its range: near, not lost) */
+            t = MU[i].lo + (int32_t)(r % (uint32_t)(MU[i].hi - MU[i].lo + 1));
+            if (PD[id].fmt != FM_LIST && id != L1_DIV) t = (t + b) / 2;
+        }
+        mu_tgt[i] = (int8_t)t;
+    }
+}
+static void mu_apply(void)
+{
+    uint32_t i;
+    for (i = 0; i < NMU; i++) {
+        int32_t b = mu_base[i], t = mu_tgt[i], id = MU[i].id;
+        int32_t v = PD[id].fmt == FM_LIST || id == L1_DIV ? (mu_amt >= 64u ? t : b) : b + (t - b) * (int32_t)mu_amt / 127;
+        patch[id] = (int8_t)clampi(v, PD[id].lo, PD[id].hi);
+    }
+    prev_dirty = 1;
+}
+/* ---- the WOBBLE RECIPES (the LFO 1 view): LFO 1 and one matrix slot set for a known wobble */
+static void wob_recipe(uint32_t r)
+{
+    static const int8_t R[4][10] = {             /* SHAPE DIV DEPTH DEST  FILTER RES  matrix: DEST AMT  DRIVE ON  FDRIVE */
+        {0, 9, 55, D_CUT, FT_VOWEL, 70, D_RES, 20, 0, 30},     /* YOY: a vowel opening and closing, an eighth */
+        {6, 6, 60, D_CUT, FT_LP24, 60, D_DRV, 30, 1, 40},      /* WUB: the classic, a quarter */
+        {7, 11, 45, D_AP2, FT_LP12, 50, D_CUT, 35, 1, 50},     /* NEURO: stepped sixteenths on the shape, the filter after */
+        {1, 7, 63, D_CUT, FT_VOWEL, 90, D_RES, 30, 0, 20}};    /* TALK: a slow vowel that speaks */
+    const int8_t *q;
+    uint32_t k, slot = 3u;
+    if (!r || r > 4u) return;
+    q = R[r - 1u];
+    undo_push(); undo_id = 0xFFFFu;
+    patch[L1_SHP] = q[0]; patch[L1_SYNC] = 1; patch[L1_DIV] = q[1]; patch[L1_DEP] = q[2]; patch[L1_DST] = q[3]; patch[L1_TRIG] = 1;
+    patch[F_TYPE] = q[4]; patch[F_RES] = q[5]; patch[F_DRV] = q[9];
+    if (patch[F_CUT] > 70) patch[F_CUT] = 45;   /* (a wobble needs room to open) */
+    for (k = 0; k < 4u; k++) {                  /* (the first free matrix slot, or the one LFO 1 already drives) */
+        uint32_t s = M1_SRC + k * 3u;
+        if (!patch[s] || patch[s] == SR_LFO1) { slot = k; break; }
+    }
+    patch[M1_SRC + slot * 3u] = SR_LFO1; patch[M1_DST + slot * 3u] = q[6]; patch[M1_AMT + slot * 3u] = q[7];
+    if (q[8] && !patch[DR_ON]) { patch[DR_ON] = 1; patch[DR_AMT] = 35; patch[DR_MIX] = 110; }
+    prev_dirty = 1;
+}
 enum { MX_OFF, MX_XY, MX_AB };
 static uint8_t mx_ready, mx_mode, ab_run;
 static void load_preset(uint32_t bank, uint32_t k)
@@ -1000,6 +1131,7 @@ static void load_preset(uint32_t bank, uint32_t k)
     pdirty = 0;
     pend_on = 0;
     mx_ready = 0; mx_mode = MX_OFF; ab_run = 0;
+    mu_amt = 0; wob_rcp = 0;
 }
 static void save_user(uint32_t k)
 {
@@ -1237,11 +1369,11 @@ static void mx_knob(uint32_t k, int32_t d)      /* K1..K4 (SELECT and ALGO: K3 a
 
 /* ---- FX PADS (FX held, window 6): the 27 keys play effects, not notes. WHITE keys: the wobble (LFO 1) at once: its rate
  * 1 bar, 1/2, then 4 8 16 24 32 48 a bar; its depth OFF LOW MID FULL; its shape SINE TRI SQR S&H. BLACK keys: effects
- * for as long as the key is down: four stutters, tape stop, DJ filter low / high, pump, saturation, phaser, crush. */
-enum { PB_ST1, PB_ST2, PB_ST3, PB_ST4, PB_TAPE, PB_DJLP, PB_DJHP, PB_PUMP, PB_SAT, PB_FRZ, PB_CRUSH, NPB };   /* (1.0.48: FREEZE where PHASER was) */
-static const char *const PB_NAME[NPB] = {"STUTTER 1/4", "STUTTER 1/8", "STUTTER 1/16", "STUTTER 1/32", "TAPE STOP", "DJ FILTER LOW",
+ * for as long as the key is down: reverse, two stutters, pitch dive, tape stop, DJ filter low / high, pump, saturation, phaser, crush. */
+enum { PB_REV, PB_ST2, PB_ST3, PB_DIVE, PB_TAPE, PB_DJLP, PB_DJHP, PB_PUMP, PB_SAT, PB_FRZ, PB_CRUSH, NPB };   /* (1.0.48: FREEZE where PHASER was) */
+static const char *const PB_NAME[NPB] = {"REVERSE", "STUTTER 1/8", "STUTTER 1/16", "PITCH DIVE", "TAPE STOP", "DJ FILTER LOW",
                                          "DJ FILTER HIGH", "PUMP", "SATURATE", "FREEZE", "BIT CRUSH"};
-static const char *const PB_SHORT[NPB] = {"ST 1/4", "ST 1/8", "ST 1/16", "ST 1/32", "TAPE", "DJ LOW", "DJ HIGH", "PUMP", "SAT", "FREEZE", "CRUSH"};
+static const char *const PB_SHORT[NPB] = {"REVERSE", "ST 1/8", "ST 1/16", "DIVE", "TAPE", "DJ LOW", "DJ HIGH", "PUMP", "SAT", "FREEZE", "CRUSH"};
 static const char *const PW_NAME[16] = {"1 BAR", "1/2", "4", "8", "16", "24", "32", "48", "OFF", "LOW", "MID", "FULL", "SINE", "TRI", "SQR", "S&H"};
 static const uint8_t PW_DIV[8] = {2, 3, 6, 9, 11, 12, 13, 14};      /* DIV: 1 bar, 1/2, 1/4, 1/8, 1/16, 1/16T, 1/32, 1/32T */
 static const uint8_t PW_DEP[4] = {0, 16, 40, 63}, PW_SHP[4] = {0, 1, 4, 5};
@@ -1257,7 +1389,9 @@ static void pad_apply(void)
     static const int8_t V[2][3] = {{1, 110, 127}, {1, 24, 127}};
     uint32_t m = pad_mask, k, j;
     int32_t st = 0;
-    for (k = 0; k < 4u; k++) if (m >> (PB_ST1 + k) & 1u) st = (int32_t)k + 1;
+    for (k = 1; k < 3u; k++) if (m >> (PB_REV + k) & 1u) st = (int32_t)k + 1;   /* (1.2.0b: 1/8 and 1/16; REVERSE and PITCH DIVE at the ends) */
+    lfx_rev = (uint8_t)(m >> PB_REV & 1u);
+    lfx_dive = (uint8_t)(m >> PB_DIVE & 1u);
     lfx_stut = (uint8_t)st;
     lfx_tape = m >> PB_TAPE & 1u ? 100u : 0u;
     lfx_flt = m >> PB_DJLP & 1u ? -55 : m >> PB_DJHP & 1u ? 55 : 0;
@@ -1576,7 +1710,15 @@ static void item_range(uint32_t id, int32_t *lo, int32_t *hi)
         return;
     }
     *lo = 0;
-    *hi = id == G_MIDICH ? 16 : id == G_BPM ? 2400 : id == G_CLOCK || id == G_QLFO || id == G_ENG8 || id == G_ASAVE || id == G_LANG || id == G_NORM || id == G_RS_GO || id == G_GRID || id == G_BROWSE || id == G_C3COL || id == G_UI || id == G_ASK || id == G_ZOOM || id == G_MLEARN || id == G_MSTART || id == G_MPROG || id == G_MCLK || id == G_SYNC || id == G_NEWSONG || id == G_L3_SYNC ? 1 : id == G_MMAP ? 16 : id == I_ABMIX ? 127 : id == G_BRI ? 3 : id == G_DEEP ? 4 : id == G_SQ_ON ? 2 : id == G_ACCEL || id == G_CON || id == G_RS_LEN ? 2 : id == G_THEME ? 7 : id == G_FONT ? (int32_t)NFONT - 1 : id == G_PAL ? (int32_t)(2u * NPAL_BASE - 1u) : id == G_OCT ? 6 : 0;
+    *hi = id == G_MIDICH ? 16 : id == G_BPM ? 2400 : id == G_CLOCK || id == G_QLFO || id == G_ASAVE || id == G_LANG || id == G_NORM || id == G_RS_GO || id == G_GRID || id == G_BROWSE || id == G_C3COL || id == G_UI || id == G_ASK || id == G_ZOOM || id == G_MLEARN || id == G_MSTART || id == G_MPROG || id == G_MCLK || id == G_SYNC || id == G_NEWSONG || id == G_L3_SYNC ? 1 : id == G_MMAP ? 16 : id == I_ABMIX ? 127 : id == G_BRI ? 3 : id == G_DEEP ? 4 : id == G_SQ_ON ? 2 : id == G_ACCEL || id == G_CON || id == G_RS_LEN ? 2 : id == G_THEME ? 7 : id == G_FONT ? (int32_t)NFONT - 1 : id == G_PAL ? (int32_t)(2u * NPAL_BASE - 1u) : id == G_OCT ? 6 : 0;
+    if (id >= G_GR_STYLE && id <= G_GR_LEN) {     /* GROOVE */
+        static const uint8_t GL[11] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, GH[11] = {(uint8_t)NDKP, 10, 99, 3, 7, 11, 10, 10, 10, 2, 2};
+        *lo = GL[id - G_GR_STYLE]; *hi = GH[id - G_GR_STYLE];
+        return;
+    }
+    if (id == G_MUTATE) *hi = 127;
+    if (id == G_MU_LOCK) *hi = 3;
+    if (id == G_WOB_RCP) *hi = 4;
     if (id == G_ACCEL) *hi = 3;                 /* (OFF, ON, FAST, ULTRA) */
     if (id == G_LANG) *hi = 2;                  /* (ENGLISH, FRANCAIS, ESPANOL) */
     if (id == G_BPM) *lo = 600;
@@ -1649,10 +1791,12 @@ static int32_t item_get(uint32_t id)
     case G_NORM: return set.norm;
     case G_BRI: return set.bri;
     case G_QLFO: return set.qlfo;
-    case G_ENG8: return set.eng8;
     case G_ASAVE: return set.asave;
     case G_LANG: return set.lang;
     case G_RS_GO: return rs_want ? 1 : 0;
+    case G_MUTATE: return mu_amt;
+    case G_MU_LOCK: return mu_lock;
+    case G_WOB_RCP: return wob_rcp;
     case G_RS_LEN: return rs_secs;
     case G_DEEP: return set.deep;
     case G_MLEARN: return ml_state != 0;
@@ -1700,6 +1844,11 @@ static int32_t item_get(uint32_t id)
     case G_SQ_LEN: return sq_pat()->len;
     case G_SQ_RATE: return sq_pat()->rate;
     case G_SQ_SWING: return sq_pat()->swing;
+    case G_GR_STYLE: case G_GR_DENS: case G_GR_VAR: case G_GR_FILL: return gr[id - G_GR_STYLE];
+    case G_GR_SCALE: return set.scale % 8u;
+    case G_GR_ROOT: return set.root % 12u;
+    case G_GR_BDENS: case G_GR_BOCT: case G_GR_BSLIDE: case G_GR_KICK: return gr[id - G_GR_STYLE - 2u];
+    case G_GR_LEN: return sq_len() <= 16u ? 0 : sq_len() <= 32u ? 1 : 2;
     case G_AR_ON: return perf.ar_on;
     case G_AR_MODE: return perf.ar_mode;
     case G_AR_RATE: return perf.ar_rate;
@@ -1761,6 +1910,22 @@ static void item_set(uint32_t id, int32_t v)
     if (id == I_L1RATE || id == I_L2RATE) id = rate_id(id);
     item_range(id, &lo, &hi);
     v = clampi(v, lo, hi);
+    if (id >= G_GR_STYLE && id <= G_GR_LEN) {    /* GROOVE (1.2.0b): each turn makes the drums or the bass again, at once */
+        switch (id) {
+        case G_GR_STYLE: case G_GR_DENS: case G_GR_FILL: gr[id - G_GR_STYLE] = (uint8_t)v; gr_drums(); break;
+        case G_GR_VAR: gr[2] = (uint8_t)v; gr_drums(); gr_bass(); break;   /* (VARIATION: the drums and the bass both) */
+        case G_GR_SCALE: set.scale = (uint8_t)v; set_dirty = 1; set_ms = fm1_ms; gr_quantize(); break;
+        case G_GR_ROOT: { int32_t dlt = v - (int32_t)set.root; uint32_t k = perf.cur % SQ_NPAT, i;   /* (the line moves with its root) */
+            set.root = (uint8_t)v; set_dirty = 1; set_ms = fm1_ms;
+            for (i = 0; i < SQ_MAX; i++) *sq_np(k, i) = (uint8_t)clampi((int32_t)*sq_np(k, i) + dlt, 0, 48);
+            gr_quantize(); sqx_touch(); break; }
+        case G_GR_BDENS: case G_GR_BOCT: case G_GR_BSLIDE: case G_GR_KICK: gr[id - G_GR_STYLE - 2u] = (uint8_t)v; gr_bass(); break;
+        case G_GR_LEN: item_set(G_SQ_LEN, 16 << v); item_set(G_DK_LEN, 16 << v); break;
+        default: break;
+        }
+        g_force = 1;
+        return;
+    }
     if (item_patch(id)) {
         if (patch[id] != v) undo_mark(id);
         patch[id] = (int8_t)v;
@@ -1789,7 +1954,13 @@ static void item_set(uint32_t id, int32_t v)
         case G_LV_FRES: lfx_fres = (uint8_t)v; return;
         case G_MC_DST: perf.mc_dst[(mc_pos >> 1) & 15u] = (uint8_t)v; perf_touch(); return;
         case G_MC_AMT: perf.mc_amt[(mc_pos >> 1) & 15u] = (int8_t)v; perf_touch(); return;
-        default: mc_val[id - G_MC1] = (uint8_t)v; return;
+        default: {                              /* (a macro on an effect that is off: on, at its mix 0, from the first turn) */
+            uint32_t k = id - G_MC1, j;
+            if (v && !mc_val[k]) for (j = 0; j < 4u; j++) {
+                uint32_t d = perf.mc_dst[k * 4u + j], on = d == D_RVMIX ? RV_ON : d == D_DLMIX ? DL_ON : d == D_CHMIX ? CH_ON : d == D_DRAMT ? DR_ON : 0u;
+                if (on && perf.mc_amt[k * 4u + j] > 0 && !patch[on]) { patch[on] = 1; patch[on == DR_ON ? DR_AMT : on + (on == DL_ON ? 4u : 3u)] = 0; if (on == DR_ON) patch[DR_MIX] = 127; }
+            }
+            mc_val[k] = (uint8_t)v; return; }
         }
     }
     if (id == G_SQ_LKP) { sq_lkp = (uint8_t)v; return; }
@@ -1927,11 +2098,16 @@ static void item_set(uint32_t id, int32_t v)
     case G_ZOOM: set.zoom = (uint8_t)v; font_set(set.font, set.zoom); g_force = 1; break;
     case G_NORM: set.norm = (uint8_t)v; ks_norm = (uint8_t)v; break;
     case G_QLFO: set.qlfo = (uint8_t)v; break;
-    case G_ENG8: set.eng8 = (uint8_t)v; toast(v ? "ENGINES: ALL 8" : "ENGINES: ESSENTIAL 4"); break;
     case G_ASAVE: set.asave = (uint8_t)v; break;
     case G_LANG: set.lang = (uint8_t)v; g_force = 1; break;
     case G_BRI: set.bri = (uint8_t)v; g_bri = (uint8_t)v; theme_set(set.theme, set.pal); g_force = 1; break;
     case G_RS_LEN: rs_secs = (uint8_t)v; return;
+    case G_MUTATE:
+        if (!mu_amt && !v) return;              /* (nothing drawn: nothing to put back) */
+        if (!mu_amt && v) { undo_push(); undo_id = 0xFFFFu; mu_draw(); }   /* (from 0: another sound to go to) */
+        mu_amt = (uint8_t)v; mu_apply(); g_force = 1; return;
+    case G_MU_LOCK: mu_lock = (uint8_t)v; if (mu_amt) { uint32_t i; for (i = 0; i < NMU; i++) if (MU[i].grp & mu_lock) mu_tgt[i] = mu_base[i]; mu_apply(); } return;
+    case G_WOB_RCP: wob_rcp = (uint8_t)v; wob_recipe(v); g_force = 1; return;
     case G_RS_GO:                               /* RESAMPLE: the output for 2 .. 4 s into OSC C */
         if (v && !rs_want) { rs_desc.len = 0; rs_desc.name = "RESAMPLE"; rs_pos = 0; rs_n = 0; rs_acc = 0; rs_rec_on = 1; rs_want = (2u + rs_secs) * RS_RATE; toast("RECORDING THE OUTPUT"); }
         else if (!v && rs_want) { rs_desc.len = rs_pos; rs_want = 0; }
@@ -1997,10 +2173,12 @@ static const char *item_name(uint32_t id)
     case G_NORM: return "AUTO LEVEL";
     case G_BRI: return "BRIGHTNESS";
     case G_QLFO: return "LFO HELD = LFO";
-    case G_ENG8: return "ENGINES";
     case G_ASAVE: return "AUTOSAVE";
     case G_LANG: return "LANGUAGE";
-    case G_RS_GO: return "RESAMPLE";
+    case G_RS_GO: return "BOUNCE TO OSC C";
+    case G_MUTATE: return "MUTATE";
+    case G_MU_LOCK: return "MUTATE LOCK";
+    case G_WOB_RCP: return "WOBBLE RECIPE";
     case G_RS_LEN: return "REC LENGTH";
     case G_DEEP: return "DEEP BASS";
     case G_RST: return "LAST STOP";
@@ -2010,7 +2188,6 @@ static const char *item_name(uint32_t id)
     case G_MPROG: return "PROGRAM CHANGE";
     case G_MCLK: return "CLOCK OUT";
     case I_ABMIX: return "A / B MIX";
-    case G_FW: return "FIRMWARE";
     case G_MIDIMON: return "LAST NOTE / CC";
     case G_MIDIRT: return "LAST START / STOP";
     case G_SQ_STEP: return "STEP";
@@ -2051,6 +2228,17 @@ static const char *item_name(uint32_t id)
     case G_DK_ECHO: return "DUB ECHO";
     case G_SQ_RATE: return "RATE";
     case G_SQ_SWING: return "SWING";
+    case G_GR_STYLE: return "DRUM STYLE";
+    case G_GR_DENS: return "DRUM DENSITY";
+    case G_GR_VAR: return "VARIATION";
+    case G_GR_FILL: return "FILL";
+    case G_GR_SCALE: return "SCALE";
+    case G_GR_ROOT: return "ROOT";
+    case G_GR_BDENS: return "BASS DENSITY";
+    case G_GR_BOCT: return "BASS OCTAVES";
+    case G_GR_BSLIDE: return "BASS SLIDES";
+    case G_GR_KICK: return "BASS + KICK";
+    case G_GR_LEN: return "LENGTH (BOTH)";
     case G_AR_ON: return "ARP";
     case G_AR_MODE: return "MODE";
     case G_AR_RATE: return "RATE";
@@ -2082,7 +2270,11 @@ static const char *item_sname(uint32_t id)
     if (k) return k == 4 ? ENG_P4[e % NENG] : ENG_P[e % NENG][k - 1];   /* (P4: its own table; 1.0.34, ENG_P[e][3] ran past the last engine) */
     if (id == I_L1RATE || id == I_L2RATE) return "RATE";
     if (item_patch(id)) return PD[id].sname;
-    return id == G_MIDICH ? "MIDI" : id == G_BPM ? "BPM" : id == G_CLOCK ? "CLOCK" : id == G_OCT ? "OCT" : id == G_THEME ? "THEME" : id == G_PAL ? "PALETTE" : id == G_FONT ? "FONT" : id == G_GRID ? "GRID" : id == G_BROWSE ? "BROWSE" : id == G_ACCEL ? "ACCEL" : id == G_C3COL ? "COLOURS" : id == G_UI ? "UI" : id == G_ASK ? "ASK" : id == G_ZOOM ? "LOUPE" : id == G_CON ? "CONTRAST" : id == G_NORM ? "LEVEL" : id == G_BRI ? "BRIGHT" : id == G_QLFO ? "QLFO" : id == G_ENG8 ? "ENGINES" : id == G_ASAVE ? "AUTOSAVE" : id == G_LANG ? "LANGUAGE" : id == G_RS_GO ? "RESAMP" : id == G_RS_LEN ? "LENGTH" : id == G_DEEP ? "DEEP" : id == G_MLEARN ? "LEARN" : id == G_MMAP ? "CC MAP" : id == I_ABMIX ? "A/B" : id == G_SQ_TYPE ? "TYPE" : id == G_SQ_PROB ? "PROB" : id == G_SQ_COND ? "COND" : id == G_SQ_PAT ? "PAT" : id == G_SQ_LEN || id == G_DK_LEN ? "STEPS" : id == G_SQ_GATE ? "NOTE LEN" : id == G_DK_LVL ? "LVL" : id == G_DK_DEC ? "DEC" : id == G_DK_TRK ? "INSTR" : id == G_DK_PROB ? "PROB" : id == G_DK_COND ? "COND" : id == G_DK_PAT ? "PAT" : id == G_DK_VOL ? "VOL" : id == G_AR_OCT ? "OCT" : item_name(id);
+    if (id >= G_GR_STYLE && id <= G_GR_LEN) { static const char *const GS[11] = {"STYLE", "DENS", "VAR", "FILL", "SCALE", "ROOT", "B.DENS", "OCT", "SLIDE", "KICK", "STEPS"}; return GS[id - G_GR_STYLE]; }
+    if (id == G_MUTATE) return "MUTATE";
+    if (id == G_MU_LOCK) return "LOCK";
+    if (id == G_WOB_RCP) return "RECIPE";
+    return id == G_MIDICH ? "MIDI" : id == G_BPM ? "BPM" : id == G_CLOCK ? "CLOCK" : id == G_OCT ? "OCT" : id == G_THEME ? "THEME" : id == G_PAL ? "PALETTE" : id == G_FONT ? "FONT" : id == G_GRID ? "GRID" : id == G_BROWSE ? "BROWSE" : id == G_ACCEL ? "ACCEL" : id == G_C3COL ? "COLOURS" : id == G_UI ? "UI" : id == G_ASK ? "ASK" : id == G_ZOOM ? "LOUPE" : id == G_CON ? "CONTRAST" : id == G_NORM ? "LEVEL" : id == G_BRI ? "BRIGHT" : id == G_QLFO ? "QLFO" : id == G_ASAVE ? "AUTOSAVE" : id == G_LANG ? "LANGUAGE" : id == G_RS_GO ? "BOUNCE" : id == G_RS_LEN ? "LENGTH" : id == G_DEEP ? "DEEP" : id == G_MLEARN ? "LEARN" : id == G_MMAP ? "CC MAP" : id == I_ABMIX ? "A/B" : id == G_SQ_TYPE ? "TYPE" : id == G_SQ_PROB ? "PROB" : id == G_SQ_COND ? "COND" : id == G_SQ_PAT ? "PAT" : id == G_SQ_LEN || id == G_DK_LEN ? "STEPS" : id == G_SQ_GATE ? "NOTE LEN" : id == G_DK_LVL ? "LVL" : id == G_DK_DEC ? "DEC" : id == G_DK_TRK ? "INSTR" : id == G_DK_PROB ? "PROB" : id == G_DK_COND ? "COND" : id == G_DK_PAT ? "PAT" : id == G_DK_VOL ? "VOL" : id == G_AR_OCT ? "OCT" : item_name(id);
 }
 static uint32_t ilog2q8(uint32_t x)             /* log2(x) in Q8, x >= 1 */
 {
@@ -2214,8 +2406,10 @@ static void item_text(uint32_t id, char *b)
             break;
         }
         case G_RS_LEN: { char *q = fmt_u(b, 2u + (uint32_t)v, 0); str_cat(q, " s"); break; }
+        case G_MUTATE: if (!v) str_cat(b, "OFF \xB7 TURN +"); else { char *q = fmt_u(b, (uint32_t)v * 100u / 127u, 0); str_cat(q, " %"); } break;
+        case G_MU_LOCK: { static const char *const L[4] = {"NONE", "ENGINES", "FILTER", "BOTH"}; str_cat(b, L[v & 3]); break; }
+        case G_WOB_RCP: { static const char *const L[5] = {"-", "YOY", "WUB", "NEURO", "TALK"}; str_cat(b, L[(uint32_t)v % 5u]); break; }
         case G_QLFO: str_cat(b, v ? "LFO 2" : "LFO 1"); break;
-        case G_ENG8: str_cat(b, v ? "ALL (8 ENGINES)" : "ESSENTIAL (4)"); break;
         case G_ASAVE: str_cat(b, v ? "EVERY MINUTE" : "OFF"); break;
         case G_LANG: { static const char *const LN[3] = {"ENGLISH", "FRANCAIS", "ESPANOL"}; str_cat(b, LN[v % 3]); break; }
         case G_BRI: str_cat(b, v == 3 ? "MAX" : v == 2 ? "BRIGHT" : v == 1 ? "NORMAL" : "ECO"); break;
@@ -2232,13 +2426,12 @@ static void item_text(uint32_t id, char *b)
             if (v == 64) { str_cat(b, "A = B"); break; }
             b = str_cat(b, "A "); b = fmt_u(b, (uint32_t)(v <= 64 ? 100 : (127 - v) * 100 / 63), 0);
             b = str_cat(b, "% B "); b = fmt_u(b, (uint32_t)(v >= 64 ? 100 : v * 100 / 64), 0); str_cat(b, "%"); break;
-        case G_FONT: { static const char *const FN[NFONT] = {"SANS", "MONO", "HYPER", "PIXEL", "OUTFIT", "INSTRUMENT", "TEKTUR", "JETBRAINS", "BIG SHOULDERS"}; str_cat(b, FN[(uint32_t)v % NFONT]); break; }
+        case G_FONT: { static const char *const FN[NFONT] = {"SANS", "OUTFIT", "TEKTUR"}; str_cat(b, FN[(uint32_t)v % NFONT]); break; }
         case G_CPU:                             /* each core's share of a block, and the governor's step */
             b = str_cat(b, "C0 "); b = fmt_u(b, ks_load[0], 0); b = str_cat(b, "%");
             if (dual_on) { b = str_cat(b, " C1 "); b = fmt_u(b, ks_load[1], 0); b = str_cat(b, "%"); }
             if (ks_shed) { b = str_cat(b, " \xB7 -"); fmt_u(b, ks_shed, 0); }
             break;
-        case G_FW: str_cat(b, "K-WASUB " APP_VER " BETA"); break;
         case G_MIDIMON: case G_MIDIRT: {        /* the last channel message in (status, data 1, data 2, in hex), and the last system one (FA start, FB continue, FC stop...): what a sequencer sends when it stops */
             static const char HX[] = "0123456789ABCDEF";
             uint8_t s0 = id == G_MIDIMON ? mm_st : mm_rt;
@@ -2302,6 +2495,13 @@ static void item_text(uint32_t id, char *b)
         case G_SQ_CHPAT: if (v < 0) str_cat(b, "END"); else { b = str_cat(b, "P"); fmt_u(b, (uint32_t)v + 1u, 2); } break;
         case G_SQ_RATE: case G_AR_RATE: str_cat(b, L_SRATE[v % 6]); break;
         case G_SQ_SWING: if (v) { b = fmt_u(b, 50u + (uint32_t)v / 2u, 0); str_cat(b, "%"); } else str_cat(b, "OFF"); break;
+        case G_GR_STYLE: str_cat(b, DKP[(uint32_t)(v - 1) % NDKP].name); break;
+        case G_GR_FILL: { static const char *const FL[4] = {"OFF", "LIGHT", "MEDIUM", "BIG"}; str_cat(b, FL[v & 3]); break; }
+        case G_GR_SCALE: { static const char *const SC[8] = {"OFF (ALL NOTES)", "MINOR", "MAJOR", "DORIAN", "PHRYGIAN", "MIN PENTA", "HARM MINOR", "BLUES"}; str_cat(b, SC[v & 7]); break; }
+        case G_GR_ROOT: { static const char *const NN[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"}; str_cat(b, NN[(uint32_t)v % 12u]); break; }
+        case G_GR_KICK: { static const char *const KK[3] = {"FREE", "ON THE KICKS", "BETWEEN KICKS"}; str_cat(b, KK[(uint32_t)v % 3u]); break; }
+        case G_GR_LEN: str_cat(fmt_u(b, 16u << v, 0), " STEPS"); break;
+        case G_GR_DENS: case G_GR_VAR: case G_GR_BDENS: case G_GR_BOCT: case G_GR_BSLIDE: fmt_u(b, (uint32_t)v, 0); break;
         case G_AR_ON: str_cat(b, v ? "ON" : "OFF"); break;
         case G_AR_MODE: str_cat(b, L_ARMODE[v % 5]); break;
         case G_AR_OCT: fmt_u(b, (uint32_t)v + 1u, 0); break;
@@ -2472,7 +2672,7 @@ static void panic_all(void)                     /* PANIC (REC held, OCT- + OCT+,
     notes_all_off();
     ev_push(EV_PANIC, 0, 0);
     pad_release_all();
-    lfx_flt = 0; lfx_pump = 0; lfx_stut = 0; lfx_tape = 0;
+    lfx_flt = 0; lfx_pump = 0; lfx_stut = 0; lfx_tape = 0; lfx_rev = 0; lfx_dive = 0;
     fx_flush = 2;
     toast("ALL NOTES OFF");
 }
@@ -2537,8 +2737,14 @@ static void edit_item(uint32_t id, int32_t d)
 {
     int32_t lo, hi, v = item_get(id), step = 1;
     uint32_t k;
-    if (id == I_NONE || id == G_CPU || id == G_FW || id == G_MIDIMON || id == G_MIDIRT || id == G_RST) return;
+    if (id == I_NONE || id == G_CPU || id == G_MIDIMON || id == G_MIDIRT || id == G_RST) return;
     if (ml_state == 1u && id != G_MLEARN && id != G_MMAP) { ml_id = (uint8_t)id; ml_state = 2; toast("LEARN: SEND A CC"); }
+    if (id == G_SQ_NOTE && set.scale && d) {   /* (a scale: the note goes from one of its notes to the next) */
+        int32_t n = v, st = d > 0 ? 1 : -1, c = d > 0 ? d : -d;
+        while (c--) { do n += st; while (n > 0 && n < 48 && !in_scale(24 + n)); }
+        item_set(id, clampi(n, 0, 48));
+        return;
+    }
     if (id == G_SQ_LEN && d) {                  /* PATTERN LENGTH: 1..8 one by one, then 12 16 24 32 48 64 (1.0.61) */
         static const uint8_t SL[14] = {1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 24, 32, 48, 64};
         int32_t j;
@@ -2693,11 +2899,11 @@ static void new_step(uint32_t which)            /* 1 NEW PRESET, 2 NEW SONG: the
 }
 static void name_trim(void) { int32_t i; for (i = 12; i >= 0 && pname[i] == ' '; i--) pname[i] = 0; }
 
-static void first_view(uint32_t pg) { vcur[pg] = 0; c3_show[pg] = COL3[pg].title ? 1u : 0u; if (pg == PG_FILT) { vcur[pg] = 2; c3_show[pg] = 0; } }   /* (SEQ: SEQ BASS first; the filter is on SEL, 1.0.53) */
-static int filt_zone(void) { return page == PG_FILT && !win && (c3_show[PG_FILT] || vcur[PG_FILT] < 2u); }   /* FILTER / COLOUR, FILTER MOD (and SHIFT's 3 columns): SEL's */
+static void first_view(uint32_t pg) { vcur[pg] = 0; c3_show[pg] = COL3[pg].title ? 1u : 0u; if (pg == PG_FILT) { vcur[pg] = FILT_N; c3_show[pg] = 0; } }   /* (SEQ: its first view; the filter is on SEL, 1.0.53) */
+static int filt_zone(void) { return page == PG_FILT && !win && (c3_show[PG_FILT] || vcur[PG_FILT] < FILT_N); }   /* FILTER / COLOUR, FILTER MOD (and SHIFT's 3 columns): SEL's */
 static void view_next(void)                     /* the page's next view (SHIFT: the 3 columns first) */
 {
-    if (page == PG_FILT) { c3_show[PG_FILT] = 0; vcur[PG_FILT] = vcur[PG_FILT] == 2u ? 3u : 2u; return; }   /* (SEQ: SEQ BASS, DRUMS) */
+    if (page == PG_FILT) { c3_show[PG_FILT] = 0; vcur[PG_FILT] = (uint8_t)(vcur[PG_FILT] < FILT_N || vcur[PG_FILT] + 1u >= FILT_N + SEQ_N ? FILT_N : vcur[PG_FILT] + 1u); return; }   /* (SEQ: its views, round) */
     uint32_t nv = (uint32_t)(PAGE_V0[page + 1u] - PAGE_V0[page]);
     if (set.ui && COL3[page].title) {
         if (c3_show[page]) { c3_show[page] = 0; vcur[page] = 0; }
@@ -2711,9 +2917,9 @@ static void view_step(int32_t d)               /* the PRESET knob off HOME and P
 {
     uint32_t nv = (uint32_t)(PAGE_V0[page + 1u] - PAGE_V0[page]), c3 = set.ui && COL3[page].title, n = nv + c3, at;
     if (page == PG_FILT) {                      /* (the filter's views and SEQ's apart: 1.0.53) */
-        if (filt_zone()) { n = 2u + c3; at = c3 ? (c3_show[page] ? 0u : vcur[page] + 1u) : vcur[page]; at = (uint32_t)(((int32_t)at + d % (int32_t)n + (int32_t)n) % (int32_t)n);
+        if (filt_zone()) { n = FILT_N + c3; at = c3 ? (c3_show[page] ? 0u : vcur[page] + 1u) : vcur[page]; at = (uint32_t)(((int32_t)at + d % (int32_t)n + (int32_t)n) % (int32_t)n);
                            if (c3) { c3_show[page] = (uint8_t)(at == 0u); vcur[page] = (uint8_t)(at ? at - 1u : 0u); } else vcur[page] = (uint8_t)at; }
-        else { c3_show[page] = 0; vcur[page] = (uint8_t)(2u + ((uint32_t)(vcur[page] - 2u) + (uint32_t)(d & 1)) % 2u); }
+        else { int32_t q = (int32_t)SEQ_N; c3_show[page] = 0; vcur[page] = (uint8_t)(FILT_N + (uint32_t)((((int32_t)vcur[page] - (int32_t)FILT_N + d) % q + q) % q)); }
         vpop_ms = 0; g_force = 1;
         return;
     }
@@ -2775,7 +2981,7 @@ static void on_button(uint32_t b)
         if (win == 5u || (!win && !filt_zone())) {   /* (1.0.53: FILTER / COLOUR first, FILTER MOD, then the windows; MORPH A/B: round to the filter) */
             win = 0; page = PG_FILT; vcur[PG_FILT] = 0; c3_show[PG_FILT] = set.ui && COL3[PG_FILT].title ? 1u : 0u;
         } else if (!win && c3_show[PG_FILT]) { c3_show[PG_FILT] = 0; vcur[PG_FILT] = 0; }
-        else if (!win && !vcur[PG_FILT]) vcur[PG_FILT] = 1;
+        else if (!win && vcur[PG_FILT] + 1u < FILT_N) vcur[PG_FILT]++;
         else { static const uint8_t NEXTW[8] = {7, 2, 5, 7, 1, 0, 0, 4}; win = NEXTW[win % 8u]; }   /* PERFORM, MORPH X/Y, FX LIVE, MACROS, MORPH A/B (from the EQ view: PERFORM) */
         if (win == 4u || win == 5u || win == 7u) mx_open();
         win_cur = 0;
@@ -3273,7 +3479,7 @@ static void ui_input(void)
             else if (hb.b == BTN_FX) { win = win == 6u ? 0u : 6u; vpop_ms = 0; g_force = 1; hb.next = 0; }
             else if (hb.b == BTN_HOME) {        /* HOME held: COMBINE A + B, the two oscillators' main settings */
                 uint32_t j;
-                for (j = 0; j < sizeof VIEWS / sizeof VIEWS[0]; j++) if (str_eq(VIEWS[j].cat, "COMBINE A + B")) break;
+                for (j = 0; j < sizeof VIEWS / sizeof VIEWS[0]; j++) if (str_eq(VIEWS[j].cat, "BASS")) break;
                 for (page = 0; page + 1u < NPAGE && PAGE_V0[page + 1u] <= j; page++) {}
                 vcur[page] = (uint8_t)(j - PAGE_V0[page]); win = 0; vpop_ms = 0; g_force = 1; hb.next = 0;
             }
@@ -3366,6 +3572,7 @@ static void ui_input(void)
         }
         if ((ne & m) || ((now & m) && !(prev_keys & m))) {
             int32_t n = clampi(53 + (int32_t)k + 12 * OCT, 0, 127);
+            if (set.scale) n = clampi(scale_snap(n), 0, 127);   /* (GROOVE's SCALE: the keys keep to it, 1.2.0b) */
             if (prev_keys & m) key_up(key_note[k]);
             key_note[k] = (uint8_t)n;
             key_down((uint32_t)n, 100);
@@ -3489,7 +3696,11 @@ static void store_fixup(void)                   /* the store as read (or restore
     if (dk.magic != DK_MAGIC || dk.sum != dk_sum()) { dk_defaults(); perf_touch(); }
     if (pl.magic != PL_MAGIC || pl.sum != pl_sum() || pl.n > PL_MAX) { pl_defaults(); perf_touch(); }
     perf.ar_on = 0;                             /* (the ARP starts off: a key does what it says) */
-    if (perf.mc_magic != MC_MAGIC) mc_defaults();
+    {                                           /* (1.2.0b: the old first macros, untouched, become GROWL WOBBLE DIRT SPACE) */
+        static const uint8_t OD[16] = {D_CUT, D_RES, 0, 0, D_WOB, D_L1RATE, 0, 0, D_DRV, D_NOISE, D_DRAMT, 0, D_AP1, D_BP1, D_XMOD, 0};
+        static const int8_t OA[16] = {44, 18, 0, 0, 48, 16, 0, 0, 60, 20, 40, 0, 40, 40, 30, 0};
+        if (perf.mc_magic != MC_MAGIC || (!memcmp(perf.mc_dst, OD, 16) && !memcmp(perf.mc_amt, OA, 16))) mc_defaults();
+    }
     if (perf.cc_magic == 0x43u) {               /* (learnt before 0.9.55: the ids past the patch moved up 4, for OSC C's START, END, DIRECTION) */
         for (i = 0; i < 16u; i++) if (perf.cc_id[i] >= 136u && perf.cc_id[i] < I_NONE - 4u) perf.cc_id[i] = (uint8_t)(perf.cc_id[i] + 4u);
         perf.cc_magic = CC_MAGIC;
@@ -3509,16 +3720,17 @@ static void app_init(void)
     uint32_t i;
     int ok;
     {                                           /* (a save from before a field was added: the fields it has, the rest as is) */
-        const uint32_t LEN[17] = {sizeof set, (uint32_t)(((uint8_t *)set.fav3 - (uint8_t *)&set + 1u) & ~1u), (uint32_t)((uint8_t *)set.fav2 - (uint8_t *)&set), (uint32_t)((uint8_t *)set.l3 - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.sync - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.lang - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.pquant - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.asave - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.eng8 - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.qlfo - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.bri - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.norm - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.contrast - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.mstart - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.zoom - (uint8_t *)&set),
+        const uint32_t LEN[18] = {sizeof set, (uint32_t)(((uint8_t *)&set.scale - (uint8_t *)&set + 1u) & ~1u), (uint32_t)(((uint8_t *)set.fav3 - (uint8_t *)&set + 1u) & ~1u), (uint32_t)((uint8_t *)set.fav2 - (uint8_t *)&set), (uint32_t)((uint8_t *)set.l3 - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.sync - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.lang - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.pquant - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.asave - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.eng8 - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.qlfo - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.bri - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.norm - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.contrast - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.mstart - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.zoom - (uint8_t *)&set),
                                  (uint32_t)((uint8_t *)&set.ui - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.accel - (uint8_t *)&set)};
-        for (ok = 0, i = 0; i < 17u && !ok; i++) ok = !settings_load(&set, LEN[i]) && set.ver == 6u;
+        for (ok = 0, i = 0; i < 18u && !ok; i++) ok = !settings_load(&set, LEN[i]) && set.ver == 6u;
         theme_ask = !ok;                        /* (nothing saved yet: the very first start) */
         l3_push();
     }
     first_run = !ok || set.askv < 2u;           /* (the very first start, or a save from before 0.9.17: the question once) */
     pre_old = ok && set.askv < 13u;             /* (a save from before 1.1.03: the factory sounds' old order) */
+    font_old = ok && set.askv < 14u;            /* (a save from before 1.2.0b: nine fonts) */
     if (!ok) {
-        set.grid = set.browse = 0; set.font = 6; set.theme = 0; set.pal = 0;   /* (CLASSIC GLOW, FLUO GREEN, TEKTUR) */
+        set.grid = set.browse = 0; set.font = 2; set.theme = 0; set.pal = 0;   /* (CLASSIC GLOW, FLUO GREEN, TEKTUR) */
         memset(set.fav, 0, sizeof set.fav); memset(set.fav2, 0, sizeof set.fav2); memset(set.fav3, 0, sizeof set.fav3);
         set.ver = 6; set.midich = 0; set.clock = 0; set.oct = 0xFF; set.bpm10 = 1400; set.bank = 0; set.idx = 0; set.cores = 1; set.accel = 2; set.c3col = 0; set.ui = 0; set.ask = 0; set.zoom = 1; set.mstart = 1; set.mprog = 1; set.mclk = 0; set.contrast = 1; set.norm = 1; set.deep = 1; set.bri = 3; set.qlfo = 1; set.eng8 = 0; set.asave = 1; set.lang = 0; set.askv = 7;
     }
@@ -3533,7 +3745,7 @@ static void app_init(void)
         if (set.pal >= 11u && set.pal < 22u) set.pal = (uint8_t)(set.pal + 2u);
     }   /* (0.10: no more question at each start; SYSTEM > ASK brings it back) */
     if (set.askv == 4u) { set.askv = 5; set_dirty = 1; set_ms = fm1_ms; }   /* (0.9.56's OUTFIT step: folded into the next) */
-    if (set.askv == 5u) { set.theme = 0; set.pal = 0; set.font = 6; set.zoom = 1; set.accel = 2; set.askv = 7; set_dirty = 1; set_ms = fm1_ms; }   /* (1.0.3: CLASSIC GLOW, FLUO GREEN, TEKTUR, LOUPE, once) */
+    if (set.askv == 5u) { set.theme = 0; set.pal = 0; set.font = 2; set.zoom = 1; set.accel = 2; set.askv = 7; set_dirty = 1; set_ms = fm1_ms; }   /* (1.0.3: CLASSIC GLOW, FLUO GREEN, TEKTUR, LOUPE, once) */
     if (set.askv == 6u) { set.accel = 2; set.askv = 7; set_dirty = 1; set_ms = fm1_ms; }   /* (1.0.23: KNOB ACCEL FAST, once; new installs too) */
     set.norm = set.norm ? 1u : 0u; set.deep = set.deep < 3u ? set.deep : 1u;
     ks_norm = set.norm; ks_deep = set.deep;
@@ -3617,6 +3829,11 @@ static void app_init(void)
             perf_touch();
         }
         set.askv = 13; set_dirty = 1; set_ms = fm1_ms;
+    }
+    if (set.askv == 13u) {                      /* (1.2.0b: three fonts left, SANS OUTFIT TEKTUR: the font chosen goes to the nearest, once) */
+        static const uint8_t FMAP[9] = {0, 0, 0, 0, 1, 2, 2, 2, 1};
+        if (font_old) { set.font = FMAP[set.font % 9u]; font_set(set.font, set.zoom); }
+        set.askv = 14; set_dirty = 1; set_ms = fm1_ms;
     }
     load_preset(set.bank, set.idx);
     if (set.asave && work.magic == WK_MAGIC && work.sum == wk_sum() && work.bank == set.bank && work.idx == set.idx) {   /* AUTOSAVE: the sound as it was left */

@@ -389,14 +389,14 @@ def main():
     a = ap.parse_args()
     name = "k-wasub.fwsc"
     if a.release:                   # one digit each: the identity has room for two (X.Y; a .Z only in the text)
-        m = re.fullmatch(r"(\d)\.(\d)(\.\d+)?(-[A-Za-z0-9]+)?", a.release)
+        m = re.fullmatch(r"(\d)\.(\d)(\.\d+)?([a-z])?(-[A-Za-z0-9]+)?", a.release)   # (1.2.0b: a letter after it, shown too)
         if not m:
-            raise SystemExit(f"--release {a.release}: use X.Y, X.Y.Z or X.Y-suffix, one digit each")
+            raise SystemExit(f"--release {a.release}: use X.Y, X.Y.Z, X.Y.Zb or X.Y-suffix, one digit each")
         if int(m[1]) > 1:
             raise SystemExit(f"--release {a.release}: K-WASUB's identities cover majors 0 (FM-1_97Y) and 1 (FM-1_1990); "
                              "a major 2 needs a new scheme first (tools/build.py, PRODUCT)")
         PRODUCT = "FM-1_1990" if int(m[1]) == 1 else f"FM-1_9{7 + int(m[1])}{m[2]}"   # (1.Y: one identity, FM-1_1990)
-        VERSION = m[1] + "." + m[2] + (m[3] or "")
+        VERSION = m[1] + "." + m[2] + (m[3] or "") + (m[4] or "")
         name = f"k-wasub-{a.release}.fwsc"
     fm1pkg_make.SDK = a.sdk
     for rel, sha in SDK_SHA256.items():          # fail early without the SDK, or with another one

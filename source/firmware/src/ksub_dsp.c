@@ -124,7 +124,8 @@ static volatile uint8_t mc_val[4];              /* the four macros now, 0..127 (
 /* FX LIVE (not stored, all off at the start): DJ filter (- low pass, + high pass) and its resonance, PUMP (the
  * sidechain dip on the tempo) and its rate, STUTTER (the last slice played again and again), TAPE (slower, to a stop) */
 static volatile int8_t lfx_flt;
-static volatile uint8_t lfx_fres = 40, lfx_pump, lfx_prate, lfx_stut, lfx_tape, lfx_frz;   /* lfx_frz: FREEZE (1.0.48) */
+static volatile uint8_t lfx_fres = 40, lfx_pump, lfx_prate, lfx_stut, lfx_tape, lfx_frz, lfx_rev, lfx_dive;   /* lfx_frz: FREEZE (1.0.48); REVERSE, PITCH DIVE (1.2.0b) */
+static int32_t dive_p;                          /* PITCH DIVE now, 1/256 semitone (down) */
 static volatile uint32_t ks_bpm10 = 1400;       /* tempo x 10 */
 static volatile int32_t ks_wheel, ks_press, ks_bend;   /* Q15 */
 static volatile uint32_t ks_beats;              /* Q24 beats, kept modulo 48 beats (every division fits) */
@@ -926,7 +927,7 @@ static void voice_block(voice_t *v, int32_t *acc)
         v->drift_b = clip(v->drift_b + ((int32_t)(rnd() >> 24) - 128) - (v->drift_b >> 6), 4000);
     }
     bend = (int32_t)(((int64_t)ks_bend * P[V_BEND]) >> 7);
-    p = v->pitch + m[D_PITCH] + bend;
+    p = v->pitch + m[D_PITCH] + bend - dive_p;
 
     qa.eng = (uint8_t)P[A_ENG];
     qa.p1 = q8to15(pv(LKB(PB_SHAPE, P[A_P1]), m[D_AP1]));
@@ -1673,7 +1674,8 @@ static int16_t dl_buf[2][DL_N] POOL;
 static int16_t lv_buf[LV_N] POOL;
 static struct {
     uint32_t w, st_start, st_len, st_pos, tp_lag, tp_fade;
-    uint8_t st_on, st_div, tp_on;
+    uint32_t rv_pos, rv_n;                      /* REVERSE: where it reads, how far back it went */
+    uint8_t st_on, st_div, tp_on, rv_on;
     int32_t dj_l[2], dj_b[2];
 } lv;
 static int16_t ch_buf[CH_N];
@@ -1780,6 +1782,11 @@ static void fx_render(const int32_t *in, int32_t *out, uint32_t n)
         if (lv.st_on && (!lfx_stut || lfx_stut != lv.st_div)) lv.st_on = 0;   /* (another length: from the same end) */
         if (lfx_stut && !lv.st_on) { lv.st_on = 1; lv.st_div = lfx_stut; lv.st_len = len < 64u ? 64u : len; lv.st_start = lv.w - lv.st_len; lv.st_pos = 0; }
     }
+    if (lfx_dive) dive_p += (6144 - dive_p) / 24 + 24;   /* PITCH DIVE: down two octaves, fast then slower; let go: back up */
+    else dive_p -= dive_p > 1536 ? dive_p / 3 : dive_p;
+    if (dive_p > 6144) dive_p = 6144;
+    if (lfx_rev && !lv.rv_on) { lv.rv_on = 1; lv.rv_pos = lv.w; lv.rv_n = 0; }
+    if (!lfx_rev) lv.rv_on = 0;
     if (lfx_flt || lfx_pump) {                  /* the DJ filter's coefficients and the PUMP's place on the beat */
         int32_t v = lfx_flt < 0 ? -lfx_flt : lfx_flt;
         dj_f = lfx_flt < 0 ? (64 - v) * (64 - v) * 6 + 360 : v * v * 6 + 120;
@@ -1803,6 +1810,11 @@ static void fx_render(const int32_t *in, int32_t *out, uint32_t n)
             int32_t y = lv_buf[(lv.st_start + q) & (LV_N - 1u)];
             x = g < 64u ? (y * (int32_t)g) >> 6 : y;
             if (++lv.st_pos >= lv.st_len) lv.st_pos = 0;
+        } else if (lv.rv_on) {                  /* REVERSE: the last 0.7 s backwards (its ends faded), then again; nothing written */
+            uint32_t q = lv.rv_n, e = LV_N - 1024u - q, g = q < e ? q : e;
+            int32_t y = lv_buf[(lv.rv_pos - q) & (LV_N - 1u)];
+            x = g < 256u ? (y * (int32_t)g) >> 8 : y;
+            if (++lv.rv_n >= LV_N - 1024u) lv.rv_n = 0;
         } else {
             lv_buf[lv.w & (LV_N - 1u)] = (int16_t)sat15(x);
             lv.w++;

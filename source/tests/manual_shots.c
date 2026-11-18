@@ -33,7 +33,9 @@ int main(void)
     look(6, 0);                                 /* RIBBON CLASSIC, EMBER (orange) */
     goview(0); keys(1u << 12 | 1u << 14); st(60); shot("p-home"); keys(0); st(150);
     goview(vnamed("OSCILLATOR A")); shot("rbc-osc");
-    goview(vnamed("FILTER ENVELOPE")); shot("rbc-env");
+    goview(vnamed("AMP ENVELOPE")); shot("rbc-env");
+    goview(vnamed("BASS")); shot("rbc-bass");
+    goview(V_GROOVE); item_set(G_GR_SCALE, 1); item_set(G_GR_ROOT, 9); item_set(G_GR_STYLE, 2); play(1); st(500); shot("d-groove"); play(0); st(100);
     goview(V_SEQ); item_set(G_SQ_PRESET, 1); play(1); st(500); shot("d-seq"); play(0); st(100);
     goview(V_DRUM); dk_load_preset(dkp("TECHNO")); dk_psel = (uint8_t)dkp("TECHNO"); play(1); st(500); shot("d-drums");
     play(0); st(60); keys(1u << PK_WHITE[4]); { int i; for (i = 0; i < 6; i++) { ksub_turn(3, 2); st(4); } } shot("d-lock"); keys(0); st(60);
@@ -48,7 +50,8 @@ int main(void)
     goview(PAGE_V0[PG_PRE]); shot("x-presets");
 
     look(5, 0); goview(vnamed("OSCILLATOR A")); st(200); shot("rb-osc");   /* RIBBON */
-    look(0, 0); goview(vnamed("LFO 1 \xB7 WOBBLE")); shot("g-lfo");        /* CLASSIC GLOW */
+    look(0, 0); goview(vnamed("LFO 1 \xB7 WOBBLE")); item_set(G_WOB_RCP, 2); shot("g-lfo"); look(6, 0);
+    goview(0); win = 2; st(10); shot("w-macros"); win = 0; st(30); look(0, 0);        /* CLASSIC GLOW */
     look(4, 0); goview(PAGE_V0[PG_PRE]); shot("k-presets");                /* TECH */
     {                                           /* the themes: the same screen (OSC A) in each */
         static const struct { uint8_t t, p; const char *n; } TH[] = {

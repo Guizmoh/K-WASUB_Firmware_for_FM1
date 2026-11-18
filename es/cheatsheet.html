@@ -122,7 +122,7 @@ footer a{color:var(--cyan);text-decoration:none}footer a:hover{text-decoration:u
   <div class="row"><div><kbd>PLAY</kbd><span class="hold">HOLD</span></div><div class="d">HOLD: las notas siguen</div></div>
   <div class="row"><div><kbd>SEL</kbd><span class="hold">HOLD</span></div><div class="d">COMPARAR con el sonido guardado</div></div>
   <div class="row"><div><kbd>FX</kbd><span class="hold">HOLD</span></div><div class="d">FX PADS: las teclas tocan efectos</div></div>
-  <div class="row"><div><kbd>HOME</kbd><span class="hold">HOLD</span></div><div class="d">COMBINE A + B</div></div>
+  <div class="row"><div><kbd>HOME</kbd><span class="hold">HOLD</span></div><div class="d">BASS</div></div>
   <div class="row"><div><kbd>GLO</kbd><span class="hold">HOLD</span></div><div class="d">modo CLASSIC ⇄ SHIFT</div></div>
   <div class="row"><div><kbd>EDIT</kbd> <kbd>SEQ</kbd><span class="hold">HOLD</span></div><div class="d">RANDOM: agita la vista</div></div>
 </section>
@@ -169,7 +169,7 @@ footer a{color:var(--cyan);text-decoration:none}footer a:hover{text-decoration:u
   <h2>FX PADS <small>FX mantenido</small></h2>
   <div class="row"><div>blancas 1–8</div><div class="d">velocidad del wobble</div></div>
   <div class="row"><div>blancas 9–16</div><div class="d">profundidad, forma del wobble</div></div>
-  <div class="row"><div>negras 1–4</div><div class="d">stutter <em>(mantenido)</em></div></div>
+  <div class="row"><div>negras 1–4</div><div class="d">REVERSE · stutter 1/8 · 1/16 · PITCH DIVE <em>(mantenido)</em></div></div>
   <div class="row"><div>negras 5–11</div><div class="d">tape stop · DJ graves · DJ agudos · pump · saturación · FREEZE · crush</div></div>
   <div class="row"><div><kbd class="k">K1</kbd>–<kbd class="k">K4</kbd></div><div class="d">cutoff · reso · tipo de filtro · morph A/B</div></div>
   <div class="row"><div><kbd class="k">ALGO</kbd></div><div class="d">QUANTIZE: compás … 1/64</div></div>
@@ -188,18 +188,18 @@ footer a{color:var(--cyan);text-decoration:none}footer a:hover{text-decoration:u
 <section class="card menus">
   <h2>Los menús <small>pulsa otra vez el botón para la vista siguiente</small></h2>
   <div class="mgrid">
-    <div class="m"><h3><kbd>HOME</kbd> tocar</h3><ol><li>CURRENT PATCH</li><li>LIVE MIX</li><li>QUICK</li></ol></div>
-    <div class="m"><h3><kbd>EDIT</kbd> el bajo</h3><ol><li>COMBINE A + B</li><li>OSC A</li><li>OSC B</li><li>SUB + NOISE</li><li>OSC C · SAMPLE</li></ol></div>
-    <div class="m"><h3><kbd>ENV</kbd> envolventes</h3><ol><li>FILTER ENV</li><li>AMP ENV</li><li>MOD ENV</li></ol></div>
-    <div class="m"><h3><kbd>SEL</kbd> filtro y directo</h3><ol><li>FILTER / COLOUR</li><li>FILTER MOD</li><li>PERFORM</li><li>MORPH X/Y</li><li>FX LIVE</li><li>MACROS</li><li>MORPH A/B</li></ol></div>
-    <div class="m"><h3><kbd>SEQ</kbd> secuenciadores</h3><ol><li>SEQ BASS</li><li>PIANO ROLL</li><li>DRUMS</li></ol></div>
-    <div class="m"><h3><kbd>LFO</kbd> movimiento</h3><ol><li>LFO 1 · WOBBLE</li><li>LFO 2</li><li>LFO 3 · GLOBAL</li><li>STEP FX</li><li>MOD MATRIX</li></ol></div>
-    <div class="m"><h3><kbd>FX</kbd> efectos</h3><ol><li>SATURATION</li><li>REVERB</li><li>DELAY</li><li>DYNAMICS</li><li>EQ</li><li>MOD FX</li><li>CRUSH</li><li>MASTER</li></ol></div>
+    <div class="m"><h3><kbd>HOME</kbd> tocar</h3><ol><li>CURRENT PATCH</li><li>LIVE MIX</li></ol></div>
+    <div class="m"><h3><kbd>EDIT</kbd> el bajo</h3><ol><li>BASS <em>(A + B · MUTATE · BOUNCE)</em></li><li>OSC A</li><li>OSC B</li><li>SUB + NOISE</li><li>OSC C · SAMPLE</li></ol></div>
+    <div class="m"><h3><kbd>ENV</kbd> envolventes</h3><ol><li>AMP ENV</li><li>PITCH / MOD ENV</li></ol></div>
+    <div class="m"><h3><kbd>SEL</kbd> filtro y directo</h3><ol><li>FILTER <em>(+ ENV)</em></li><li>PERFORM</li><li>MORPH X/Y</li><li>FX LIVE</li><li>MACROS</li><li>MORPH A/B</li></ol></div>
+    <div class="m"><h3><kbd>SEQ</kbd> secuenciadores</h3><ol><li>GROOVE</li><li>SEQ BASS</li><li>PIANO ROLL</li><li>DRUMS</li></ol></div>
+    <div class="m"><h3><kbd>LFO</kbd> movimiento</h3><ol><li>LFO 1 · WOBBLE <em>(RECIPES)</em></li><li>LFO 2</li><li>LFO 3 · GLOBAL</li><li>STEP FX</li><li>MOD MATRIX</li></ol></div>
+    <div class="m"><h3><kbd>FX</kbd> efectos</h3><ol><li>DIRT</li><li>SPACE</li><li>DYNAMICS</li><li>EQ</li><li>MASTER</li></ol></div>
     <div class="m"><h3><kbd>SAVE</kbd> sonidos</h3><ol><li>SAVE</li><li>SELECT PATCH A</li><li>SELECT PATCH B</li></ol></div>
     <div class="m"><h3><kbd>ARP</kbd> arpegio</h3><ol><li>ARPEGGIATOR</li></ol></div>
-    <div class="m"><h3><kbd>GLO</kbd> sistema</h3><ol><li>GLOBAL SETUP</li><li>DISPLAY</li><li>ADVANCED</li><li>MIDI</li></ol></div>
+    <div class="m"><h3><kbd>GLO</kbd> sistema</h3><ol><li>GLOBAL SETUP</li><li>ADVANCED</li><li>MIDI</li></ol></div>
   </div>
-  <p class="note">La 1.ª fila de cada efecto es su ON / OFF · DYNAMICS = compresor + OTT · MOD FX = chorus + phaser · DEEP BASS y SUB HARMONICS: GLO › GLOBAL SETUP.</p>
+  <p class="note">La 1.ª fila de cada efecto es su ON / OFF · DYNAMICS = compresor + OTT · DIRT = saturación + crush · SPACE = reverb, delay, chorus, phaser · MACROS: GROWL · WOBBLE · DIRT · SPACE · DEEP BASS y SUB HARMONICS: GLO › GLOBAL SETUP.</p>
 </section>
 
 </div>
