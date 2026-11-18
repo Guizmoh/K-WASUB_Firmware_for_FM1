@@ -46,6 +46,7 @@ int main(void)
     set.ui = 1; goview(vnamed("OSCILLATOR A")); c3_show[PG_BASS] = 1; shot("s-osc"); set.ui = 0; c3_show[PG_BASS] = 0;
     goview(PAGE_V0[PG_FILT]); shot("x-sel-filter");
     goview(V_SEQ); win = 8; shot("x-piano-roll"); win = 0;
+    goview(V_ARP); item_set(G_AR_ON, 1); item_set(G_AR_OCT, 1); keys(1u << 5 | 1u << 9 | 1u << 12); st(60); shot("x-arp"); keys(0); item_set(G_AR_ON, 0); st(60);
     save_open(); shot("x-save");
     goview(PAGE_V0[PG_PRE]); shot("x-presets");
 

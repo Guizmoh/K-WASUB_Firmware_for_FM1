@@ -586,7 +586,8 @@ static int32_t env_run(env_t *e, uint32_t a, uint32_t d, int32_t s, uint32_t r, 
     switch (e->st) {
     case 1: {
         uint32_t st = KS_ENV_ATK[a];
-        e->lv += (int32_t)(st < slow ? slow : st);
+        if (slow && st > slow) st = slow;       /* (1.2.1b: at most that fast; it was at least, so every ATTACK past ~2 ms played as 2 ms) */
+        e->lv += (int32_t)st;
         if (e->lv >= (1 << 30)) { e->lv = 1 << 30; e->st = 2; }
         break;
     }
@@ -1748,7 +1749,8 @@ static void fx_render(const int32_t *in, int32_t *out, uint32_t n)
     int32_t dj_f = 0, dj_q = 0, dj_mix = 0, dj_df = 0, dj_dm = 0;
     static const int32_t MB_A[7] = {0, 267, 356, 445, 534, 667, 889};   /* one pole at 60 .. 200 Hz, Q15 */
     int32_t mba = MB_A[(uint32_t)P[MB_MONO] % 7u], ot_amt = GP(D_OTAMT) * 258, ot_sum[3] = {0, 0, 0}, ot_gl, ot_gm, ot_gh;
-    int32_t shelf = ks_deep == 2u ? 300 : ks_deep == 1u || ks_deep == 4u ? 150 : 0, harm = ks_deep >= 3u, ng = fx.ng ? fx.ng : 4096, lg = fx.lg ? fx.lg : 32768, nsum = 0;
+    int32_t shelf = P[P_STYLE] == ST_SYNTH ? 0 : ks_deep == 2u ? 300 : ks_deep == 1u || ks_deep == 4u ? 150 : 0,   /* (DEEP BASS: not on a SYNTH) */
+            harm = ks_deep >= 3u && P[P_STYLE] != ST_SYNTH, ng = fx.ng ? fx.ng : 4096, lg = fx.lg ? fx.lg : 32768, nsum = 0;
     if (!fx.ot_g[0]) fx.ot_g[0] = fx.ot_g[1] = fx.ot_g[2] = 4096;
     ot_gl = (int32_t)(((int64_t)fx.ot_g[0] * (4096 + GP(D_OTLOW) * 32)) >> 12);   /* (LOW / HIGH BAND: +-0.5) */
     ot_gm = fx.ot_g[1];

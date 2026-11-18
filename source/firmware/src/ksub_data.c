@@ -131,8 +131,9 @@ static const char *const L_MONO[7] = {"OFF", "60 Hz", "80 Hz", "100 Hz", "120 Hz
 static const char *const L_SMM[3] = {"AUTO", "LOOP", "ONCE"};
 static const char *const L_VM[] = {"MONO", "LEGATO", "POLY"};
 static const char *const L_STYLE[] = {"DNB", "DUB", "DUBSTEP", "TECHNO", "JUNGLE", "UK GARAGE", "TRAP", "HOUSE", "NEUROFUNK",
-                                      "DUB TECHNO", "BREAKS", "MINIMAL"};   /* the music a preset is for */
-#define NSTYLE 12
+                                      "DUB TECHNO", "BREAKS", "MINIMAL", "SYNTH"};   /* the music a preset is for */
+#define NSTYLE 13
+#define ST_SYNTH 12                             /* (1.2.1b: a sound that is not a bass: DEEP BASS left out, its own tag) */
 
 /* the engines' three timbre controls: names (long, short) and how they read */
 static const char *const ENG_P[NENG][3] = {
@@ -484,6 +485,59 @@ static const preset_t FACTORY[] = {
     PR("CS DRIFT PAD", MS_VOL, 100, P_STYLE, 9, A_ENG, E_CS, A_P1, 40, A_P2, 100, A_P3, 110, A_LVL, 100, S_LVL, 40, F_CUT, 60, F_RES, 20,
        V_MODE, VM_POLY, AE_A, 60, AE_S, 100, AE_R, 70, RV_ON, 1, RV_SIZE, 110, RV_MIX, 50, DL_ON, 1, DL_MIX, 30, CH_ON, 1),
     PR("INIT", P_STYLE, 0),
+    /* (1.2.1b) SYNTHS, not basses: the style SYNTH (DEEP BASS left out), up an octave or two, poly mostly; appended (the
+     * favourites and MORPH codes of the user slots move on, once) */
+#define SY P_STYLE, ST_SYNTH, S_LVL, 0, MB_MONO, 2
+    PR("PLUCK BRIGHT", SY, MS_VOL, 112, V_MODE, VM_POLY, A_OCT, 1, B_ENG, E_ANALOG, B_P1, 85, B_LVL, 70, B_OCT, 1, B_FINE, 8, F_TYPE, FT_LP12, F_CUT, 42, F_RES, 30,
+       F_ENV, 55, FE_D, 72, FE_S, 0, AE_D, 84, AE_S, 0, AE_R, 72, DL_ON, 1, DL_TIME, 9, DL_MIX, 22, RV_ON, 1, RV_MIX, 25),
+    PR("PLUCK FM", SY, MS_VOL, 105, V_MODE, VM_POLY, A_OCT, 1, A_ENG, E_FM, A_P1, 60, A_P2, 24, A_P3, 10, ME_AMT, -40, ME_DST, D_AP1, ME_D, 70,
+       F_CUT, 110, AE_D, 85, AE_S, 0, AE_R, 72, RV_ON, 1, RV_TYPE, 2, RV_MIX, 30, CH_ON, 1, CH_MIX, 35),
+    PR("PLUCK KALIMBA", SY, MS_VOL, 105, V_MODE, VM_POLY, A_OCT, 2, A_ENG, E_FM, A_P1, 45, A_P2, 100, A_P3, 0, ME_AMT, -50, ME_DST, D_AP1, ME_D, 62,
+       F_CUT, 120, AE_D, 82, AE_S, 0, AE_R, 75, SM_SEL, 18, SM_LVL, 40, RV_ON, 1, RV_SIZE, 60, RV_MIX, 30),
+    PR("PLUCK HOUSE", SY, MS_VOL, 105, V_MODE, VM_POLY, A_OCT, 1, A_P1, 127, A_P2, 30, F_TYPE, FT_LP24, F_CUT, 48, F_RES, 55, F_ENV, 50, FE_D, 68, FE_S, 0,
+       AE_D, 76, AE_S, 0, AE_R, 65, CH_ON, 1, CH_MIX, 45, RV_ON, 1, RV_MIX, 20),
+    PR("DUB CHORD", SY, MS_VOL, 110, V_MODE, VM_POLY, A_OCT, 1, B_ENG, E_ANALOG, B_P1, 85, B_LVL, 90, B_OCT, 1, B_SEMI, 7, F_TYPE, FT_LP12, F_CUT, 58, F_RES, 40,
+       F_ENV, 45, FE_D, 72, FE_S, 0, AE_D, 80, AE_S, 0, AE_R, 75, DL_ON, 1, DL_TYPE, 3, DL_TIME, 7, DL_FB, 95, DL_TONE, 30, DL_MIX, 55,
+       RV_ON, 1, RV_SIZE, 110, RV_MIX, 40),
+    PR("DUB SKANK", SY, MS_VOL, 112, V_MODE, VM_POLY, A_OCT, 1, A_P1, 120, A_P2, 50, B_ENG, E_ANALOG, B_P1, 120, B_LVL, 80, B_OCT, 1, B_SEMI, 3, F_TYPE, FT_BP,
+       F_CUT, 72, F_RES, 35, AE_D, 68, AE_S, 0, AE_R, 60, DL_ON, 1, DL_TYPE, 1, DL_TIME, 7, DL_FB, 100, DL_MIX, 55, RV_ON, 1, RV_TYPE, 3, RV_MIX, 30),
+    PR("DUB ECHO LEAD", SY, A_OCT, 2, A_P1, 30, V_GLIDE, 25, F_CUT, 80, F_RES, 20, AE_S, 110, AE_R, 70, L2_DEP, 4, L2_DST, D_PITCH, L2_RATE, 60,
+       DL_ON, 1, DL_TYPE, 3, DL_TIME, 7, DL_FB, 100, DL_TONE, 35, DL_MIX, 50, RV_ON, 1, RV_SIZE, 100, RV_MIX, 35),
+    PR("DUB ECHO PAD", SY, V_MODE, VM_POLY, A_OCT, 1, A_ENG, E_CS, A_P1, 40, A_P2, 90, A_P3, 40, F_CUT, 55, F_RES, 25, AE_A, 82, AE_S, 110, AE_R, 92,
+       DL_ON, 1, DL_TYPE, 3, DL_TIME, 6, DL_FB, 90, DL_TONE, 25, DL_MIX, 45, RV_ON, 1, RV_SIZE, 120, RV_MIX, 50),
+    PR("GUITAR PLUCK", SY, V_MODE, VM_POLY, A_OCT, 1, A_P1, 80, B_ENG, E_ANALOG, B_P1, 90, B_LVL, 60, B_OCT, 1, B_FINE, 5, F_TYPE, FT_LP12, F_CUT, 45,
+       F_RES, 25, F_ENV, 45, FE_D, 78, FE_S, 10, F_KEY, 100, AE_D, 92, AE_S, 15, AE_R, 72, SM_SEL, 17, SM_LVL, 70, CH_ON, 1, CH_MIX, 30,
+       RV_ON, 1, RV_TYPE, 0, RV_MIX, 22),
+    PR("GUITAR CLEAN", SY, V_MODE, VM_POLY, A_OCT, 1, A_ENG, E_PHASE, A_P1, 50, A_P2, 30, A_P3, 40, F_CUT, 70, F_RES, 10, F_ENV, 30, FE_D, 78, FE_S, 20,
+       AE_D, 92, AE_S, 25, AE_R, 72, SM_SEL, 17, SM_LVL, 60, CH_ON, 1, CH_MIX, 45, RV_ON, 1, RV_TYPE, 3, RV_MIX, 30),
+    PR("GUITAR DRIVE", SY, V_MODE, VM_POLY, A_OCT, 1, A_P1, 95, B_ENG, E_ANALOG, B_P1, 110, B_LVL, 80, B_OCT, 1, B_SEMI, 7, F_TYPE, FT_LP12, F_CUT, 68,
+       F_RES, 20, AE_D, 95, AE_S, 90, AE_R, 65, SM_SEL, 17, SM_LVL, 50, DR_ON, 1, DR_TYPE, 2, DR_AMT, 95, DR_MIX, 127, RV_ON, 1, RV_MIX, 18),
+    PR("E-PIANO", SY, MS_VOL, 127, V_MODE, VM_POLY, A_OCT, 1, A_ENG, E_FM, A_P1, 45, A_P2, 110, A_P3, 0, ME_AMT, -35, ME_DST, D_AP1, ME_D, 80, F_CUT, 105,
+       AE_D, 98, AE_S, 20, AE_R, 75, SM_SEL, 20, SM_LVL, 35, CH_ON, 1, CH_MIX, 50, RV_ON, 1, RV_MIX, 20),
+    PR("PIANO", SY, MS_VOL, 127, V_MODE, VM_POLY, A_OCT, 1, A_ENG, E_ADD, A_P1, 40, A_P2, 110, A_P3, 30, F_CUT, 95, F_ENV, 25, FE_D, 85, FE_S, 30,
+       AE_D, 100, AE_S, 0, AE_R, 75, SM_SEL, 20, SM_LVL, 55, RV_ON, 1, RV_TYPE, 1, RV_SIZE, 90, RV_MIX, 25),
+    PR("ORGAN", SY, MS_VOL, 127, V_MODE, VM_POLY, A_OCT, 1, A_ENG, E_ADD, A_P1, 100, A_P2, 127, A_P3, 0, A_P4, 48, F_CUT, 110, AE_D, 0, AE_S, 127, AE_R, 55,
+       SM_SEL, 23, SM_LVL, 30, PH_ON, 1, PH_RATE, 50, PH_MIX, 45, RV_ON, 1, RV_MIX, 18),
+    PR("HOUSE KEYS", SY, MS_VOL, 127, V_MODE, VM_POLY, A_OCT, 1, A_ENG, E_ADD, A_P1, 80, A_P2, 127, A_P4, 112, F_CUT, 90, F_ENV, 20, FE_D, 72, FE_S, 30,
+       AE_D, 85, AE_S, 30, AE_R, 68, CH_ON, 1, CH_MIX, 40, RV_ON, 1, RV_MIX, 25, CP_ON, 1, CP_AMT, 40),
+    PR("DNB LEAD", SY, A_OCT, 2, A_ENG, E_CS, A_P1, 30, A_P2, 100, A_P3, 60, V_GLIDE, 20, F_CUT, 85, F_RES, 25, AE_S, 115, AE_R, 70,
+       DL_ON, 1, DL_TIME, 7, DL_FB, 70, DL_MIX, 30, RV_ON, 1, RV_SIZE, 100, RV_MIX, 30),
+    PR("LIQUID PAD", SY, MS_VOL, 100, V_MODE, VM_POLY, A_OCT, 1, A_ENG, E_CS, A_P1, 20, A_P2, 110, A_P3, 100, F_CUT, 60, F_RES, 15, AE_A, 85, AE_S, 115, AE_R, 95,
+       CH_ON, 1, CH_MIX, 50, RV_ON, 1, RV_SIZE, 127, RV_DAMP, 90, RV_MIX, 55),
+    PR("DNB STAB", SY, MS_VOL, 112, V_MODE, VM_POLY, A_OCT, 1, A_ENG, E_WAVE, A_P1, 60, A_P2, 16, A_P3, 20, B_ENG, E_ANALOG, B_P1, 85, B_LVL, 70, B_OCT, 1, B_SEMI, 5,
+       F_CUT, 70, F_RES, 30, F_ENV, 40, FE_D, 70, FE_S, 0, AE_D, 80, AE_S, 0, AE_R, 75, RV_ON, 1, RV_TYPE, 2, RV_MIX, 35, DL_ON, 1, DL_TIME, 8, DL_MIX, 20),
+    PR("ATMOS BELL", SY, V_MODE, VM_POLY, A_OCT, 1, A_ENG, E_FM, A_P1, 55, A_P2, 120, A_P3, 0, F_CUT, 115, AE_D, 102, AE_S, 0, AE_R, 98,
+       CH_ON, 1, CH_MIX, 40, DL_ON, 1, DL_TIME, 7, DL_FB, 80, DL_MIX, 35, RV_ON, 1, RV_SIZE, 127, RV_MIX, 50),
+    PR("SUPER SAW", SY, V_MODE, VM_POLY, A_OCT, 1, A_ENG, E_CS, A_P1, 10, A_P2, 120, A_P3, 80, B_ENG, E_CS, B_P1, 10, B_P2, 100, B_LVL, 90, B_OCT, 1,
+       B_FINE, -12, F_CUT, 95, F_RES, 10, AE_S, 115, AE_R, 75, CH_ON, 1, CH_MIX, 50, RV_ON, 1, RV_MIX, 30),
+    PR("SYNC LEAD", SY, MS_VOL, 127, A_LVL, 127, A_OCT, 2, A_ENG, E_SYNC, A_P1, 60, A_P2, 85, ME_AMT, 30, ME_DST, D_AP1, ME_D, 80, V_GLIDE, 15, F_CUT, 95, AE_S, 115, AE_R, 65,
+       DL_ON, 1, DL_TIME, 9, DL_MIX, 25, RV_ON, 1, RV_MIX, 20),
+    PR("WARM PAD", SY, V_MODE, VM_POLY, A_OCT, 1, A_P1, 50, B_ENG, E_ANALOG, B_P1, 75, B_LVL, 90, B_OCT, 2, B_FINE, 6, F_CUT, 64, F_RES, 15,
+       AE_A, 86, AE_S, 120, AE_R, 95, L2_DEP, 4, L2_DST, D_CUT, L2_RATE, 30, CH_ON, 1, CH_MIX, 50, RV_ON, 1, RV_SIZE, 120, RV_MIX, 45),
+    PR("GLASS KEYS", SY, V_MODE, VM_POLY, A_OCT, 2, A_ENG, E_FM, A_P1, 35, A_P2, 90, A_P3, 0, ME_AMT, -30, ME_DST, D_AP1, ME_D, 72, F_CUT, 120,
+       AE_D, 95, AE_S, 10, AE_R, 85, SM_SEL, 18, SM_LVL, 30, RV_ON, 1, RV_SIZE, 100, RV_MIX, 35),
+    PR("INIT SYNTH", SY, V_MODE, VM_POLY, A_OCT, 1, F_CUT, 90, AE_R, 65),
+#undef SY
 };
 #define NFACTORY (sizeof FACTORY / sizeof FACTORY[0])
 

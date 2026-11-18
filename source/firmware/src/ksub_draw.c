@@ -8,10 +8,8 @@
  * Every visual is drawn with integers only (no FPU), from the patch and what the voices say (ksub_dsp.c). */
 enum { TH_GLOW, TH_STUDIO, TH_PURE, TH_RACK, TH_TECH, TH_RIBBON, TH_RIBBONC, TH_CLASSIC, NTHEMES };   /* (CLASSIC: GLOW flat, 1.0.19) */
 enum { VZ_NONE, VZ_SCOPE, VZ_OSCA, VZ_OSCB, VZ_SUB, VZ_MIX, VZ_ENV0, VZ_ENV1, VZ_ENV2, VZ_FILT, VZ_LFO1, VZ_LFO2, VZ_STEP,
-       VZ_SEQ, VZ_SMP, VZ_DRIVE, VZ_CRUSH, VZ_CHORUS, VZ_DELAY, VZ_REVERB, VZ_MASTER, VZ_COMP, VZ_PHASER, VZ_OTT, VZ_CPU, VZ_DRUM };
-static const uint8_t VZ_OF[] = {VZ_SCOPE, VZ_SCOPE, VZ_MIX, VZ_OSCA, VZ_OSCB, VZ_SUB, VZ_SMP, VZ_ENV0, VZ_ENV2, VZ_FILT, VZ_DRUM,
-                                VZ_SEQ, VZ_DRUM, VZ_LFO1, VZ_LFO2, VZ_NONE, VZ_STEP, VZ_NONE, VZ_DRIVE, VZ_DELAY, VZ_COMP, VZ_NONE, VZ_MASTER,
-                                VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_NONE, VZ_CPU, VZ_NONE};   /* (1.2.0b's order) */   /* (1.0.54's order) */
+       VZ_SEQ, VZ_SMP, VZ_DRIVE, VZ_CRUSH, VZ_CHORUS, VZ_DELAY, VZ_REVERB, VZ_MASTER, VZ_COMP, VZ_PHASER, VZ_OTT, VZ_CPU, VZ_DRUM, VZ_ARP };
+static const uint8_t VZ_OF[] = {VZ_SCOPE, VZ_SCOPE, VZ_MIX, VZ_OSCA, VZ_OSCB, VZ_SUB, VZ_SMP, VZ_ENV0, VZ_ENV2, VZ_FILT, VZ_SEQ, VZ_DRUM, VZ_DRUM, VZ_LFO1, VZ_LFO2, VZ_NONE, VZ_STEP, VZ_NONE, VZ_DRIVE, VZ_DELAY, VZ_COMP, VZ_NONE, VZ_MASTER, VZ_NONE, VZ_NONE, VZ_NONE, VZ_ARP, VZ_NONE, VZ_CPU, VZ_NONE};   /* (1.2.0b's order) */   /* (1.0.54's order) */
 typedef char vz_fits[sizeof VZ_OF == sizeof VIEWS / sizeof VIEWS[0] ? 1 : -1];
 #define K_FOOT g_mix(K_GREY, K_WHITE, 180)       /* (1.0.60: the knobs' line at the bottom, lighter) */
 static const char *const PAGE_SHORT[NPAGE] = {"PLAY", "BASS", "ENV", "SEQ", "LFO", "FX", "PRE", "SYS"};   /* (1.0.53: the filter on SEL, SEQ BASS and DRUMS on SEQ) */
@@ -718,6 +716,25 @@ static void vis_fx(uint32_t kind, int32_t x, int32_t y, int32_t w, int32_t h)
         g_bar(x0 + 28, y + 7, bw, 6, (uint32_t)(pk >> 7), pk > 30000 ? K_ORANGE : K_WAVE);
         g_text(T_XS, x0, y + h - 14, "GLUE", K_GREY);
         g_bar(x0 + 28, y + h - 13, bw, 6, (uint32_t)(gr >> 6), K_CYAN);
+        break;
+    }
+    case VZ_ARP: {                              /* (1.2.1b) ARP: how many octaves it repeats over, the notes held (small: the rows show under it) */
+        char t[24], *q;
+        uint32_t i, n = ar_n < 16u ? ar_n : 16u, oct = perf.ar_oct % 4u + 1u;
+        int32_t ty = y + (h - T_XS->h) / 2, tx;
+        q = str_cat(t, "OCT x"); q = fmt_u(q, oct, 0); *q = 0;
+        g_text(T_XS, x0, ty, t, perf.ar_on ? K_WAVE : K_GREY);
+        tx = x0 + g_text_w(T_XS, t) + 10;
+        for (i = 0; i < oct; i++) g_rect(tx + (int32_t)i * 6, ty + T_XS->h - 3 - (int32_t)i * 3, 4, 3 + (int32_t)i * 3, perf.ar_on ? K_WAVE : K_GREY);
+        tx += 30;
+        if (!n) g_text(T_XS, tx, ty, perf.ar_on ? "HOLD KEYS" : "ARP OFF", K_GREY);
+        for (i = 0; i < n; i++) {               /* the notes held, in the order played */
+            uint32_t nt = ar_held[i];
+            q = str_cat(t, NOTE_N[nt % 12u]); q = fmt_u(q, nt / 12u ? nt / 12u - 1u : 0u, 0); *q = 0;
+            if (tx + g_text_w(T_XS, t) > x + w - 4) { g_text(T_XS, tx, ty, "..", K_GREY); break; }
+            g_text(T_XS, tx, ty, t, K_WHITE);
+            tx += g_text_w(T_XS, t) + 6;
+        }
         break;
     }
     default:                                     /* CPU: the block's share */

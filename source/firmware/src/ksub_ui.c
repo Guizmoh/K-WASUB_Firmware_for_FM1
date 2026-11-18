@@ -58,12 +58,12 @@ static const view_t VIEWS[] = {               /* (1.2.0b: fewer pages, the main 
     {LY_BOX, "AMP ENVELOPE", 4, {AE_A, AE_D, AE_S, AE_R}, "ENV"},
     {LY_BOX, "MOD ENVELOPE", 4, {ME_A, ME_D, ME_AMT, ME_DST}, "ENV"},
     {LY_LIST, "FILTER", 11, {F_CUT, F_RES, F_ENV, F_TYPE, F_DRV, F_KEY, F_VEL, FE_A, FE_D, FE_S, FE_R}, "FX"},   /* (SEL: the filter, its modulation and its envelope in one) */
-    {LY_LIST, "GROOVE", 13, {G_GR_STYLE, G_GR_DENS, G_GR_VAR, G_GR_FILL, G_GR_SCALE, G_GR_ROOT, G_GR_BDENS, G_GR_BOCT, G_GR_BSLIDE, G_GR_KICK,
-                             G_GR_LEN, G_SQ_SWING, G_BPM}, "SEQ"},   /* (1.2.0b: SEQ opens on it: the drums and the bass made in a few turns) */
     {LY_LIST, "SEQ BASS", 18, {G_SQ_PRESET, G_SQ_LEN, G_SQ_STEP, G_SQ_NOTE, G_SQ_GATE, G_SQ_TYPE, G_SQ_PAT, G_SQ_COPY, G_SQ_CHAIN, G_SQ_CHPOS, G_SQ_CHPAT,
                                G_SQ_PROB, G_SQ_COND, G_SQ_LKP, G_SQ_LKV, G_SQ_RATE, G_SQ_SWING, G_SQ_ON}, "SEQ"},   /* (PRESET and LENGTH first, SEQUENCE last) */
     {LY_LIST, "DRUMS", 19, {G_DK_LVL, G_DK_TUNE, G_DK_DEC, G_DK_TONE, G_DK_PAT, G_DK_PRE, G_DK_KIT, G_DK_LEN, G_DK_TRK, G_DK_STEP, G_DK_HIT, G_DK_PROB, G_DK_COND,
                             G_DK_VOL, G_DK_KSAT, G_DK_SNAP, G_DK_ECHO, G_DK_MODE, G_DK_SWING}, "SEQ"},   /* (black keys: the track, white: its steps, OCT: the page; K1-K4 the sound, then the pattern) */
+    {LY_LIST, "GROOVE", 14, {G_GR_STYLE, G_GR_DENS, G_GR_VAR, G_GR_FILL, G_DK_KIT, G_GR_SCALE, G_GR_ROOT, G_GR_BDENS, G_GR_BOCT, G_GR_BSLIDE, G_GR_KICK,
+                             G_GR_LEN, G_SQ_SWING, G_BPM}, "SEQ"},   /* (1.2.0b; 1.2.1b: SEQ's last view, the drum KIT in it too) */
     {LY_LFO, "LFO 1 \xB7 WOBBLE", 10, {I_L1RATE, L1_DEP, L1_SHP, L1_DST, G_WOB_RCP, G_GRID, L1_SYNC, L1_TRIG, L1_PH, L1_SMO}, "LFO"},
     {LY_LFO, "LFO 2 \xB7 MOTION", 9, {I_L2RATE, L2_DEP, L2_SHP, L2_DST, G_GRID, L2_SYNC, L2_TRIG, L2_PH, L2_SMO}, "LFO"},
     {LY_LIST, "LFO 3 \xB7 GLOBAL", 5, {G_L3_RATE, G_L3_DEP, G_L3_SHP, G_L3_DST, G_L3_SYNC}, "LFO"},   /* (1.0.17: the third LFO, whatever the patch) */
@@ -92,9 +92,9 @@ static const uint8_t PAGE_V0[NPAGE + 1] = {0, 2, 7, 9, 13, 18, 23, 27, 30};   /*
 #define V_EQ 21u
 #define ARP_VIEW 3u                             /* the ARP button's page: PRESET BANK A, B, SAVE, then ARPEGGIATOR (its view 3); the button opens it first */
 #define V_SMP 6u
-#define V_SEQ 11u
-#define V_GROOVE 10u                               /* SEQ BASS (the SEQ button's third view), DRUMS (its fourth), ARP (the ARP button's last) */
-#define V_DRUM 12u
+#define V_SEQ 10u                               /* (1.2.1b) SEQ: SEQ BASS, its PIANO ROLL, DRUMS, GROOVE */
+#define V_DRUM 11u
+#define V_GROOVE 12u
 #define V_ARP 26u
 static const char *const FX_TITLE[NFXV] = {"DIRT", "SPACE", "DYNAMICS", "EQ", "MASTER"};
 static const char *const FT_TITLE[NFT] = {"DARK EDGE", "SOFT EDGE", "BAND RAZOR", "THIN AIR", "HOLLOW", "TALK BOX", "METAL COMB"};
@@ -103,6 +103,7 @@ static const char *const FT_SUB[NFT] = {"LOW PASS \xB7 24 dB", "LOW PASS \xB7 12
 
 /* ---- state */
 #define NUSER 32u
+typedef char fav_fit[NFACTORY + NUSER <= 160u ? 1 : -1];   /* (the favourites' bits, 0 .. 159) */
 typedef struct {
     uint8_t magic, sum;
     char name[14];
@@ -1004,8 +1005,8 @@ static const char *mc_name(uint32_t k)
 }
 
 /* TAGS (the PRESETS views, K4): what a sound is, read from its settings: SUB REESE GROWL WOBBLE PLUCK 808 DRONE */
-enum { TG_SUB, TG_REESE, TG_GROWL, TG_WOBBLE, TG_PLUCK, TG_808, TG_DRONE, NTAG };
-static const char *const L_TAG[NTAG + 1] = {"ALL", "SUB", "REESE", "GROWL", "WOBBLE", "PLUCK", "808", "DRONE"};
+enum { TG_SUB, TG_REESE, TG_GROWL, TG_WOBBLE, TG_PLUCK, TG_808, TG_DRONE, TG_SYNTH, NTAG };   /* (SYNTH: 1.2.1b, the style SYNTH) */
+static const char *const L_TAG[NTAG + 1] = {"ALL", "SUB", "REESE", "GROWL", "WOBBLE", "PLUCK", "808", "DRONE", "SYNTH"};
 static uint8_t pre_tag, tag_c[NFACTORY + NUSER], tag_ok;
 static uint32_t tag_of(const int8_t *p)
 {
@@ -1023,6 +1024,7 @@ static uint32_t tag_of(const int8_t *p)
     if (p[AE_S] < 40 && p[AE_D] < 75) t |= 1u << TG_PLUCK;
     if ((p[SM_SEL] == 1 && p[SM_LVL]) || (p[S_LVL] >= 60 && p[AE_S] < 40 && p[AE_D] >= 70)) t |= 1u << TG_808;
     if ((p[AE_S] >= 100 && p[AE_R] >= 70) || p[AE_A] >= 40) t |= 1u << TG_DRONE;
+    if (p[P_STYLE] == ST_SYNTH) t = (t & ((1u << TG_PLUCK) | (1u << TG_DRONE))) | 1u << TG_SYNTH;   /* (a synth: not a sub, a reese, a growl...) */
     return t;
 }
 static void tags_make(void)
@@ -3723,14 +3725,14 @@ static void app_init(void)
         const uint32_t LEN[18] = {sizeof set, (uint32_t)(((uint8_t *)&set.scale - (uint8_t *)&set + 1u) & ~1u), (uint32_t)(((uint8_t *)set.fav3 - (uint8_t *)&set + 1u) & ~1u), (uint32_t)((uint8_t *)set.fav2 - (uint8_t *)&set), (uint32_t)((uint8_t *)set.l3 - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.sync - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.lang - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.pquant - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.asave - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.eng8 - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.qlfo - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.bri - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.norm - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.contrast - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.mstart - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.zoom - (uint8_t *)&set),
                                  (uint32_t)((uint8_t *)&set.ui - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.accel - (uint8_t *)&set)};
         for (ok = 0, i = 0; i < 18u && !ok; i++) ok = !settings_load(&set, LEN[i]) && set.ver == 6u;
-        theme_ask = !ok;                        /* (nothing saved yet: the very first start) */
+        theme_ask = 0;                          /* (1.2.1b: the first start asks nothing: CLASSIC mode, RIBBON, MINT) */
         l3_push();
     }
     first_run = !ok || set.askv < 2u;           /* (the very first start, or a save from before 0.9.17: the question once) */
     pre_old = ok && set.askv < 13u;             /* (a save from before 1.1.03: the factory sounds' old order) */
     font_old = ok && set.askv < 14u;            /* (a save from before 1.2.0b: nine fonts) */
     if (!ok) {
-        set.grid = set.browse = 0; set.font = 2; set.theme = 0; set.pal = 0;   /* (CLASSIC GLOW, FLUO GREEN, TEKTUR) */
+        set.grid = set.browse = 0; set.font = 2; set.theme = 5; set.pal = 3;   /* (1.2.1b: RIBBON, MINT, TEKTUR) */
         memset(set.fav, 0, sizeof set.fav); memset(set.fav2, 0, sizeof set.fav2); memset(set.fav3, 0, sizeof set.fav3);
         set.ver = 6; set.midich = 0; set.clock = 0; set.oct = 0xFF; set.bpm10 = 1400; set.bank = 0; set.idx = 0; set.cores = 1; set.accel = 2; set.c3col = 0; set.ui = 0; set.ask = 0; set.zoom = 1; set.mstart = 1; set.mprog = 1; set.mclk = 0; set.contrast = 1; set.norm = 1; set.deep = 1; set.bri = 3; set.qlfo = 1; set.eng8 = 0; set.asave = 1; set.lang = 0; set.askv = 7;
     }
@@ -3835,6 +3837,19 @@ static void app_init(void)
         if (font_old) { set.font = FMAP[set.font % 9u]; font_set(set.font, set.zoom); }
         set.askv = 14; set_dirty = 1; set_ms = fm1_ms;
     }
+    if (set.askv == 14u) {                      /* (1.2.1b: the SYNTH presets after the 97: the user slots' favourites and MORPH codes move on, once) */
+        const int32_t nn = (int32_t)NFACTORY - 97;
+        int32_t i;
+        for (i = 97 + (int32_t)NUSER - 1 + nn; i >= 97; i--) {
+            int32_t f = i - nn, on = f >= 97 && (*fav_b((uint32_t)f) >> (f & 7) & 1u);
+            uint8_t *b = fav_b((uint32_t)i);
+            *b = (uint8_t)((*b & ~(1u << (i & 7))) | (on ? 1u << (i & 7) : 0u));
+        }
+        for (i = 0; i < 4; i++) if (perf.mx_pre[i] >= MX_VAR + 97u && perf.mx_pre[i] < MX_VAR + 97u + NUSER) perf.mx_pre[i] = (uint8_t)(perf.mx_pre[i] + nn);
+        if (perf.ab_pre >= MX_VAR + 97u && perf.ab_pre < MX_VAR + 97u + NUSER) perf.ab_pre = (uint8_t)(perf.ab_pre + nn);
+        perf_touch();
+        set.askv = 15; set_dirty = 1; set_ms = fm1_ms;
+    }
     load_preset(set.bank, set.idx);
     if (set.asave && work.magic == WK_MAGIC && work.sum == wk_sum() && work.bank == set.bank && work.idx == set.idx) {   /* AUTOSAVE: the sound as it was left */
         int8_t p[NP_MAX];
@@ -3869,7 +3884,8 @@ static void app_init(void)
     booted = 1;
     splash_until = 1;                           /* the start screen: the picture, the last patch, the cores; until a touch */
     splash_t0 = fm1_ms | 1u;
-    if (set.ask || first_run) { ask_on = 1; ask_sel = set.ui; ask_ms = fm1_ms; }   /* ... and the question (the first start only, or ASK on): CLASSIC or SHIFT */
+    if (first_run) { set.ui = 0; set_dirty = 1; set_ms = fm1_ms; first_run = 0; }   /* (1.2.1b: CLASSIC, no question) */
+    if (set.ask) { ask_on = 1; ask_sel = set.ui; ask_ms = fm1_ms; }   /* ... and the question (the first start only, or ASK on): CLASSIC or SHIFT */
     g_force = 1;
 }
 
