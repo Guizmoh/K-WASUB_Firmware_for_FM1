@@ -172,7 +172,7 @@ static struct {
     uint8_t fav2[4];                            /* the favourites 96 .. 127 (1.0.32: 96 factory presets, 32 user) */
     uint8_t fav3[4];                            /* the favourites 128 .. 159 (1.0.50: 97 factory presets) */
     uint8_t scale, root;                        /* GROOVE: the scale the keys and the bass keep to (0 OFF) and its root, C = 0 (1.2.0b) */
-} set = {6, 0, 0, 0xFF, 1400, 0, 0, 1, 0, 0, 0, 0, 0, {0}, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 3, 1, 0, 1, 0, 0, 0, {0, 1, 64, 9, 0, D_CUT}, {0}};
+} set = {6, 0, 0, 0xFF, 1400, 0, 0, 1, 0, 0, 0, 0, 0, {0}, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 3, 1, 0, 1, 0, 0, 0, {0, 1, 64, 9, 0, D_CUT}, {0}, {0}, 0, 0};
 static void l3_push(void) { uint32_t i; for (i = 0; i < NL3; i++) l3cfg[i] = set.l3[i]; }   /* (the settings to the audio) */
 static char pname[14];
 static uint8_t new_arm;                         /* SAVE, K4 turned once: turn it again to start a new preset */
@@ -1916,7 +1916,7 @@ static void item_set(uint32_t id, int32_t v)
         switch (id) {
         case G_GR_STYLE: case G_GR_DENS: case G_GR_FILL: gr[id - G_GR_STYLE] = (uint8_t)v; gr_drums(); break;
         case G_GR_VAR: gr[2] = (uint8_t)v; gr_drums(); gr_bass(); break;   /* (VARIATION: the drums and the bass both) */
-        case G_GR_SCALE: set.scale = (uint8_t)v; set_dirty = 1; set_ms = fm1_ms; gr_quantize(); break;
+        case G_GR_SCALE: set.scale = (uint8_t)v; set_dirty = 1; set_ms = fm1_ms; gr_quantize(); toast(v ? "KEYS LOCKED TO THE SCALE" : "KEYS FREE"); break;
         case G_GR_ROOT: { int32_t dlt = v - (int32_t)set.root; uint32_t k = perf.cur % SQ_NPAT, i;   /* (the line moves with its root) */
             set.root = (uint8_t)v; set_dirty = 1; set_ms = fm1_ms;
             for (i = 0; i < SQ_MAX; i++) *sq_np(k, i) = (uint8_t)clampi((int32_t)*sq_np(k, i) + dlt, 0, 48);
@@ -1931,6 +1931,7 @@ static void item_set(uint32_t id, int32_t v)
     if (item_patch(id)) {
         if (patch[id] != v) undo_mark(id);
         patch[id] = (int8_t)v;
+        if (mu_amt) { uint32_t i; for (i = 0; i < NMU; i++) if (MU[i].id == id) mu_base[i] = mu_tgt[i] = (int8_t)v; }   /* (1.2.1b: turned by hand under MUTATE: kept, MUTATE leaves it) */
         if (aut_saved[id >> 3] >> (id & 7u) & 1u) aut_base[id] = (int8_t)v;   /* (an automated setting turned by hand: its own value now) */
         if (PD[id].fmt == FM_DEST && (v == D_DRAMT || v == D_DRMIX) && !patch[DR_ON]) { patch[DR_ON] = 1; toast("SATURATION ON"); }
         if (id < N_LVL || id == S_LVL || id == S_WAVE || id == S_OCT) prev_dirty = 1;
