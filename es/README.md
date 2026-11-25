@@ -6,7 +6,7 @@
 
 **English** : [README](../README.md) · **Français** : [README](../fr/README.md) · **Español** : esta página
 
-**Sintetizador de graves moderno para el M-VAVE FM-1**: DnB, dub, dubstep, techno. Wobble en vivo, reese, sub, 808, un EQ, un morph entre cuatro sonidos, efectos en las teclas. Gratuito y de código abierto (GPL-3.0). *Versión 1.2.5b **BETA**: probada en el emulador y con pruebas automáticas (la 1.1.03, la anterior, se probó en el FM-1); dime qué ves (pestaña Issues).*
+**Sintetizador de graves moderno para el M-VAVE FM-1**: DnB, dub, dubstep, techno. Wobble en vivo, reese, sub, 808, un EQ, un morph entre cuatro sonidos, efectos en las teclas. Gratuito y de código abierto (GPL-3.0). *Versión 1.2.5b **BETA**: probada en el FM-1 (hardware), en el emulador y con pruebas automáticas; dime qué ves (pestaña Issues).*
 
 | | |
 |---|---|

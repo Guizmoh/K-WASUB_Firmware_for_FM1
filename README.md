@@ -6,7 +6,7 @@
 
 **English** · [Français](fr/README.md) · [Español](es/README.md)
 
-**A modern bass synth for the M-VAVE FM-1**: DnB, dub, dubstep, techno. Live wobble, reese, sub, 808, an EQ, a morph between four sounds, effects on the keys. Free and open source (GPL-3.0). *Version 1.2.5b **BETA**: tested in the emulator and by automatic tests (1.1.03, the version before, was tested on the FM-1 hardware); tell me what you see (Issues tab).*
+**A modern bass synth for the M-VAVE FM-1**: DnB, dub, dubstep, techno. Live wobble, reese, sub, 808, an EQ, a morph between four sounds, effects on the keys. Free and open source (GPL-3.0). *Version 1.2.5b **BETA**: tested on the FM-1 hardware, in the emulator and by automatic tests; tell me what you see (Issues tab).*
 
 | | |
 |---|---|

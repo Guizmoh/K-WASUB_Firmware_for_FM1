@@ -6,7 +6,7 @@
 
 **English** : [README](../README.md) · **Français** : cette page · **Español** : [README](../es/README.md)
 
-**Synthé de basses modernes pour le M-VAVE FM-1** : DnB, dub, dubstep, techno. Wobble en direct, reese, sub, 808, un EQ, un morph entre quatre sons, des effets sur les touches. Gratuit et libre (GPL-3.0). *Version 1.2.5b **BÊTA** : testée dans l’émulateur et par des tests automatiques (la 1.1.03, la précédente, a été testée sur le FM-1) ; dis-moi ce que tu vois (onglet Issues).*
+**Synthé de basses modernes pour le M-VAVE FM-1** : DnB, dub, dubstep, techno. Wobble en direct, reese, sub, 808, un EQ, un morph entre quatre sons, des effets sur les touches. Gratuit et libre (GPL-3.0). *Version 1.2.5b **BÊTA** : testée sur le FM-1 (matériel), dans l’émulateur et par des tests automatiques ; dis-moi ce que tu vois (onglet Issues).*
 
 | | |
 |---|---|
