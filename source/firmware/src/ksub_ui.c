@@ -64,7 +64,7 @@ static const view_t VIEWS[] = {               /* (1.2.0b: fewer pages, the main 
                             G_DK_VOL, G_DK_KSAT, G_DK_SNAP, G_DK_ECHO, G_DK_MODE, G_DK_SWING}, "SEQ"},   /* (black keys: the track, white: its steps, OCT: the page; K1-K4 the sound, then the pattern) */
     {LY_LIST, "GROOVE", 14, {G_GR_STYLE, G_GR_DENS, G_GR_VAR, G_GR_FILL, G_DK_KIT, G_GR_SCALE, G_GR_ROOT, G_GR_BDENS, G_GR_BOCT, G_GR_BSLIDE, G_GR_KICK,
                              G_GR_LEN, G_SQ_SWING, G_BPM}, "SEQ"},   /* (1.2.0b; 1.2.1b: SEQ's last view, the drum KIT in it too) */
-    {LY_LFO, "LFO 1 \xB7 WOBBLE", 10, {I_L1RATE, L1_DEP, L1_SHP, L1_DST, G_WOB_RCP, G_GRID, L1_SYNC, L1_TRIG, L1_PH, L1_SMO}, "LFO"},
+    {LY_LFO, "LFO 1 \xB7 WOBBLE", 10, {I_L1RATE, L1_DEP, L1_SHP, L1_DST, G_GRID, G_WOB_RCP, L1_SYNC, L1_TRIG, L1_PH, L1_SMO}, "LFO"},
     {LY_LFO, "LFO 2 \xB7 MOTION", 9, {I_L2RATE, L2_DEP, L2_SHP, L2_DST, G_GRID, L2_SYNC, L2_TRIG, L2_PH, L2_SMO}, "LFO"},
     {LY_LIST, "LFO 3 \xB7 GLOBAL", 5, {G_L3_RATE, G_L3_DEP, G_L3_SHP, G_L3_DST, G_L3_SYNC}, "LFO"},   /* (1.0.17: the third LFO, whatever the patch) */
     {LY_STEP, "STEP FX", 7, {ST_PAT, ST_RATE, ST_GATE, ST_DEP, ST_ON, ST_DST, ST_SMO}, "LFO"},
@@ -79,8 +79,8 @@ static const view_t VIEWS[] = {               /* (1.2.0b: fewer pages, the main 
     {LY_PRESET, "PRESET BANK B", 0, {0}, "PRESET"},
     {LY_SAVE, "SAVE PATCH", 0, {0}, "PRESET"},
     {LY_LIST, "ARPEGGIATOR", 5, {G_AR_ON, G_AR_MODE, G_AR_RATE, G_AR_OCT, G_AR_GATE}, "ARP"},
-    {LY_SYS, "GLOBAL SETUP", 19, {G_BPM, V_MODE, V_GLIDE, G_DEEP, G_UI, G_THEME, G_PAL, G_FONT, G_ZOOM, G_BRI, G_QLFO, G_ASAVE, G_LANG, G_NORM, V_BEND, V_VEL,
-                                  G_GRID, G_BROWSE, G_C3COL}, "SYSTEM"},   /* (1.2.0b: the display's rows here too) */
+    {LY_SYS, "GLOBAL SETUP", 19, {G_BPM, V_MODE, V_GLIDE, G_DEEP, G_GRID, G_THEME, G_PAL, G_FONT, G_UI, G_ZOOM, G_BRI, G_QLFO, G_ASAVE, G_LANG, G_NORM, V_BEND, V_VEL,
+                                  G_BROWSE, G_C3COL}, "SYSTEM"},   /* (1.2.0b: the display's rows here too) */
     {LY_SYS, "ADVANCED", 6, {G_CPU, G_RST, G_ACCEL, G_ASK, G_CON, G_NEWSONG}, "SYSTEM"},
     {LY_SYS, "MIDI", 10, {G_MLEARN, G_MMAP, G_MIDICH, G_CLOCK, G_MSTART, G_MPROG, G_MCLK, G_SYNC, G_MIDIMON, G_MIDIRT}, "SYSTEM"},
 };
