@@ -40,6 +40,7 @@ static volatile int batt_pct = 100;         /* the battery, 0..100 (the screen's
 #include "fm1_lcd_hw.h"
 #include "fm1_audio.h"
 #include "fm1_adc.h"
+#include "fm1_uart.h"
 #include "bootguard.h"
 
 #ifndef APP_NAME
@@ -67,7 +68,7 @@ static volatile uint32_t fm1_ms;                /* milliseconds since power-on (
 #define FELUCCA_OTA 1
 #define FELUCCA_CDC 0
 #define FELUCCA_UAC 1
-#define FELUCCA_UART 0
+#define FELUCCA_UART 1                          /* (1.2.4b: TRS MIDI IN, UART1 on PH8, 31250 baud: hal/fm1_uart.h) */
 #include "usb.c"
 
 /* ---- flash: read anywhere; erase / program only the update's staging area and the settings sector */
@@ -181,11 +182,43 @@ static int settings_save(const void *p, uint32_t n)   /* p in RAM, n <= 256 */
 }
 
 /* ---- MIDI over USB: 4-byte USB-MIDI packets, cable 0 */
-static int midi_get(uint8_t *st, uint8_t *d1, uint8_t *d2)   /* 1: a message (status, data 1, data 2) */
+/* ---- MIDI IN over the TRS jack (1.2.4b): UART1's DMA fills a ring; the main loop reads it as a byte stream (running
+ * status, real time anywhere, SysEx skipped) into the same messages as USB's */
+#define UT_N 256u
+static volatile uint8_t ut_ring[UT_N] __attribute__((aligned(16)));
+static uint32_t ut_w, ut_r;
+static uint8_t ut_st, ut_d[2], ut_n, ut_sx;
+static int uart_midi_get(uint8_t *st, uint8_t *d1, uint8_t *d2)
+{
+#if FELUCCA_UART && !defined(KAWA_WASM)
+    ut_w += fm1_uart1_rx_take();
+    if (ut_w - ut_r > UT_N) ut_r = ut_w - UT_N;   /* (fallen behind: the oldest are gone) */
+    while (ut_r != ut_w) {
+        uint8_t b = ut_ring[ut_r % UT_N];
+        ut_r++;
+        if (b >= 0xF8u) { *st = b; *d1 = *d2 = 0; return 1; }   /* real time: clock, start, stop... at once */
+        if (b >= 0x80u) {
+            ut_sx = b == 0xF0u;
+            ut_st = b < 0xF0u ? b : 0; ut_n = 0;   /* (system common: dropped, and it cancels the running status) */
+            continue;
+        }
+        if (ut_sx || !ut_st) continue;
+        ut_d[ut_n++] = b;
+        if (ut_n >= ((ut_st & 0xE0u) == 0xC0u ? 1u : 2u)) {   /* program change / pressure: one byte, the rest two */
+            *st = ut_st; *d1 = ut_d[0]; *d2 = ut_n > 1u ? ut_d[1] : 0; ut_n = 0;
+            return 1;
+        }
+    }
+#else
+    (void)st; (void)d1; (void)d2; (void)ut_ring; (void)ut_w; (void)ut_r; (void)ut_st; (void)ut_d; (void)ut_n; (void)ut_sx;
+#endif
+    return 0;
+}
+static int midi_get(uint8_t *st, uint8_t *d1, uint8_t *d2)   /* 1: a message (status, data 1, data 2): USB first, then the TRS jack */
 {
     uint32_t pk;
     if (mi_r == mi_w)
-        return 0;
+        return uart_midi_get(st, d1, d2);
     pk = midi_in_q[mi_r % MQ];
     mi_r++;
     *st = (uint8_t)(pk >> 8);
@@ -373,6 +406,9 @@ void fm1_cstart(void)
     fm1_adc_init();
     fm1_audio_init(abuf, HALF_WORDS, isr_alnk0, 3);   /* (abuf is zero: .bss) */
     usb_start();
+#if FELUCCA_UART
+    fm1_uart1_midi_init(ut_ring, UT_N);         /* (TRS MIDI IN: before TIMER5, which writes PORTH too) */
+#endif
     fm1_timer5_start(isr_timer5, 4);
     fm1_guard_lock_top();
     fm1_irq_enable_all();
