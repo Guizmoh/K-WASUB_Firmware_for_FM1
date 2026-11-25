@@ -1,6 +1,6 @@
 # Each new version pushed to main (the k-wasub-X.fwsc at the top of the repository) gets its tag vX by itself, then
 # release.yml builds it from source on that tag (The Firmware Hub's shared build) and publishes the GitHub release.
-# Nothing to do by hand: push the release to main as usual.
+# Nothing to do by hand: push the release to main as usual. (A failed run, e.g. a GitHub error: push again, or touch this file.)
 name: auto-tag
 on:
   push:
