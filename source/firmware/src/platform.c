@@ -319,21 +319,22 @@ static uint32_t fm1_crash_mark[2] __attribute__((section(".noinit")));   /* a cr
 static void fm1_fault(const fm1_crash_t *c)
 {
     char b[16];
-    uint32_t i, t0, v[3] = {c->vec, c->pc, c->rets};
-    static const char *const LB[3] = {"VEC ", "PC  ", "RET "};   /* (PC: also in SYSTEM > LAST STOP after the restart) */
+    uint32_t i, t0, v[6] = {c->vec, c->pc, c->rets, c->etm[0], c->etm[1], c->uptime_ms};
+    static const char *const LB[6] = {"VEC ", "PC  ", "RET ", "BR1 ", "BR2 ", "MS  "};   /* (1.2.3b: the last branches and the time too; PC RET BR1: also on the next start) */
     fm1_crash_mark[0] = 0xC4A54ED0u;
     fm1_crash_mark[1] = c->pc;
     app_flash_busy();
     fm1_audio_stop();
     lcd_fill(0, 0, 240, 240, RGB(160, 0, 0));
     draw_text_box(0, 20, 240, &FONT_S, APP_NAME " CRASH", C_WHITE, 1);
-    for (i = 0; i < 3u; i++) {
+    for (i = 0; i < 6u; i++) {
         uint32_t k;
         for (k = 0; k < 4u; k++) b[k] = LB[i][k];
         for (k = 0; k < 8u; k++) b[4u + k] = "0123456789ABCDEF"[(v[i] >> (28u - 4u * k)) & 15u];
         b[12] = 0;
         draw_text_box(10, 60 + i * 20, 220, &FONT_S, b, C_WHITE, 0);
     }
+    draw_text_box(0, 192, 240, &FONT_S, "A PHOTO OF THIS, PLEASE", C_WHITE, 1);   /* (1.2.3b: for a report) */
     t0 = fm1_ticks();
     while ((uint32_t)(fm1_ticks() - t0) < 30000u * 1000u * FM1_TICKS_PER_US)   /* (30 s to note it down) */
         fm1_wdt_feed();

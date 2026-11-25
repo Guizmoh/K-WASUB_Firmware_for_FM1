@@ -773,7 +773,7 @@ static void draw_visual(uint32_t kind, int32_t x, int32_t y, int32_t w, int32_t 
 }
 
 /* ---------------------------------------------------------------- the titles */
-static const char *view_title(uint32_t vi, char *t, char *sub)
+static const char *view_title(uint32_t vi, char *t, char *sub)   /* (t: 48 bytes, sub: 96; 1.2.3b: 32 and 64 were overrun by DRUMS, kit + instrument + page + the hint) */
 {
     const view_t *v = &VIEWS[vi];
     char *p;
@@ -794,7 +794,7 @@ static const char *view_title(uint32_t vi, char *t, char *sub)
         return "SELECT PATCH";
     case LY_SAVE: str_cat(sub, "HOLD SAVE: WRITE \xB7 SEL: LOAD THIS SLOT"); return pname;
     case LY_SYS:
-        if (vi == PAGE_V0[PG_SYS] + 1u) { str_cat(sub, "CPU \xB7 LAST STOP \xB7 KNOBS \xB7 NEW SONG"); return "ADVANCED"; }
+        if (vi == PAGE_V0[PG_SYS] + 1u) { str_cat(sub, rst_info[0] ? rst_info : "CPU \xB7 LAST STOP \xB7 KNOBS \xB7 NEW SONG"); return "ADVANCED"; }   /* (1.2.3b: a crash's details, kept) */
         if (vi != PAGE_V0[PG_SYS]) { str_cat(sub, "LEARN \xB7 CHANNEL \xB7 CLOCK \xB7 START / STOP \xB7 PROGRAM"); return "MIDI"; }
         str_cat(sub, "DNB / DUB / DUBSTEP / TECHNO EDITION"); return "DEVICE SETUP";
     case LY_LFO: {
@@ -1131,7 +1131,7 @@ static void glow_vis(uint32_t vz, int32_t x, int32_t y, int32_t w, int32_t h)
 static int big_vis(uint32_t vi) { return vi == V_DRUM || vi == V_SEQ || vi == V_SMP; }   /* (the views whose picture is what you play: a pattern, a sample) */
 static void th_glow(const view_t *v, uint32_t vi)
 {
-    char t[32], sub[64], n[8], fb[64], *p;
+    char t[48], sub[96], n[8], fb[64], *p;
     const char *ti = view_title(vi, t, sub), *ff = foot_fixed(vi);
     uint32_t vz = VZ_OF[vi], c = cursor[vi], i;
     if (g_vis(0, 36)) {
@@ -1191,7 +1191,7 @@ static void tech_win(int32_t x, int32_t y, int32_t w, int32_t h, int dir, uint16
 }
 static void th_tech(const view_t *v, uint32_t vi)
 {
-    char t[32], sub[64], b[24], nm[24], fb[64], *p;
+    char t[48], sub[96], b[24], nm[24], fb[64], *p;
     const char *ti = view_title(vi, t, sub), *ff = foot_fixed(vi);
     int32_t ph;
     uint32_t vz = VZ_OF[vi], c = cursor[vi], i;
@@ -1277,7 +1277,7 @@ foot:
 /* ---------------------------------------------------------------- STUDIO */
 static void th_studio(const view_t *v, uint32_t vi)
 {
-    char t[32], sub[64], s[40], fb[64], *p;
+    char t[48], sub[96], s[40], fb[64], *p;
     const char *ti = view_title(vi, t, sub), *ff = foot_fixed(vi);
     uint32_t vz = VZ_OF[vi], c = cursor[vi], i;
     if (g_vis(0, 28)) {                         /* status: the patch, its slot, the tempo, the load; the eight pages */
@@ -1343,7 +1343,7 @@ static void th_studio(const view_t *v, uint32_t vi)
 /* ---------------------------------------------------------------- PURE */
 static void th_pure(const view_t *v, uint32_t vi)
 {
-    char t[32], sub[64], s[40], *p;
+    char t[48], sub[96], s[40], *p;
     const char *ti = view_title(vi, t, sub);
     uint32_t vz = VZ_OF[vi], c = cursor[vi], i, nv = (uint32_t)(PAGE_V0[page + 1u] - PAGE_V0[page]);
     if (g_vis(0, 18)) {                         /* the section on a lime tab with a cut corner */
@@ -1455,7 +1455,7 @@ static void rb_name(uint32_t vi, char *b)       /* a view's short name, for the 
                                      "SEQ", "LFO 1", "LFO 2", "STEP", "MATRIX", "BANK A", "BANK B", "SAVE", "ARP", "SYSTEM", "QUICK", "DISPLAY", "ADVANCED", "BASS", "FILTER", "GROOVE"};
     const char *c = VIEWS[vi].cat;
     uint32_t i;
-    char t[32], sub[64];
+    char t[48], sub[96];
     if (str_eq(c, "FX RACK")) {                /* (the effects by their short names) */
         static const char *const FXL[] = {"DIRT", "DYNAMICS", "SPACE", "MASTER", "EQ"}, *const FXS[] = {"DIRT", "DYN", "SPACE", "MASTER", "EQ"};
         const char *ti = view_title(vi, t, sub);
@@ -1616,7 +1616,7 @@ static void th_ribbon(const view_t *v, uint32_t vi, int classic)
 {
     const int32_t wy = 26, wh = 206;
     int32_t ww = 190, wx = 25, k, off = 0, tall, sel_y, scroll = 0, cy0 = wy + 28, cy1 = wy + wh - 2;
-    char t[32], sub[64], b[24];
+    char t[48], sub[96], b[24];
     const char *ti = view_title(vi, t, sub);
     uint32_t nv = sizeof VIEWS / sizeof VIEWS[0], stack = !classic && (v->lay == LY_PLAY || v->lay == LY_LIST || v->lay == LY_BOX || v->lay == LY_LFO || v->lay == LY_STEP);
     if (classic) { wx = 2; ww = 236; }         /* RIBBON CLASSIC: the whole page, no neighbours, no sliding */
@@ -1682,7 +1682,7 @@ static void th_ribbon(const view_t *v, uint32_t vi, int classic)
 /* ---------------------------------------------------------------- RACK */
 static void th_rack(const view_t *v, uint32_t vi)
 {
-    char t[32], sub[64], fb[64];
+    char t[48], sub[96], fb[64];
     const char *ti = view_title(vi, t, sub), *ff = foot_fixed(vi);
     uint32_t vz = VZ_OF[vi], i;
     if (g_vis(0, 240)) {                        /* the rail: the eight pages */
@@ -1749,7 +1749,7 @@ static void draw_c3(void)
     const col3_t *c = &COL3[page];
     uint32_t act = c3_col(), k;
     int32_t pk = -1;
-    char t[48], sub[64], b[24], *p;
+    char t[48], sub[96], b[24], *p;
     if (vpop_ms) for (k = 0; k < 12u; k++) if (c->id[k >> 2][k & 3u] == vpop_id) pk = (int32_t)k;
     if (g_vis(0, 46)) {
         if (pk >= 0) {                          /* the setting turning: its column, its knob, its name, its value */
@@ -2714,10 +2714,13 @@ static void draw_all(void)
         p = str_cat(p, " \xB7 ");
         eng_str(p, patch);
         if (g_vis(218, 22) && fm1_ms - splash_t0 >= 1000u) {   /* (the words once the logo is there) */
+            if (rst_bad && rst_why[0] == 'C' && rst_info[0]) { str_cat(str_cat(b, "LAST STOP: "), rst_why); g_text_c(T_XS, 120, 220, b, RGB(255, 150, 60)); g_text(T_XS, 4, 232, rst_info, RGB(255, 150, 60)); }   /* (1.2.3b: a crash, its details, the version: a photo says it all) */
+            else {
             g_text_c(T_XS, 120, 220, b, RGB(255, 255, 255));
             if (rst_bad) { str_cat(str_cat(b, "LAST STOP: "), rst_why); g_text_c(T_XS, 120, 231, b, RGB(255, 150, 60)); }
             else g_text_c(T_XS, 120, 231, dual_on ? "TWO CORES \xB7 PRESS ANY BUTTON OR KEY" : dual_why == DW_SILENT ? "CORE 1 SILENT \xB7 ONE CORE" : dual_why == DW_SAFE ? "ONE CORE (SAFE) \xB7 PRESS A KEY" : "PRESS ANY BUTTON OR KEY", RGB(150, 150, 150));
             g_text(T_XS, 4, 232, "BETA", RGB(88, 93, 95));            /* (a beta: on the left, the version on the right, both a little darker) */
+            }
             g_text_r(T_XS, 238, 232, "V" APP_VER, RGB(88, 93, 95));
         }
     }

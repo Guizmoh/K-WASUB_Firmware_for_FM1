@@ -172,7 +172,8 @@ static struct {
     uint8_t fav2[4];                            /* the favourites 96 .. 127 (1.0.32: 96 factory presets, 32 user) */
     uint8_t fav3[4];                            /* the favourites 128 .. 159 (1.0.50: 97 factory presets) */
     uint8_t scale, root;                        /* GROOVE: the scale the keys and the bass keep to (0 OFF) and its root, C = 0 (1.2.0b) */
-} set = {6, 0, 0, 0xFF, 1400, 0, 0, 1, 0, 0, 0, 0, 0, {0}, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 3, 1, 0, 1, 0, 0, 0, {0, 1, 64, 9, 0, D_CUT}, {0}, {0}, 0, 0};
+    uint8_t cr[16];                             /* the last crash, kept through a power off (1.2.3b): PC, RET, the last branch (LE), up time in 10 ms (LE16), vector, count */
+} set = {6, 0, 0, 0xFF, 1400, 0, 0, 1, 0, 0, 0, 0, 0, {0}, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 3, 1, 0, 1, 0, 0, 0, {0, 1, 64, 9, 0, D_CUT}, {0}, {0}, 0, 0, {0}};
 static void l3_push(void) { uint32_t i; for (i = 0; i < NL3; i++) l3cfg[i] = set.l3[i]; }   /* (the settings to the audio) */
 static char pname[14];
 static uint8_t new_arm;                         /* SAVE, K4 turned once: turn it again to start a new preset */
@@ -573,8 +574,21 @@ static void lcd_contrast(uint32_t c)
 #endif
 }
 /* ---- why it stopped last time (the reset's source, a crash's mark): on the start screens and in SYSTEM */
-static char rst_why[28];
+static char rst_why[28], rst_info[48];         /* the last stop; a crash's details (1.2.3b): RET, VEC, when, how many */
 static uint8_t rst_bad;                         /* a stop that was not asked for */
+static void hex8(char *p, uint32_t v) { int i; for (i = 28; i >= 0; i -= 4) *p++ = "0123456789ABCDEF"[(v >> i) & 15u]; *p = 0; }
+static uint32_t cr_u32(const uint8_t *b) { return b[0] | (uint32_t)b[1] << 8 | (uint32_t)b[2] << 16 | (uint32_t)b[3] << 24; }
+static void cr_text(void)                       /* the saved crash in words: "CRASH 20ED5AA9", "RET 0200ABCD VEC 3 AT 0.21 S #2" */
+{
+    char *p;
+    uint32_t up = set.cr[12] | (uint32_t)set.cr[13] << 8;
+    if (!set.cr[15]) { rst_info[0] = 0; return; }
+    p = str_cat(rst_info, "R"); hex8(p, cr_u32(set.cr + 4)); p += 8;
+    p = str_cat(p, " B"); hex8(p, cr_u32(set.cr + 8)); p += 8;
+    p = str_cat(p, " V"); p = fmt_u(p, set.cr[14], 0);
+    p = str_cat(p, " T"); p = fmt_u(p, up / 100u, 0); *p++ = '.'; p = fmt_u(p, up / 10u % 10u, 0);   /* (T: seconds after power-on) */
+    p = str_cat(p, " #"); fmt_u(p, set.cr[15], 0);
+}
 static void rst_read(void)
 {
 #if defined(KAWA_WASM)
@@ -582,16 +596,22 @@ static void rst_read(void)
 #else
     uint8_t r = fm1_boot.p3_rst;
     const char *t = r & 4u ? "WATCHDOG (TOO BUSY)" : r & 2u ? "LOW VOLTAGE (POWER)" : r & 0x20u ? "1.2 V LOW (POWER)" : r & 0x10u ? "LONG PRESS" : 0;
-    if (fm1_crash_mark[0] == 0xC4A54ED0u) { t = "CRASH"; fm1_crash_mark[0] = 0; }
+    if (fm1_crash_mark[0] == 0xC4A54ED0u) {     /* a crash: its details kept in the settings (1.2.3b), the count of them too */
+        int ok = fm1_crash.magic == FM1_CRASH_MAGIC;
+        uint32_t pc = fm1_crash_mark[1], ret = ok ? fm1_crash.rets : 0u, br = ok ? fm1_crash.etm[0] : 0u, up = ok ? fm1_crash.uptime_ms / 10u : 0u, i;
+        t = "CRASH"; fm1_crash_mark[0] = 0;
+        for (i = 0; i < 4u; i++) { set.cr[i] = (uint8_t)(pc >> (8u * i)); set.cr[4u + i] = (uint8_t)(ret >> (8u * i)); set.cr[8u + i] = (uint8_t)(br >> (8u * i)); }
+        if (up > 65535u) up = 65535u;
+        set.cr[12] = (uint8_t)up; set.cr[13] = (uint8_t)(up >> 8);
+        set.cr[14] = ok ? (uint8_t)fm1_crash.vec : 0xFFu;
+        if (set.cr[15] < 255u) set.cr[15]++;
+        set_dirty = 1; set_ms = fm1_ms;
+    }
     rst_bad = t && !(r & 0x10u);
     str_cat(rst_why, t ? t : r & 1u ? "POWER OFF" : "RESTART");
-    if (t && t[0] == 'C') {                     /* CRASH: the address, to look up in the map */
-        char *p = rst_why + 5; uint32_t pc = fm1_crash_mark[1]; int i;
-        *p++ = ' ';
-        for (i = 28; i >= 0; i -= 4) *p++ = "0123456789ABCDEF"[(pc >> i) & 15u];
-        *p = 0;
-    }
+    if (t && t[0] == 'C') { rst_why[5] = ' '; hex8(rst_why + 6, cr_u32(set.cr)); }   /* CRASH: the address, to look up in the map */
 #endif
+    cr_text();
 }
 static uint8_t mm_st, mm_d1, mm_d2, mm_n, mm_rt, mm_rn;   /* the last channel message in, and the last system one but the clock (the MIDI page shows them) */
 static uint8_t ml_state, ml_id;                 /* MIDI LEARN: 1 waits for a setting, 2 for a CC; the setting */
@@ -2419,7 +2439,7 @@ static void item_text(uint32_t id, char *b)
         case G_NORM: str_cat(b, v ? "ON (EVEN LEVEL)" : "OFF"); break;
         case G_DEEP: str_cat(b, v == 4 ? "DEEP + HARMONICS" : v == 3 ? "SUB HARMONICS" : v == 2 ? "MAX (+7 dB UNDER 90 Hz)" : v ? "DEEP (+4 dB)" : "OFF"); break;
         case G_CON: str_cat(b, v == 2 ? "MAX (DEEP BLACK)" : v ? "HIGH" : "NORMAL"); break;
-        case G_RST: str_cat(b, rst_why); break;
+        case G_RST: if (set.cr[15] && !rst_bad) { char *q = str_cat(b, "CRASH "); hex8(q, cr_u32(set.cr)); } else str_cat(b, rst_why); break;   /* (1.2.3b: the last crash, kept) */
         case G_MLEARN: str_cat(b, ml_state == 1u ? "TURN A KNOB" : ml_state == 2u ? "SEND A CC" : "OFF"); break;
         case G_MMAP: if (v) { b = fmt_u(b, (uint32_t)v, 0); str_cat(b, v > 1 ? " CCS \xB7 LEFT: CLEAR" : " CC \xB7 LEFT: CLEAR"); } else str_cat(b, "EMPTY"); break;
         case G_MSTART: str_cat(b, v ? "PLAYS THE SEQ" : "IGNORED"); break;
@@ -3723,9 +3743,9 @@ static void app_init(void)
     uint32_t i;
     int ok;
     {                                           /* (a save from before a field was added: the fields it has, the rest as is) */
-        const uint32_t LEN[18] = {sizeof set, (uint32_t)(((uint8_t *)&set.scale - (uint8_t *)&set + 1u) & ~1u), (uint32_t)(((uint8_t *)set.fav3 - (uint8_t *)&set + 1u) & ~1u), (uint32_t)((uint8_t *)set.fav2 - (uint8_t *)&set), (uint32_t)((uint8_t *)set.l3 - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.sync - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.lang - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.pquant - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.asave - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.eng8 - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.qlfo - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.bri - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.norm - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.contrast - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.mstart - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.zoom - (uint8_t *)&set),
+        const uint32_t LEN[19] = {sizeof set, (uint32_t)(((uint8_t *)set.cr - (uint8_t *)&set + 1u) & ~1u), (uint32_t)(((uint8_t *)&set.scale - (uint8_t *)&set + 1u) & ~1u), (uint32_t)(((uint8_t *)set.fav3 - (uint8_t *)&set + 1u) & ~1u), (uint32_t)((uint8_t *)set.fav2 - (uint8_t *)&set), (uint32_t)((uint8_t *)set.l3 - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.sync - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.lang - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.pquant - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.asave - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.eng8 - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.qlfo - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.bri - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.norm - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.contrast - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.mstart - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.zoom - (uint8_t *)&set),
                                  (uint32_t)((uint8_t *)&set.ui - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.accel - (uint8_t *)&set)};
-        for (ok = 0, i = 0; i < 18u && !ok; i++) ok = !settings_load(&set, LEN[i]) && set.ver == 6u;
+        for (ok = 0, i = 0; i < 19u && !ok; i++) ok = !settings_load(&set, LEN[i]) && set.ver == 6u;
         theme_ask = 0;                          /* (1.2.1b: the first start asks nothing: CLASSIC mode, RIBBON, MINT) */
         l3_push();
     }
