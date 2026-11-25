@@ -276,7 +276,7 @@ def build(L):
 
     o.append(f'<p id="noq">{t(T("Nothing matches that search.", "Rien ne correspond à cette recherche."))}</p>')
     o.append(dbar)
-    spec = "CAHIER-DES-CHARGES.md" if fr else "SPECIFICATIONS.md"
+    spec = "CAHIER-DES-CHARGES.md" if fr else "docs/SPECIFICATIONS.md"
     o.append(f'<footer>{t(T("K-WASUB is free software (GPL-3.0), born from", "K-WASUB est un logiciel libre (GPL-3.0), né de"))} <a href="https://github.com/Guizmoh/Kawa-Tracker-Fm1">KAWA</a> (Omnipotard / Leo Kuroshita, Hügelton Instruments). '
              f'{t(T("BETA version 1.2.5b, tested on the FM-1 hardware. Tell me what you see on yours (GitHub, Issues).", "Version BÊTA 1.2.5b, testée sur le FM-1. Dis-moi ce que tu vois sur le tien (GitHub, Issues)."))} <a href="index.html">← {t(T("Home", "Accueil"))}</a> · <a href="{spec}">{t(T("Specifications", "Cahier des charges"))}</a></footer>')
     o.append('</main></div>')

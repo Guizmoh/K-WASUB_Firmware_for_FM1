@@ -4,21 +4,20 @@
 
 # K-WASUB · FM1 modern Bass firmware
 
-**English** · [Français](fr/README.md) · [Español](es/README.md)
+**English** · [Français](fr/README.md)
 
 **A modern bass synth for the M-VAVE FM-1**: DnB, dub, dubstep, techno. Live wobble, reese, sub, 808, an EQ, a morph between four sounds, effects on the keys. Free and open source (GPL-3.0). *Version 1.2.5b **BETA**: tested on the FM-1 hardware, in the emulator and by automatic tests; tell me what you see (Issues tab).*
 
 | | |
 |---|---|
 | 🎛 **Try it** (browser) | [`emulator/index.html`](emulator/index.html)  |
-| ⬇️ **Install** on the FM-1 | [`installer.html`](installer.html) (Chrome or Edge, USB) · or `INSTALL-Windows.bat` / `INSTALL-Mac.command` / `INSTALL-Linux.sh` |
+| ⬇️ **Install** on the FM-1 | [`installer.html`](installer.html) (Chrome or Edge, USB) · or `install/INSTALL-Windows.bat` / `install/INSTALL-Mac.command` / `install/INSTALL-Linux.sh` |
 | 📖 **Manual** (illustrated) | [`manual.html`](manual.html) |
 | 🧾 **Cheat sheet** (one page, printable) | [`cheatsheet.html`](cheatsheet.html) · [PDF](cheatsheet.pdf) |
 | 🏠 **Home page** | [`index.html`](index.html) (with GitHub Pages on: <https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/>) |
-| 🗺 **Specifications** | [`SPECIFICATIONS.md`](SPECIFICATIONS.md): done, to do, ideas |
+| 🗺 **Specifications** | [`docs/SPECIFICATIONS.md`](docs/SPECIFICATIONS.md): done, to do, ideas |
 | 📜 Technical notes | [`docs/TECHNICAL-NOTES.md`](docs/TECHNICAL-NOTES.md) |
 | 🇫🇷 French | [`fr/`](fr/): the home page, manual, specifications and notes in French |
-| 🇪🇸 Spanish | [`es/index.html`](es/index.html) (home page) · [`es/README.md`](es/README.md) · [`es/cheatsheet.html`](es/cheatsheet.html) |
 
 ## Key features
 

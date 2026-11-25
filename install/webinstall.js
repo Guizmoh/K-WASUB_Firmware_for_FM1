@@ -375,7 +375,7 @@ async function connect(nav) {            // -> WebMidiBackend; the browser's MID
         const insecure = typeof isSecureContext !== "undefined" && isSecureContext === false;   // Web MIDI needs https
         throw new InstallError("nomidi", "this browser has no Web MIDI with SysEx, which the installer needs to talk to the FM-1. " +
                                "Use Chrome, Edge or Opera on a computer" + (insecure ? " (and open the page over https)" : "") +
-                               ", or the INSTALL-Windows.bat / INSTALL-Mac.command / INSTALL-Linux.sh launcher of the repository");
+                               ", or the install/INSTALL-Windows.bat / install/INSTALL-Mac.command / install/INSTALL-Linux.sh launcher of the repository");
     }
     let access;
     try {

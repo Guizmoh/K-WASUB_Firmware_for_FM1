@@ -4,20 +4,19 @@
 
 # K-WASUB · FM1 modern Bass firmware
 
-**English** : [README](../README.md) · **Français** : cette page · **Español** : [README](../es/README.md)
+**English** : [README](../README.md) · **Français** : cette page
 
 **Synthé de basses modernes pour le M-VAVE FM-1** : DnB, dub, dubstep, techno. Wobble en direct, reese, sub, 808, un EQ, un morph entre quatre sons, des effets sur les touches. Gratuit et libre (GPL-3.0). *Version 1.2.5b **BÊTA** : testée sur le FM-1 (matériel), dans l’émulateur et par des tests automatiques ; dis-moi ce que tu vois (onglet Issues).*
 
 | | |
 |---|---|
 | 🎛 **Essayer** (navigateur) | [`emulator/index.html`](../emulator/index.html?lang=fr)  |
-| ⬇️ **Installer** sur le FM-1 | [`installer.html`](../installer.html) (Chrome ou Edge, USB) · ou `INSTALL-Windows.bat` / `INSTALL-Mac.command` / `INSTALL-Linux.sh` |
+| ⬇️ **Installer** sur le FM-1 | [`installer.html`](../installer.html) (Chrome ou Edge, USB) · ou `install/INSTALL-Windows.bat` / `install/INSTALL-Mac.command` / `install/INSTALL-Linux.sh` |
 | 📖 **Manuel** illustré | [`manual.html`](manual.html) |
 | 🧾 **Aide-mémoire** (une page, imprimable) | [`cheatsheet.html`](cheatsheet.html) · [PDF](cheatsheet.pdf) |
 | 🏠 **Accueil** | [`index.html`](index.html) (si GitHub Pages est activé : <https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/>) |
 | 🗺 **Cahier des charges** | [`CAHIER-DES-CHARGES.md`](CAHIER-DES-CHARGES.md) : fait, à faire, idées |
 | 📜 Notes techniques | [`NOTES-TECHNIQUES.md`](NOTES-TECHNIQUES.md) |
-| 🇪🇸 Espagnol | [`es/README.md`](../es/README.md) : le README en espagnol |
 
 ## Fonctions clés
 
