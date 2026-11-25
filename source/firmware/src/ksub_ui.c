@@ -1732,7 +1732,7 @@ static void item_range(uint32_t id, int32_t *lo, int32_t *hi)
         return;
     }
     *lo = 0;
-    *hi = id == G_MIDICH ? 16 : id == G_BPM ? 2400 : id == G_CLOCK || id == G_QLFO || id == G_ASAVE || id == G_LANG || id == G_NORM || id == G_RS_GO || id == G_GRID || id == G_BROWSE || id == G_C3COL || id == G_UI || id == G_ASK || id == G_ZOOM || id == G_MLEARN || id == G_MSTART || id == G_MPROG || id == G_MCLK || id == G_SYNC || id == G_NEWSONG || id == G_L3_SYNC ? 1 : id == G_MMAP ? 16 : id == I_ABMIX ? 127 : id == G_BRI ? 3 : id == G_DEEP ? 4 : id == G_SQ_ON ? 2 : id == G_ACCEL || id == G_CON || id == G_RS_LEN ? 2 : id == G_THEME ? 7 : id == G_FONT ? (int32_t)NFONT - 1 : id == G_PAL ? (int32_t)(2u * NPAL_BASE - 1u) : id == G_OCT ? 6 : 0;
+    *hi = id == G_MIDICH ? 16 : id == G_BPM ? 2400 : id == G_CLOCK || id == G_QLFO || id == G_ASAVE || id == G_LANG || id == G_NORM || id == G_RS_GO || id == G_GRID || id == G_BROWSE || id == G_C3COL || id == G_UI || id == G_ASK || id == G_ZOOM || id == G_MLEARN || id == G_MSTART || id == G_MPROG || id == G_SYNC || id == G_NEWSONG || id == G_L3_SYNC ? 1 : id == G_MMAP ? 16 : id == I_ABMIX ? 127 : id == G_BRI ? 3 : id == G_DEEP ? 4 : id == G_SQ_ON ? 2 : id == G_MCLK ? 3 : id == G_ACCEL || id == G_CON || id == G_RS_LEN ? 2 : id == G_THEME ? 7 : id == G_FONT ? (int32_t)NFONT - 1 : id == G_PAL ? (int32_t)(2u * NPAL_BASE - 1u) : id == G_OCT ? 6 : 0;
     if (id >= G_GR_STYLE && id <= G_GR_LEN) {     /* GROOVE */
         static const uint8_t GL[11] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, GH[11] = {(uint8_t)NDKP, 10, 99, 3, 7, 11, 10, 10, 10, 2, 2};
         *lo = GL[id - G_GR_STYLE]; *hi = GH[id - G_GR_STYLE];
@@ -2209,7 +2209,7 @@ static const char *item_name(uint32_t id)
     case G_MMAP: return "CC MAP";
     case G_MSTART: return "START / STOP";
     case G_MPROG: return "PROGRAM CHANGE";
-    case G_MCLK: return "CLOCK OUT";
+    case G_MCLK: return "MIDI OUT";
     case I_ABMIX: return "A / B MIX";
     case G_MIDIMON: return "LAST NOTE / CC";
     case G_MIDIRT: return "LAST START / STOP";
@@ -2444,7 +2444,7 @@ static void item_text(uint32_t id, char *b)
         case G_MMAP: if (v) { b = fmt_u(b, (uint32_t)v, 0); str_cat(b, v > 1 ? " CCS \xB7 LEFT: CLEAR" : " CC \xB7 LEFT: CLEAR"); } else str_cat(b, "EMPTY"); break;
         case G_MSTART: str_cat(b, v ? "PLAYS THE SEQ" : "IGNORED"); break;
         case G_MPROG: str_cat(b, v ? "LOADS A PRESET" : "IGNORED"); break;
-        case G_MCLK: str_cat(b, v ? "SENT (INTERNAL)" : "OFF"); break;
+        case G_MCLK: { static const char *const L[4] = {"OFF", "CLOCK", "KEYS", "KEYS + CLOCK"}; str_cat(b, L[v & 3]); break; }   /* (1.2.4b: the keys too; CLOCK: the internal tempo) */
         case I_ABMIX:
             if (v == 64) { str_cat(b, "A = B"); break; }
             b = str_cat(b, "A "); b = fmt_u(b, (uint32_t)(v <= 64 ? 100 : (127 - v) * 100 / 63), 0);
@@ -2687,7 +2687,7 @@ static void ui_leds(void)
 static void notes_all_off(void)
 {
     uint32_t n;
-    for (n = 0; n < 128u; n++) if (latched[n] || phys[n]) { ev_push(EV_OFF, n, 0); latched[n] = phys[n] = 0; }
+    for (n = 0; n < 128u; n++) if (latched[n] || phys[n]) { if (phys[n] && (set.mclk & 2u)) midi_send(0x80u | (set.midich ? set.midich - 1u : 0u), n, 0); ev_push(EV_OFF, n, 0); latched[n] = phys[n] = 0; }
 }
 static void panic_all(void)                     /* PANIC (REC held, OCT- + OCT+, MIDI CC 123): every note, the FX PADS and FX LIVE, and the
                                                  * delay, reverb, chorus and dub echo emptied (1.0.36: an old echo kept playing behind) */
@@ -2724,6 +2724,7 @@ static void key_down(uint32_t n, uint32_t vel)
     }
     phys[n] = 1;
     ev_push(EV_ON, n, vel);
+    if (set.mclk & 2u) midi_send(0x90u | (set.midich ? set.midich - 1u : 0u), n, vel);   /* (1.2.4b: MIDI OUT KEYS: the keys to a DAW, on the MIDI channel, 1 if OMNI) */
 }
 static void key_up(uint32_t n)
 {
@@ -2737,6 +2738,7 @@ static void key_up(uint32_t n)
     }
     if (!phys[n]) return;
     phys[n] = 0;
+    if (set.mclk & 2u) midi_send(0x80u | (set.midich ? set.midich - 1u : 0u), n, 0);
     if (hold) latched[n] = 1;
     else ev_push(EV_OFF, n, 0);
 }
@@ -3682,7 +3684,7 @@ static void midi_clock_out(void)                /* CLOCK OUT (internal clock): 2
     static uint32_t last = 0xFFFFFFFFu;
     static uint8_t was;
     uint32_t now = (uint32_t)(((uint64_t)ks_beats * 24u) >> 24), n;
-    if (!set.mclk || set.clock) { last = 0xFFFFFFFFu; return; }
+    if (!(set.mclk & 1u) || set.clock) { last = 0xFFFFFFFFu; return; }
     if (sq_play != was) { was = sq_play; midi_send(sq_play ? 0xFAu : 0xFCu, 0, 0); }
     if (last == 0xFFFFFFFFu) last = now;
     n = (now + 1152u - last) % 1152u;           /* (ks_beats: 48 beats round) */
@@ -3746,16 +3748,16 @@ static void app_init(void)
         const uint32_t LEN[19] = {sizeof set, (uint32_t)(((uint8_t *)set.cr - (uint8_t *)&set + 1u) & ~1u), (uint32_t)(((uint8_t *)&set.scale - (uint8_t *)&set + 1u) & ~1u), (uint32_t)(((uint8_t *)set.fav3 - (uint8_t *)&set + 1u) & ~1u), (uint32_t)((uint8_t *)set.fav2 - (uint8_t *)&set), (uint32_t)((uint8_t *)set.l3 - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.sync - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.lang - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.pquant - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.asave - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.eng8 - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.qlfo - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.bri - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.norm - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.contrast - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.mstart - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.zoom - (uint8_t *)&set),
                                  (uint32_t)((uint8_t *)&set.ui - (uint8_t *)&set), (uint32_t)((uint8_t *)&set.accel - (uint8_t *)&set)};
         for (ok = 0, i = 0; i < 19u && !ok; i++) ok = !settings_load(&set, LEN[i]) && set.ver == 6u;
-        theme_ask = 0;                          /* (1.2.1b: the first start asks nothing: CLASSIC mode, RIBBON, MINT) */
+        theme_ask = 0;                          /* (1.2.1b: the first start asks nothing: CLASSIC mode; 1.2.4b: RIBBON CLASSIC, MINT) */
         l3_push();
     }
     first_run = !ok || set.askv < 2u;           /* (the very first start, or a save from before 0.9.17: the question once) */
     pre_old = ok && set.askv < 13u;             /* (a save from before 1.1.03: the factory sounds' old order) */
     font_old = ok && set.askv < 14u;            /* (a save from before 1.2.0b: nine fonts) */
     if (!ok) {
-        set.grid = set.browse = 0; set.font = 2; set.theme = 5; set.pal = 3;   /* (1.2.1b: RIBBON, MINT, TEKTUR) */
+        set.grid = set.browse = 0; set.font = 2; set.theme = 6; set.pal = 3;   /* (1.2.4b: RIBBON CLASSIC, MINT, TEKTUR) */
         memset(set.fav, 0, sizeof set.fav); memset(set.fav2, 0, sizeof set.fav2); memset(set.fav3, 0, sizeof set.fav3);
-        set.ver = 6; set.midich = 0; set.clock = 0; set.oct = 0xFF; set.bpm10 = 1400; set.bank = 0; set.idx = 0; set.cores = 1; set.accel = 2; set.c3col = 0; set.ui = 0; set.ask = 0; set.zoom = 1; set.mstart = 1; set.mprog = 1; set.mclk = 0; set.contrast = 1; set.norm = 1; set.deep = 1; set.bri = 3; set.qlfo = 1; set.eng8 = 0; set.asave = 1; set.lang = 0; set.askv = 7;
+        set.ver = 6; set.midich = 0; set.clock = 0; set.oct = 0xFF; set.bpm10 = 1400; set.bank = 0; set.idx = 0; set.cores = 1; set.accel = 2; set.c3col = 0; set.ui = 0; set.ask = 0; set.zoom = 1; set.mstart = 1; set.mprog = 1; set.mclk = 2; set.contrast = 1; set.norm = 1; set.deep = 1; set.bri = 3; set.qlfo = 1; set.eng8 = 0; set.asave = 1; set.lang = 0; set.askv = 7;
     }
     set.eng8 = set.eng8 ? 1u : 0u;
     set.qlfo = set.qlfo ? 1u : 0u;
@@ -3871,6 +3873,7 @@ static void app_init(void)
         perf_touch();
         set.askv = 15; set_dirty = 1; set_ms = fm1_ms;
     }
+    if (set.askv == 15u) { set.mclk |= 2u; set.askv = 16; set_dirty = 1; set_ms = fm1_ms; }   /* (1.2.4b: MIDI OUT sends the keys, once) */
     load_preset(set.bank, set.idx);
     if (set.asave && work.magic == WK_MAGIC && work.sum == wk_sum() && work.bank == set.bank && work.idx == set.idx) {   /* AUTOSAVE: the sound as it was left */
         int8_t p[NP_MAX];
