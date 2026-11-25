@@ -1,3 +1,4 @@
+<p align="center"><a href="https://ko-fi.com/omnipotard"><img src="https://img.shields.io/badge/Ko--fi-Apoyar%20K--WASUB-FF5E5B?logo=ko-fi&logoColor=white" alt="Apoyar K-WASUB en Ko-fi"></a><br><b>Firmware gratuito.</b> Si lo usas y te gusta, un café en <a href="https://ko-fi.com/omnipotard">Ko-fi</a> lo mantiene vivo ☕</p>
 <p align="center"><img src="../docs/img/promo.png" alt="K-WASUB, sintetizador de graves moderno para el M-VAVE FM-1"></p>
 <p align="center"><a href="https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/">https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/</a></p>
 

@@ -1,3 +1,4 @@
+<p align="center"><a href="https://ko-fi.com/omnipotard"><img src="https://img.shields.io/badge/Ko--fi-Soutenir%20K--WASUB-FF5E5B?logo=ko-fi&logoColor=white" alt="Soutenir K-WASUB sur Ko-fi"></a><br><b>Firmware gratuit.</b> Si tu l’utilises et qu’il te plaît, un café sur <a href="https://ko-fi.com/omnipotard">Ko-fi</a> aide à le faire vivre ☕</p>
 <p align="center"><img src="../docs/img/promo-fr.png" alt="K-WASUB, synthé de basses modernes pour le M-VAVE FM-1"></p>
 <p align="center"><a href="https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/">https://guizmoh.github.io/K-WASUB_Firmware_for_FM1/</a></p>
 
