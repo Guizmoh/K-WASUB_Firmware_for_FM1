@@ -3208,6 +3208,19 @@ static void on_enc(uint32_t e, int32_t d)
         else new_step(d > 0 ? 2u : 1u);         /* (left: NEW PRESET, right: NEW SONG) */
         return;
     }
+    if (page == 0u) {   /* (1.2.6b) HOME: SELECT the next view (as HOME again), ALGO the kind of sound */
+        if (e == ENC_SELECT) { view_step(d > 0 ? 1 : -1); g_force = 1; return; }
+        if (e == ENC_ALGORITHM) {
+            uint32_t k, n;
+            if (!tag_ok) tags_make();
+            pre_tag = (uint8_t)(((int32_t)pre_tag - 1 + (d > 0 ? 1 : -1) + (int32_t)NTAG) % (int32_t)NTAG + 1);   /* (round the kinds, ALL left out) */
+            for (n = 0; n < NFACTORY; n++) { k = (set.bank ? 0u : set.idx + 1u + n) % NFACTORY; if (pre_match(0, k)) break; }
+            if (n < NFACTORY) { load_preset(0, k); pre_cur[0] = (uint8_t)k; }
+            { char t[24]; str_cat(str_cat(t, "TYPE: "), L_TAG[pre_tag]); toast(t); }
+            g_force = 1;
+            return;
+        }
+    }
     if (e == ENC_SELECT) {
         if (v->n) cursor[vi] = (uint8_t)clampi(cursor[vi] + d, 0, v->n - 1);
         return;

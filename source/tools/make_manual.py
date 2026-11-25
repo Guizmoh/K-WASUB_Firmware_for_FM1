@@ -88,7 +88,7 @@ def build(L):
 
     # 3 pages -- one picture (HOME); every view listed as text, grouped by the button that opens it (complete, not a
     # sample: FX alone has 10 views, showing a thumbnail of each would not fit a short manual)
-    pages = [("HOME", T("CURRENT PATCH, LIVE MIX", "CURRENT PATCH, LIVE MIX")),
+    pages = [("HOME", T("CURRENT PATCH, LIVE MIX; on HOME, <kbd>SELECT</kbd> goes to the next view (as HOME again) and <kbd>ALGO</kbd> changes the kind of sound (SUB, REESE, GROWL, WOBBLE, PLUCK, 808, DRONE, SYNTH): the first sound of that kind loads", "CURRENT PATCH, LIVE MIX ; sur HOME, <kbd>SELECT</kbd> passe à la vue suivante (comme rappuyer sur HOME) et <kbd>ALGO</kbd> change le type de son (SUB, REESE, GROWL, WOBBLE, PLUCK, 808, DRONE, SYNTH) : le premier son de ce type se charge")),
              ("EDIT", T("BASS (both engines, A/B mix, X-MOD, MUTATE, LOCK, BOUNCE), OSCILLATOR A, OSCILLATOR B, SUB + NOISE, OSCILLATOR C · SAMPLE", "BASS (les deux moteurs, mix A/B, X-MOD, MUTATE, LOCK, BOUNCE), OSCILLATEUR A, OSCILLATEUR B, SUB + BRUIT, OSCILLATEUR C · SAMPLE")),
              ("ENV", T("AMP ENVELOPE (ADSR), PITCH / MOD ENVELOPE (the filter envelope is on the FILTER view)", "ENVELOPPE AMPLI (ADSR), ENVELOPPE PITCH / MOD (l’enveloppe du filtre est dans la vue FILTER)")),
              ("SEL", T("FILTER (type, cutoff, resonance, drive, its envelope), then the windows (PERFORM, MORPH, FX LIVE, MACROS)", "FILTER (type, cutoff, résonance, drive, son enveloppe), puis les fenêtres (PERFORM, MORPH, FX LIVE, MACROS)")),
@@ -278,7 +278,7 @@ def build(L):
     o.append(dbar)
     spec = "CAHIER-DES-CHARGES.md" if fr else "docs/SPECIFICATIONS.md"
     o.append(f'<footer>{t(T("K-WASUB is free software (GPL-3.0), born from", "K-WASUB est un logiciel libre (GPL-3.0), né de"))} <a href="https://github.com/Guizmoh/Kawa-Tracker-Fm1">KAWA</a> (Omnipotard / Leo Kuroshita, Hügelton Instruments). '
-             f'{t(T("BETA version 1.2.5b, tested on the FM-1 hardware. Tell me what you see on yours (GitHub, Issues).", "Version BÊTA 1.2.5b, testée sur le FM-1. Dis-moi ce que tu vois sur le tien (GitHub, Issues)."))} <a href="index.html">← {t(T("Home", "Accueil"))}</a> · <a href="{spec}">{t(T("Specifications", "Cahier des charges"))}</a></footer>')
+             f'{t(T("BETA version 1.2.6b, tested on the FM-1 hardware. Tell me what you see on yours (GitHub, Issues).", "Version BÊTA 1.2.6b, testée sur le FM-1. Dis-moi ce que tu vois sur le tien (GitHub, Issues)."))} <a href="index.html">← {t(T("Home", "Accueil"))}</a> · <a href="{spec}">{t(T("Specifications", "Cahier des charges"))}</a></footer>')
     o.append('</main></div>')
     o.append(f'<a class="fab" href="{KOFI}" target="_blank" rel="noopener">☕ {t(T("Support K-WASUB", "Soutenir K-WASUB"))}</a>')
     o.append('''<script>
