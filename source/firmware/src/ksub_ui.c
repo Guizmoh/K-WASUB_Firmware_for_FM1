@@ -596,8 +596,11 @@ static void rst_read(void)
 #else
     uint8_t r = fm1_boot.p3_rst;
     const char *t = r & 4u ? "WATCHDOG (TOO BUSY)" : r & 2u ? "LOW VOLTAGE (POWER)" : r & 0x20u ? "1.2 V LOW (POWER)" : r & 0x10u ? "LONG PRESS" : 0;
+    if (set.cr[15] && set.cr[14] == 0xFFu) memset(set.cr, 0, sizeof set.cr);   /* (1.2.8b: a "crash" kept with no report of its own was not one: gone) */
+    if (fm1_crash_mark[0] == 0xC4A54ED0u && !(fm1_crash.magic == FM1_CRASH_MAGIC && fm1_crash.pc == fm1_crash_mark[1])) fm1_crash_mark[0] = 0;   /* (1.2.8b: the mark alone, without the
+                                                 * crash's own report that the fault handler writes first, is what the RAM held at power-on on some FM-1s: no crash) */
     if (fm1_crash_mark[0] == 0xC4A54ED0u) {     /* a crash: its details kept in the settings (1.2.3b), the count of them too */
-        int ok = fm1_crash.magic == FM1_CRASH_MAGIC;
+        int ok = 1;
         uint32_t pc = fm1_crash_mark[1], ret = ok ? fm1_crash.rets : 0u, br = ok ? fm1_crash.etm[0] : 0u, up = ok ? fm1_crash.uptime_ms / 10u : 0u, i;
         t = "CRASH"; fm1_crash_mark[0] = 0;
         for (i = 0; i < 4u; i++) { set.cr[i] = (uint8_t)(pc >> (8u * i)); set.cr[4u + i] = (uint8_t)(ret >> (8u * i)); set.cr[8u + i] = (uint8_t)(br >> (8u * i)); }
